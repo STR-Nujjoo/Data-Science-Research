@@ -44,7 +44,7 @@ df_aerial_imagery <- all_dates %>%
                                           as.Date('2010-01-16'), as.Date('2010-06-25'), as.Date('2010-08-12'), as.Date('2010-09-13'),
                                           as.Date('2010-10-31'), as.Date('2010-11-16'), as.Date('2010-12-18'), # 2010 series
                                           
-                                          as.Date('2011-01-03'), as.Date('2011-04-09'), as.Date('2011-05-05'), as.Date('2011-06-12'),
+                                          as.Date('2011-01-03'), as.Date('2011-04-09'), as.Date('2011-05-27'), as.Date('2011-06-12'),
                                           as.Date('2011-08-15'), as.Date('2011-09-16'), # 2011 series
                                           
                                           as.Date('2012-01-06'), as.Date('2012-03-26'), as.Date('2012-04-11'), as.Date('2012-09-02'),
@@ -59,7 +59,7 @@ df_aerial_imagery <- all_dates %>%
                                                  
                                           as.Date('2014-02-04'), as.Date('2014-04-09'), as.Date('2014-04-25'), as.Date('2014-06-12'), 
                                           as.Date('2014-06-28'), as.Date('2014-07-14'), as.Date('2014-07-30'), as.Date('2014-08-31'),
-                                          as.Date('2014-10-02'), as.Date('2014-10-18'), as.Date('2014-11-10'), as.Date('2014-12-05'), # 2014 series
+                                          as.Date('2014-10-02'), as.Date('2014-10-18'), as.Date('2014-11-19'), as.Date('2014-12-05'), # 2014 series
                                           
                                           as.Date('2015-01-06'), as.Date('2015-01-22'), as.Date('2015-02-07'), as.Date('2015-02-23'),
                                           as.Date('2015-03-11'), as.Date('2015-04-12'), as.Date('2015-07-01'), as.Date('2015-08-02'),
@@ -146,7 +146,13 @@ ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data 
        plot = all_possible_aerial_imagery_plot, width = 6.56, height= 8.5)
 
 
-# # No. of imagery acquired
-# df_aerial_imagery %>%
-#   filter(has_data != 'Missing Data') %>%
-#   tally()
+# Total no. of imagery acquired
+df_aerial_imagery %>%
+  filter(has_data != 'Missing Data') %>%
+  tally()
+
+# No. of imagery acquired for each category
+df_aerial_imagery %>%
+  group_by(has_data) %>%
+  tally()
+
