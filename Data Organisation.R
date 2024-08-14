@@ -470,225 +470,326 @@ find_midpoint_date <- function(date1, date2) {
   
   return(midpoint)
 }
-find_midpoint_date(df[1,1][[1]]@file@name, df[1,3][[1]][[1]]@file@name)
-x <- (df[1,1][[1]] + df[1,3][[1]][[1]])/2
-x@file@name <- as.character(find_midpoint_date(df[1,1][[1]]@file@name, df[1,3][[1]][[1]]@file@name))
-find_midpoint_date('20041115', '20050102')
 
-trimmed_df <- df[1:22,]
 
-for (row in 1:nrow(trimmed_df)) {
-  for (col in 1:ncol(trimmed_df)) {
-    # For each cell, get the next cell in the same row
-    if (col < ncol(trimmed_df)) {
-      # First element in the table remains unchange
-      if(row == 1 & col == 1){
-        trimmed_df[row, col] <- list(trimmed_df[row, col]) # cell remain unchanged
-        # First element in each row if they are Null apart from first row
-      }else if(row != 1 & col == 1){
-        # If the latter is not null... 
-        if(!is.na(trimmed_df[row, col])){
+trimmed_df <- df[1:4,]
+{
+  for (row in 1:nrow(trimmed_df)) {
+    for (col in 1:ncol(trimmed_df)) {
+      # For each cell, get the next cell in the same row
+      if (col < ncol(trimmed_df)) {
+        # First element in the table remains unchange
+        if(row == 1 & col == 1){
           trimmed_df[row, col] <- list(trimmed_df[row, col]) # cell remain unchanged
-          # If the latter is null...
-        }else if(is.na(trimmed_df[row, col]) && 
-                 !is.na(trimmed_df[row-1, 12]) &&
-                 !is.na(trimmed_df[row, col+1])){
-          # when previous cell contains 2 imageries and next next cell contains 2 imageries
-          if(length(trimmed_df[row-1, 12][[1]])>1 & length(trimmed_df[row, col+1][[1]])>1){
-            trimmed_df[row, col][[1]] <- list((trimmed_df[row-1, 12][[1]][[2]] + trimmed_df[row, col+1][[1]][[1]])/2) # Horizontal Interpolation
-            # interpolated_raster <- trimmed_df[row, col][[1]]
-            # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
-            # 
-            # when previous cell contains 2 imageries and next next cell contains 1 imagery
-          }else if(length(trimmed_df[row-1, 12][[1]])>1 & length(trimmed_df[row, col+1][[1]])==1){
-            trimmed_df[row, col][[1]] <- list((trimmed_df[row-1, 12][[1]][[2]] + trimmed_df[row, col+1][[1]])/2) # Horizontal Interpolation
-            # interpolated_raster <- trimmed_df[row, col][[1]]
-            # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
-            # 
-            # when previous cell contains 1 imagery and next next cell contains 2 imageries
-          }else if(length(trimmed_df[row-1, 12][[1]])==1 & length(trimmed_df[row, col+1][[1]])>1){
-            trimmed_df[row, col][[1]] <- list((trimmed_df[row-1, 12][[1]] + trimmed_df[row, col+1][[1]][[1]])/2) # Horizontal Interpolation
-            # interpolated_raster <- trimmed_df[row, col][[1]]
-            # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
-            # 
-             # when previous cell contains 1 imagery and next next cell contains 1 imagery
-          }else if(length(trimmed_df[row-1, 12][[1]])==1 & length(trimmed_df[row, col+1][[1]])==1){
-            trimmed_df[row, col][[1]] <- list((trimmed_df[row-1, 12][[1]] + trimmed_df[row, col+1][[1]])/2) # Horizontal Interpolation
-            # interpolated_raster <- trimmed_df[row, col][[1]]
-            # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
+          # First element in each row if they are Null apart from first row
+        }else if(row != 1 & col == 1){
+          # If the latter is not null... 
+          if(!is.na(trimmed_df[row, col])){
+            trimmed_df[row, col] <- list(trimmed_df[row, col]) # cell remain unchanged
+            # If the latter is null...
+          }else if(is.na(trimmed_df[row, col]) && 
+                   !is.na(trimmed_df[row-1, 12]) &&
+                   !is.na(trimmed_df[row, col+1])){
+            # when previous cell contains 2 imageries and next next cell contains 2 imageries
+            if(length(trimmed_df[row-1, 12][[1]])>1 && length(trimmed_df[row, col+1][[1]])>1){
+              trimmed_df[row, col][[1]] <- list((trimmed_df[row-1, 12][[1]][[2]] + trimmed_df[row, col+1][[1]][[1]])/2) # Horizontal Interpolation
+              print(names(trimmed_df[row, col][[1]]))
+              print(trimmed_df[row-1, 12][[1]][[2]])
+              print(trimmed_df[row, col+1][[1]][[1]])
+              #trimmed_df[row, col][[1]]@file@name <- as.character(find_midpoint_date(trimmed_df[row-1, 12][[1]][[2]]@file@name, trimmed_df[row, col+1][[1]][[1]]@file@name))
+              # interpolated_raster <- trimmed_df[row, col][[1]]
+              # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
+              # trimmed_df[row, col][[1]] <- list(interpolated_raster) # re-appending item to appripriate cell in dataframe
+              
+              # when previous cell contains 2 imageries and next next cell contains 1 imagery
+            }else if(length(trimmed_df[row-1, 12][[1]])>1 && length(trimmed_df[row, col+1][[1]])==1){
+              trimmed_df[row, col][[1]] <- list((trimmed_df[row-1, 12][[1]][[2]] + trimmed_df[row, col+1][[1]])/2) # Horizontal Interpolation
+              print(names(trimmed_df[row, col][[1]]))
+              print(trimmed_df[row-1, 12][[1]][[2]])
+              print(trimmed_df[row, col+1][[1]])
+              #trimmed_df[row, col][[1]]@file@name <- as.character(find_midpoint_date(trimmed_df[row-1, 12][[1]][[2]]@file@name, trimmed_df[row, col+1][[1]]@file@name))
+              # interpolated_raster <- trimmed_df[row, col][[1]]
+              # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
+              # trimmed_df[row, col][[1]] <- list(interpolated_raster) # re-appending item to appripriate cell in dataframe
+              
+              # when previous cell contains 1 imagery and next next cell contains 2 imageries
+            }else if(length(trimmed_df[row-1, 12][[1]])==1 && length(trimmed_df[row, col+1][[1]])>1){
+              trimmed_df[row, col][[1]] <- list((trimmed_df[row-1, 12][[1]] + trimmed_df[row, col+1][[1]][[1]])/2) # Horizontal Interpolation
+              print(names(trimmed_df[row, col][[1]]))
+              print(trimmed_df[row-1, 12][[1]] )
+              print(trimmed_df[row, col+1][[1]][[1]])
+              # trimmed_df[row, col][[1]]@file@name <- as.character(find_midpoint_date(trimmed_df[row-1, 12][[1]]@file@name, trimmed_df[row, col+1][[1]][[1]]@file@name))
+              # interpolated_raster <- trimmed_df[row, col][[1]]
+              # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
+              # trimmed_df[row, col][[1]] <- list(interpolated_raster) # re-appending item to appripriate cell in dataframe
+              
+              # when previous cell contains 1 imagery and next next cell contains 1 imagery
+            }else if(length(trimmed_df[row-1, 12][[1]])==1 && length(trimmed_df[row, col+1][[1]])==1){
+              trimmed_df[row, col][[1]] <- list((trimmed_df[row-1, 12][[1]] + trimmed_df[row, col+1][[1]])/2) # Horizontal Interpolation
+              print(names(trimmed_df[row, col][[1]]))
+              print(trimmed_df[row-1, 12][[1]])
+              print(trimmed_df[row, col+1][[1]])
+              #trimmed_df[row, col][[1]]@file@name <- as.character(find_midpoint_date(trimmed_df[row-1, 12][[1]]@file@name, trimmed_df[row, col+1][[1]]@file@name))
+              # interpolated_raster <- trimmed_df[row, col][[1]]
+              # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
+              # trimmed_df[row, col][[1]] <- list(interpolated_raster) # re-appending item to appripriate cell in dataframe
+            }
+            # trimmed_df[row, col] <- 'Interpolate'
+          }else if(!is.na(trimmed_df[row-1, 12]) || !is.na(trimmed_df[row, col+1])){
+            trimmed_df[row, col] <- NA
           }
-          # trimmed_df[row, col] <- 'Interpolate'
-        }else(trimmed_df[row, col] <- NA)
-        
+          
+          # If cell contains 1 or more than a raster then keep it
+        }else if((length(trimmed_df[row, col][[1]]) == 1 && !is.na(trimmed_df[row, col])) || length(trimmed_df[row, col][[1]]) > 1){
+          trimmed_df[row, col] <- list(trimmed_df[row, col]) # cell remain unchanged
+          # If cell is null...
+        }else if(is.na(trimmed_df[row, col])) {
+          if(!is.na(trimmed_df[row, col-1]) && !is.na(trimmed_df[row, col+1])){
+            # when previous cell contains 2 imageries and next next cell contains 2 imageries
+            if(length(trimmed_df[row, col-1][[1]]) > 1 && length(trimmed_df[row, col+1][[1]]) > 1){
+              trimmed_df[row, col][[1]] <- list((trimmed_df[row, col-1][[1]][[2]] + trimmed_df[row, col+1][[1]][[1]])/2) # Horizontal Interpolation
+              print(names(trimmed_df[row, col][[1]]))
+              print(trimmed_df[row, col-1][[1]][[2]])
+              print(trimmed_df[row, col+1][[1]][[1]])
+              #trimmed_df[row, col][[1]]@file@name <- as.character(find_midpoint_date(trimmed_df[row, col-1][[1]][[2]]@file@name, trimmed_df[row, col+1][[1]][[1]]@file@name))
+              # interpolated_raster <- trimmed_df[row, col][[1]]
+              # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
+              # trimmed_df[row, col][[1]] <- list(interpolated_raster) # re-appending item to appripriate cell in dataframe
+              
+              # when previous cell contains 2 imageries and next next cell contains 1 imagery
+            }else if(length(trimmed_df[row, col-1][[1]]) > 1 && length(trimmed_df[row, col+1][[1]]) == 1){
+              trimmed_df[row, col][[1]] <- list((trimmed_df[row, col-1][[1]][[2]] + trimmed_df[row, col+1][[1]])/2) # Horizontal Interpolation
+              print(names(trimmed_df[row, col][[1]]))
+              print(trimmed_df[row, col-1][[1]][[2]])
+              print(trimmed_df[row, col+1][[1]])
+              # trimmed_df[row, col][[1]]@file@name <- as.character(find_midpoint_date(trimmed_df[row, col-1][[1]][[2]]@file@name, trimmed_df[row, col+1][[1]]@file@name))
+              # interpolated_raster <- trimmed_df[row, col][[1]]
+              # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
+              # trimmed_df[row, col][[1]] <- list(interpolated_raster) # re-appending item to appripriate cell in dataframe
+              
+              # when previous cell contains 1 imagery and next next cell contains 2 imageries
+            }else if(length(trimmed_df[row, col-1][[1]]) == 1 && length(trimmed_df[row, col+1][[1]]) > 1){
+              trimmed_df[row, col][[1]] <- list((trimmed_df[row, col-1][[1]] + trimmed_df[row, col+1][[1]][[1]])/2) # Horizontal Interpolation
+              print(names(trimmed_df[row, col][[1]]))
+              print(trimmed_df[row, col-1][[1]])
+              print(trimmed_df[row, col+1][[1]][[1]])
+              # trimmed_df[row, col][[1]]@file@name <- as.character(find_midpoint_date(trimmed_df[row, col-1][[1]]@file@name, trimmed_df[row, col+1][[1]][[1]]@file@name))
+              # interpolated_raster <- trimmed_df[row, col][[1]]
+              # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
+              # trimmed_df[row, col][[1]] <- list(interpolated_raster) # re-appending item to appripriate cell in dataframe
+              
+              # when previous cell contains 1 imagery and next next cell contains 1 imagery
+            }else if(length(trimmed_df[row, col-1][[1]]) == 1 && length(trimmed_df[row, col+1][[1]]) == 1){
+              trimmed_df[row, col][[1]] <- list((trimmed_df[row, col-1][[1]] + trimmed_df[row, col+1][[1]])/2) # Horizontal Interpolation
+              print(names(trimmed_df[row, col][[1]]))
+              print(trimmed_df[row, col-1][[1]])
+              print(trimmed_df[row, col+1][[1]])
+              # trimmed_df[row, col][[1]]@file@name <- as.character(find_midpoint_date(trimmed_df[row, col-1][[1]]@file@name, trimmed_df[row, col+1][[1]]@file@name))
+              # interpolated_raster <- trimmed_df[row, col][[1]]
+              # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
+              # trimmed_df[row, col][[1]] <- list(interpolated_raster) # re-appending item to appripriate cell in dataframe
+            }
+            # trimmed_df[row, col] <- 'Interpolate'
+          }else (trimmed_df[row, col] <- NA)
+        }
+        # For the last cell in the row, get the first cell of the next row  
+      }else if (col == ncol(trimmed_df) && row < nrow(trimmed_df)) {
         # If cell contains 1 or more than a raster then keep it
-      }else if(length(trimmed_df[row, col][[1]]) == 1 & !is.na(trimmed_df[row, col]) || length(trimmed_df[row, col][[1]]) > 1){
-        trimmed_df[row, col] <- list(trimmed_df[row, col]) # cell remain unchanged
-        # If cell is null...
-      }else if(is.na(trimmed_df[row, col])) {
-        if(!is.na(trimmed_df[row, col-1]) & !is.na(trimmed_df[row, col+1])){
-          # when previous cell contains 2 imageries and next next cell contains 2 imageries
-          if(length(trimmed_df[row, col-1][[1]]) > 1 & length(trimmed_df[row, col+1][[1]]) > 1){
-            trimmed_df[row, col][[1]] <- list((trimmed_df[row, col-1][[1]][[2]] + trimmed_df[row, col+1][[1]][[1]])/2) # Horizontal Interpolation
-            # interpolated_raster <- trimmed_df[row, col][[1]]
-            # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
-            
-            # when previous cell contains 2 imageries and next next cell contains 1 imagery
-          }else if(length(trimmed_df[row, col-1][[1]]) > 1 & length(trimmed_df[row, col+1][[1]]) == 1){
-            trimmed_df[row, col][[1]] <- list((trimmed_df[row, col-1][[1]][[2]] + trimmed_df[row, col+1][[1]])/2) # Horizontal Interpolation
-            # interpolated_raster <- trimmed_df[row, col][[1]]
-            # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
-            
-            # when previous cell contains 1 imagery and next next cell contains 2 imageries
-          }else if(length(trimmed_df[row, col-1][[1]]) == 1 & length(trimmed_df[row, col+1][[1]]) > 1){
-            trimmed_df[row, col][[1]] <- list((trimmed_df[row, col-1][[1]] + trimmed_df[row, col+1][[1]][[1]])/2) # Horizontal Interpolation
-            # interpolated_raster <- trimmed_df[row, col][[1]]
-            # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
-            
-            # when previous cell contains 1 imagery and next next cell contains 1 imagery
-          }else if(length(trimmed_df[row, col-1][[1]]) == 1 & length(trimmed_df[row, col+1][[1]]) == 1){
-            trimmed_df[row, col][[1]] <- list((trimmed_df[row, col-1][[1]] + trimmed_df[row, col+1][[1]])/2) # Horizontal Interpolation
-            # interpolated_raster <- trimmed_df[row, col][[1]]
-            # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
-          }
-          # trimmed_df[row, col] <- 'Interpolate'
-        }else (trimmed_df[row, col] <- NA)
+        if((length(trimmed_df[row, col][[1]]) == 1 && !is.na(trimmed_df[row, col])) || length(trimmed_df[row, col][[1]]) > 1){
+          trimmed_df[row, col] <- list(trimmed_df[row, col]) # cell remain unchanged
+          # If cell is null
+        }else if(is.na(trimmed_df[row, col])){
+          if(!is.na(trimmed_df[row, col-1]) && !is.na(trimmed_df[row+1, 1])){ 
+            # when previous cell contains 2 imageries and next next cell contains 2 imageries
+            if(length(trimmed_df[row, col-1][[1]])>1 && length(trimmed_df[row+1, 1][[1]])>1){
+              trimmed_df[row, col][[1]] <- list((trimmed_df[row, col-1][[1]][[2]] + trimmed_df[row+1, 1][[1]][[1]])/2) # Horizontal Interpolation
+              print(names(trimmed_df[row, col][[1]]))
+              print(trimmed_df[row, col-1][[1]][[2]])
+              print(trimmed_df[row+1, 1][[1]][[1]])
+              # trimmed_df[row, col][[1]]@file@name <- as.character(find_midpoint_date(trimmed_df[row, col-1][[1]][[2]]@file@name, trimmed_df[row+1, 1][[1]][[1]]@file@name))
+              # interpolated_raster <- trimmed_df[row, col][[1]]
+              # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
+              # trimmed_df[row, col][[1]] <- list(interpolated_raster) # re-appending item to appripriate cell in dataframe
+              
+              # when previous cell contains 2 imageries and next next cell contains 1 imagery
+            }else if(length(trimmed_df[row, col-1][[1]])>1 && length(trimmed_df[row+1, 1][[1]])==1){
+              trimmed_df[row, col][[1]] <- list((trimmed_df[row, col-1][[1]][[2]] + trimmed_df[row+1, 1][[1]])/2) # Horizontal Interpolation
+              print(names(trimmed_df[row, col][[1]]))
+              print(trimmed_df[row, col-1][[1]][[2]])
+              print(trimmed_df[row+1, 1][[1]])
+              # trimmed_df[row, col][[1]]@file@name <- as.character(find_midpoint_date(trimmed_df[row, col-1][[1]][[2]]@file@name, trimmed_df[row+1, 1][[1]]@file@name))
+              # interpolated_raster <- trimmed_df[row, col][[1]]
+              # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
+              # trimmed_df[row, col][[1]] <- list(interpolated_raster) # re-appending item to appripriate cell in dataframe
+              
+              # when previous cell contains 1 imagery and next next cell contains 2 imageries
+            }else if(length(trimmed_df[row, col-1][[1]])==1 && length(trimmed_df[row+1, 1][[1]])>1){
+              trimmed_df[row, col][[1]] <- list((trimmed_df[row, col-1][[1]] + trimmed_df[row+1, 1][[1]][[1]])/2) # Horizontal Interpolation
+              print(names(trimmed_df[row, col][[1]]))
+              print(trimmed_df[row, col-1][[1]])
+              print(trimmed_df[row+1, 1][[1]][[1]])
+              # trimmed_df[row, col][[1]]@file@name <- as.character(find_midpoint_date(trimmed_df[row, col-1][[1]]@file@name, trimmed_df[row+1, 1][[1]][[1]]@file@name))
+              # interpolated_raster <- trimmed_df[row, col][[1]]
+              # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
+              # trimmed_df[row, col][[1]] <- list(interpolated_raster) # re-appending item to appripriate cell in dataframe
+              
+              # when previous cell contains 1 imagery and next next cell contains 1 imagery
+            }else if(length(trimmed_df[row, col-1][[1]])==1 && length(trimmed_df[row+1, 1][[1]])==1){
+              trimmed_df[row, col][[1]] <- list((trimmed_df[row, col-1][[1]] + trimmed_df[row+1, 1][[1]])/2) # Horizontal Interpolation
+              print(names(trimmed_df[row, col][[1]]))
+              print(trimmed_df[row, col-1][[1]])
+              print(trimmed_df[row+1, 1][[1]])
+              # trimmed_df[row, col][[1]]@file@name <- as.character(find_midpoint_date(trimmed_df[row, col-1][[1]]@file@name, trimmed_df[row+1, 1][[1]]@file@name))
+              # interpolated_raster <- trimmed_df[row, col][[1]]
+              # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
+              # trimmed_df[row, col][[1]] <- list(interpolated_raster) # re-appending item to appripriate cell in dataframe
+              
+            }
+            # trimmed_df[row, col] <- 'Interpolate'
+          }else (trimmed_df[row, col] <- NA)
+        } 
       }
-      # For the last cell in the row, get the first cell of the next row  
-    }else if (col == ncol(trimmed_df) && row < nrow(trimmed_df)) {
-      # If cell contains 1 or more than a raster then keep it
-      if(length(trimmed_df[row, col][[1]]) == 1 & !is.na(trimmed_df[row, col]) || length(trimmed_df[row, col][[1]]) > 1){
-        trimmed_df[row, col] <- list(trimmed_df[row, col]) # cell remain unchanged
-        # If cell is null
-      }else if(is.na(trimmed_df[row, col])){
-        if(!is.na(trimmed_df[row, col-1]) & !is.na(trimmed_df[row+1, 1])){ 
-          # when previous cell contains 2 imageries and next next cell contains 2 imageries
-          if(length(trimmed_df[row, col-1][[1]])>1 & length(trimmed_df[row+1, 1][[1]])>1){
-            trimmed_df[row, col][[1]] <- list((trimmed_df[row, col-1][[1]][[2]] + trimmed_df[row+1, 1][[1]][[1]])/2) # Horizontal Interpolation
-            # interpolated_raster <- trimmed_df[row, col][[1]]
-            # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
-            
-            # when previous cell contains 2 imageries and next next cell contains 1 imagery
-          }else if(length(trimmed_df[row, col-1][[1]])>1 & length(trimmed_df[row+1, 1][[1]])==1){
-            trimmed_df[row, col][[1]] <- list((trimmed_df[row, col-1][[1]][[2]] + trimmed_df[row+1, 1][[1]])/2) # Horizontal Interpolation
-            # interpolated_raster <- trimmed_df[row, col][[1]]
-            # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
-            # 
-            # when previous cell contains 1 imagery and next next cell contains 2 imageries
-          }else if(length(trimmed_df[row, col-1][[1]])==1 & length(trimmed_df[row+1, 1][[1]])>1){
-            trimmed_df[row, col][[1]] <- list((trimmed_df[row, col-1][[1]] + trimmed_df[row+1, 1][[1]][[1]])/2) # Horizontal Interpolation
-            # interpolated_raster <- trimmed_df[row, col][[1]]
-            # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
-            
-            # when previous cell contains 1 imagery and next next cell contains 1 imagery
-          }else if(length(trimmed_df[row, col-1][[1]])==1 & length(trimmed_df[row+1, 1][[1]])==1){
-            trimmed_df[row, col][[1]] <- list((trimmed_df[row, col-1][[1]] + trimmed_df[row+1, 1][[1]])/2) # Horizontal Interpolation
-            # interpolated_raster <- trimmed_df[row, col][[1]]
-            # names(interpolated_raster) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename bands
-          }
-          # trimmed_df[row, col] <- 'Interpolate'
-        }else (trimmed_df[row, col] <- NA)
-      } 
+      print(c(row, col)) # track progress
     }
-    print(c(row, col)) # track progress
   }
+} # partially failed!
+
+# Manual approach for interpolation ---------------------------------------
+# Truncated dataframe excluding Landsat 7 imagery
+df_2014_2022 <- df[13:22,]
+
+# Creating horizontal interpolation function
+HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION <- function(prev_raster, following_raster, plot = F){
+  prev_raster <- prev_raster
+  following_raster <- following_raster
+  horizontal_interpolation <- (prev_raster + following_raster)/2 # simple average
+  horizontal_interpolation@file@name <- gsub('-','', as.character(find_midpoint_date(prev_raster@file@name, following_raster@file@name))) # rename layer using midpoint date of the interpolated imageries
+  
+  # Plotting option
+  if(plot==T){
+    plotRGB(horizontal_interpolation, r=3 , g=2 , b=1, 
+            stretch = 'lin',
+            margin = T, 
+            main = paste0('Interpolated Date: ', as.Date(horizontal_interpolation@file@name, format = "%Y%m%d")))
+  }
+  return(list(horizontal_interpolation))
 }
 
+# Imputing missing aerial imageries
+# 2014 Horizontal Interpolation 
+df_2014_2022[1,1][[1]] <- HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION(prev_raster = df[12,12][[1]][[1]], # 20131218
+                                                            following_raster = df[13,2][[1]], # 20140204
+                                                            plot = T)
+df_2014_2022[1,3][[1]] <- HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION(prev_raster = df[13,2][[1]], # 20140204
+                                                            following_raster = df[13,4][[1]][[1]], # 20140409
+                                                            plot = T)
 
+df_2014_2022[1,5][[1]] <- HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION(prev_raster = df[13,4][[1]][[2]], # 20140425
+                                                                        following_raster = df[13,6][[1]][[1]], # 20140612
+                                                                        plot = T)
 
+df_2014_2022[1,9][[1]] <- HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION(prev_raster = df[13,8][[1]], # 20140831
+                                                                        following_raster = df[13,10][[1]][[1]], # 20141002
+                                                                        plot = T)
 
+# 2015 Vertical interpolation
+df_2014_2022[2,5][[1]] <- HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION(prev_raster = df_2014_2022[1,5][[1]], # 20140519 interpolated date
+                                                                        following_raster = df[15,5][[1]], # 20160526
+                                                                        plot = T)
 
+df_2014_2022[2,6][[1]] <- HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION(prev_raster = df[13,6][[1]][[2]], # 20140628
+                                                                        following_raster = df[15,6][[1]], # 20160605
+                                                                        plot = T)
 
 
-trimmed_df[1,7][[1]]
-trimmed_df[13,2][[1]]
+df_2014_2022[2,7][[1]] <- HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION(prev_raster = df[13,7][[1]][[2]], # 20140730
+                                                                        following_raster = df[15,7][[1]], # 20160703
+                                                                        plot = T)
 
 
+df_2014_2022[2,10][[1]] <- HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION(prev_raster = df[13,10][[1]][[2]], # 20141018
+                                                                         following_raster = df[15,10][[1]], # 20161023
+                                                                         plot = T)
 
 
+df_2014_2022[2,11][[1]] <- HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION(prev_raster = df[13,11][[1]], # 20141119
+                                                                         following_raster = df[15,11][[1]], # 20161122
+                                                                         plot = T)
 
 
-# Extract the raster object
-raster_obj <- trimmed_df[13, 1][[1]]
 
-# Rename the layers
-names(raster_obj) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2')
+# 2016 horizontal interpolation
+df_2014_2022[3,3][[1]] <- HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION(prev_raster = df[15,2][[1]], # 20160210
+                                                                        following_raster = df[15,4][[1]], # 20160406
+                                                                        plot = T)
 
 
+# 2017 vertical interpolation
+df_2014_2022[4,7][[1]] <- HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION(prev_raster = df[15,7][[1]], # 20160703
+                                                                        following_raster = df[17,7][[1]], # 20180709
+                                                                        plot = T)
 
+# 2017 horizontal interpolation
+# 2nd degree
+df_2014_2022[4,6][[1]] <- HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION(prev_raster = df[16,5][[1]], # 20170519
+                                                                        following_raster = df_2014_2022[4,7][[1]], # 20170706 interpolated date
+                                                                        plot = T)
 
 
+df_2014_2022[4,9][[1]] <- HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION(prev_raster = df[16,8][[1]], # 20170807
+                                                                        following_raster = df[16,10][[1]], # 20171010
+                                                                        plot = T)
 
+# 2018 vertical interpolation
+# 2nd degree
+df_2014_2022[5,6][[1]] <- HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION(prev_raster = df_2014_2022[4,6][[1]], # 20170612 interpolated date
+                                                                        following_raster = df[18,6][[1]], # 20190615
+                                                                        plot = T)
 
 
+# 2018 horizontal interpolation
+# 2nd degree
+df_2014_2022[5,5][[1]] <- HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION(prev_raster = df[17,4][[1]], # 20180404
+                                                                        following_raster = df_2014_2022[5,6][[1]], # 20180613 interpolated date
+                                                                        plot = T)
 
+df_2014_2022[5,8][[1]] <- HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION(prev_raster = df[17,7][[1]], # 20180709
+                                                                        following_raster = df[17,9][[1]], # 20180911
+                                                                        plot = T)
 
+# 2020 horizontal interpolation
+df_2014_2022[7,8][[1]] <- HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION(prev_raster = df[19,7][[1]], # 20200719
+                                                                        following_raster = df[19,9][[1]], # 20200922
+                                                                        plot = T)
+# 2021 horizontal interpolation
+df_2014_2022[8,5][[1]] <- HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION(prev_raster = df[20,4][[1]], # 20210412
+                                                                        following_raster = df[20,6][[1]], # 20210619
+                                                                        plot = T)
+# 2022 horizontal interpolation
+df_2014_2022[10,6][[1]] <- HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION(prev_raster = df[22,5][[1]], # 20230528
+                                                                         following_raster = df[22,7][[1]], # 20230724
+                                                                         plot = T)
 
 
+# Extract imageries and put them in column format for further analyses
+year_2014_2022 <- year[13:22]
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+df_2014_2022_long <- df_2014_2022 %>%
+  mutate(year = year_2014_2022) %>%
+  pivot_longer(cols = -year, names_to = 'month', values_to = "Imageries")
+
+# Extract the dates in the same order as acquired
+dates_extraction_2014_2022 <- NULL
+for(i in 1:length(unlist(df_2014_2022_long$Imageries))){
+  dates_extraction_2014_2022[i] <- unlist(df_2014_2022_long$Imageries)[[i]]@file@name
+}
+
+# Space between set of pairs of observation
+days_between_imagery_obs_2014_2022 <- diff(as.Date(dates_extraction_2014_2022, format="%Y%m%d"))
+
+# Average space between set of pairs of observation
+ave_days_between_imagery_obs_2014_2022 <- ceiling(mean(days_between_imagery_obs_2014_2022)) # ~approximately
+quantile(days_between_imagery_obs_2014_2022)
 
 
 
