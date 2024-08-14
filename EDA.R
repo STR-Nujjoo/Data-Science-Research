@@ -55,7 +55,7 @@ df_aerial_imagery <- all_dates %>%
                                           ) ~ 'Landsat 7 SR', # all the above imageries collected from L7 SR satellite
                                      
                                      date %in% c(
-                                          as.Date('2013-10-15'), as.Date('2013-12-18'), # 2013 series
+                                          as.Date('2013-12-18'), # 2013 series
                                                  
                                           as.Date('2014-02-04'), as.Date('2014-04-09'), as.Date('2014-04-25'), as.Date('2014-06-12'), 
                                           as.Date('2014-06-28'), as.Date('2014-07-14'), as.Date('2014-07-30'), as.Date('2014-08-31'),
@@ -69,7 +69,7 @@ df_aerial_imagery <- all_dates %>%
                                           as.Date('2016-12-10'), as.Date('2016-12-26'), # 2016 series
                                           
                                           as.Date('2017-01-11'), as.Date('2017-02-28'), as.Date('2017-03-16'), as.Date('2017-04-17'),
-                                          as.Date('2017-05-19'), as.Date('2017-07-06'), as.Date('2017-08-07'), as.Date('2017-10-10'),
+                                          as.Date('2017-05-19'), as.Date('2017-08-07'), as.Date('2017-10-10'),
                                           as.Date('2017-11-27'), as.Date('2017-12-29'), # 2017 series
                                           
                                           as.Date('2018-01-14'), as.Date('2018-02-15'), as.Date('2018-03-03'), as.Date('2018-03-19'),
