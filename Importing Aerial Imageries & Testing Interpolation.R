@@ -38,7 +38,7 @@ L7SR_image_collection_visualisation <- function(index){
   return(mask_image)
 }
 
-L7 <- lapply(1:length(L7SR_image_collection), L7SR_image_collection_visualisation) # plot imageries
+L7_with_plot <- lapply(1:length(L7SR_image_collection), L7SR_image_collection_visualisation) # plot imageries
 
 # LANDSAT 8 ---------------------------------------------------------------
 # Read in Landsat 8 files names in the R environment
@@ -61,7 +61,7 @@ L8SR_image_collection_visualisation <- function(index){
   return(mask_image)
 }
 
-L8 <- lapply(1:length(L8SR_image_collection), L8SR_image_collection_visualisation) # plot imageries
+L8_with_plot  <- lapply(1:length(L8SR_image_collection), L8SR_image_collection_visualisation) # plot imageries
 
 # LANDSAT 9 ---------------------------------------------------------------
 # Read in Landsat 9 files names in the R environment
@@ -84,7 +84,7 @@ L9SR_image_collection_visualisation <- function(index){
   return(mask_image)
 }
 
-L9 <- lapply(1:length(L9SR_image_collection), L9SR_image_collection_visualisation) # plot imageries
+L9_with_plot  <- lapply(1:length(L9SR_image_collection), L9SR_image_collection_visualisation) # plot imageries
 
 # SENTINEL 2 TOA ----------------------------------------------------------
 # Read in Sentinel 2 TOA files names in the R environment
@@ -106,7 +106,7 @@ S2TOA_image_collection_visualisation <- function(index){
   plot(roi_trans, col = 'transparent', border = 'red', lwd = 2, add = T)
   return(mask_image)
 }
-S2TOA <- lapply(1:length(S2TOA_image_collection), S2TOA_image_collection_visualisation) # plot imageries
+S2TOA_with_plot  <- lapply(1:length(S2TOA_image_collection), S2TOA_image_collection_visualisation) # plot imageries
 
 # SENTINEL 2 SR -----------------------------------------------------------
 # Read in Sentinel 2 SR files names in the R environment
@@ -128,7 +128,7 @@ S2SR_image_collection_visualisation <- function(index){
   plot(roi_trans, col = 'transparent', border = 'red', lwd = 2, add = T)
   return(mask_image)
 }
-S2SR <- lapply(1:length(S2SR_image_collection), S2SR_image_collection_visualisation) # plot imageries
+S2SR_with_plot <- lapply(1:length(S2SR_image_collection), S2SR_image_collection_visualisation) # plot imageries
 
 # INTERPOLATION METHODS AND STRATEGIES ------------------------------------
 
