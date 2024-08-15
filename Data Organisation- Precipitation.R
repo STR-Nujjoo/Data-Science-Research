@@ -125,7 +125,6 @@ precipitation_EDA_df <- data.frame(mean_total_prec = c(mean(unlist(na.omit(as.da
 plot(precipitation_EDA_df$mean_total_prec, type = 'b', col = 'steelblue')
 
 
-
 format(as.Date(paste0(precipitation_EDA_df$date, "-01"), format = "%Y-%m-%d"), "%Y-%m")
 str_extract(total_precipitation_filenames_2014_2021[1], "\\d{4}-\\d{2}")
 
