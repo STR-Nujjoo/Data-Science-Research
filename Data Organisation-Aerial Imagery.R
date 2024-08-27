@@ -435,6 +435,35 @@ df_long_withoutNAs <- df %>%
   pivot_longer(cols = -year, names_to = 'month', values_to = "Imageries") %>%
   filter(!is.na(Imageries))
 
+
+# Extract all collected imagery in a list (prior to interpolation)
+all_aerial_imagery_before_interpolation <- df_long_withoutNAs$Imageries |> unlist()
+# Visualisation
+plotRGB(all_aerial_imagery_before_interpolation[[1]], r=3 , g=2 , b=1, 
+        stretch = 'lin', 
+        margin = T,
+        main = as.Date(all_aerial_imagery_before_interpolation[[1]]@file@name, format = "%Y%m%d"))
+
+# Save object
+# save(all_aerial_imagery_before_interpolation, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Unprocessed Variables/Aerial Imagery 2002-2023 (without interpolation)/all_aerial_imagery_before_interpolation.Rdata')
+
+# Save rasters in one folder on local machine or hard drive
+{
+  Save_aerial_imagery_raster <- function(index, path){
+    
+    file_path <- paste0(path, all_aerial_imagery_before_interpolation[[index]]@file@name)
+    
+    return(writeRaster(all_aerial_imagery_before_interpolation[[index]], 
+                       filename = file_path, format = "GTiff", overwrite = TRUE))
+  }
+  
+  # # Bulk Save!!!!
+  # pblapply(seq_along(all_aerial_imagery_before_interpolation),
+  #          function(x) {Save_aerial_imagery_raster(index = x, path = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Unprocessed Variables/Aerial Imagery 2002-2023 (without interpolation)/')})
+
+}
+
+
 # head(as.data.frame(pivot_wider(df_long, names_from = 'month', values_from = Imageries), row.names = year))
 
 # Extract the dates in the same order as acquired
@@ -447,30 +476,10 @@ for(i in 1:length(unlist(df_long_withoutNAs$Imageries))){
 days_between_imagery_obs <- diff(as.Date(dates_extraction, format="%Y%m%d"))
 
 # Average space between set of pairs of observation
-ave_days_between_imagery_obs <- floor(mean(days_between_imagery_obs)) # ~approximately
-
+ave_days_between_imagery_obs <- ceiling(mean(days_between_imagery_obs)) # ~approximately
 quantile(days_between_imagery_obs)
-(which(days_between_imagery_obs > 32 & days_between_imagery_obs <= 48 ))
-
-days_between_imagery_obs[which(days_between_imagery_obs > 32 & days_between_imagery_obs <= 48)]
 
 # HEURISTIC FOR HORIZONTAL INTERPOLATION ----------------------------------
-df_long_withNAs <- df %>%
-  mutate(year = year) %>%
-  pivot_longer(cols = -year, names_to = 'month', values_to = "Imageries")
-
-# Function to find midpoint of 2 dates
-find_midpoint_date <- function(date1, date2) {
-  # Ensure the input dates are in Date format
-  date1 <- as.Date(date1, format="%Y%m%d")
-  date2 <- as.Date(date2, format="%Y%m%d")
-  
-  # Calculate the midpoint
-  midpoint <- date1 + (difftime(date2, date1) / 2)
-  
-  return(midpoint)
-}
-
 
 trimmed_df <- df[1:4,]
 {
@@ -655,6 +664,19 @@ trimmed_df <- df[1:4,]
 } # partially failed!
 
 # Manual approach for interpolation ---------------------------------------
+
+# Function to find midpoint of 2 dates
+find_midpoint_date <- function(date1, date2) {
+  # Ensure the input dates are in Date format
+  date1 <- as.Date(date1, format="%Y%m%d")
+  date2 <- as.Date(date2, format="%Y%m%d")
+  
+  # Calculate the midpoint
+  midpoint <- date1 + (difftime(date2, date1) / 2)
+  
+  return(midpoint)
+}
+
 # Truncated dataframe excluding Landsat 7 imagery
 df_2014_2022 <- df[13:22,]
 
@@ -741,14 +763,14 @@ df_2014_2022[4,9][[1]] <- HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION(prev_ras
                                                                         plot = T)
 
 # 2018 vertical interpolation
-# 2nd degree
+# 3rd degree
 df_2014_2022[5,6][[1]] <- HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION(prev_raster = df_2014_2022[4,6][[1]], # 20170612 interpolated date
                                                                         following_raster = df[18,6][[1]], # 20190615
                                                                         plot = T)
 
 
 # 2018 horizontal interpolation
-# 2nd degree
+# 4th degree
 df_2014_2022[5,5][[1]] <- HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION(prev_raster = df[17,4][[1]], # 20180404
                                                                         following_raster = df_2014_2022[5,6][[1]], # 20180613 interpolated date
                                                                         plot = T)
@@ -770,13 +792,34 @@ df_2014_2022[10,6][[1]] <- HORIZONTAL_OR_VERTICAL_INTERPOLATION_FUNCTION(prev_ra
                                                                          following_raster = df[22,7][[1]], # 20230724
                                                                          plot = T)
 
-
 # Extract imageries and put them in column format for further analyses
 year_2014_2022 <- year[13:22]
 
 df_2014_2022_long <- df_2014_2022 %>%
   mutate(year = year_2014_2022) %>%
   pivot_longer(cols = -year, names_to = 'month', values_to = "Imageries")
+
+trimmed_df_aerial_imagery_after_interpolation <- df_2014_2022_long$Imageries |> unlist()
+
+# # Save object
+# save(trimmed_df_aerial_imagery_after_interpolation, 
+#      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Unprocessed Variables/Aerial Imagery 2014-2023 (with interpolation)/trimmed_df_aerial_imagery_after_interpolation.Rdata')
+
+# Save rasters in one folder on local machine or hard drive
+{
+  Save_aerial_imagery_raster <- function(index, path){
+    
+    file_path <- paste0(path, trimmed_df_aerial_imagery_after_interpolation[[index]]@file@name)
+    
+    return(writeRaster(trimmed_df_aerial_imagery_after_interpolation[[index]], 
+                       filename = file_path, format = "GTiff", overwrite = TRUE))
+  }
+#   # Bulk save
+#   pblapply(seq_along(trimmed_df_aerial_imagery_after_interpolation), 
+#            function(x) {Save_aerial_imagery_raster(index = x,
+#                                                    path = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Unprocessed Variables/Aerial Imagery 2014-2023 (with interpolation)/')})
+#   
+}
 
 # Extract the dates in the same order as acquired
 dates_extraction_2014_2022 <- NULL
@@ -785,11 +828,108 @@ for(i in 1:length(unlist(df_2014_2022_long$Imageries))){
 }
 
 # Space between set of pairs of observation
-days_between_imagery_obs_2014_2022 <- diff(as.Date(dates_extraction_2014_2022, format="%Y%m%d"))
+days_between_imagery_obs_2014_2022 <- diff(as.Date(dates_extraction_2014_2022, format="%Y%m%d")) 
 
 # Average space between set of pairs of observation
 ave_days_between_imagery_obs_2014_2022 <- ceiling(mean(days_between_imagery_obs_2014_2022)) # ~approximately
-quantile(days_between_imagery_obs_2014_2022)
+quantile(days_between_imagery_obs_2014_2022) 
+
+# EDA for Collected Aerial Imagery ----------------------------------------
+
+{ ##############################################################################
+  # Create a color ramp function
+  #color_ramp <- colorRampPalette(c("lightcyan", "blue", "black"))
+  ave_days <- as.numeric(ave_days_between_imagery_obs) # average of the days differences between imagery collected
+  # par(mar = c(5.1, 4.1, 4.1, 2.1)) # default margin
+  # par(mar = c(bottom, left, top, right))
+  par(mar = c(4.0, 3, 0.3, 0.1)) # customised margin
+  h <- days_between_imagery_obs |>
+    as.numeric() |> # convert object to numeric
+    hist(xlab = '', # x-axis label
+         ylab = '', # y-axis label
+         main = '', # main title
+         #main = 'Range of Days between Consecutive\n Pairs of Observation (2002-2023)',
+         xaxt = 'n', # remove x-axis ticks and values
+         # cex.main = .9, # adjust font size of main title
+         cex.axis = .6, # adjust font size of axis label
+         # cex.sub = .8, # adjust font size of sub label
+        # col = color_ramp(max(h$counts))[h$counts],
+        col = 'bisque') # apply colour ramp on histogram
+  axis(side = 1, at = h$breaks, cex.axis = .6) # re-adjust the x-axis ticks and values
+  text(h$mids,
+       h$counts,
+       labels=h$counts, 
+       adj=c(0.5, -0.5),
+       cex = .6) # label each bin with their respective frequency
+  title(ylab="Frequency", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+  title(xlab = "Range of Days", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+  title(sub = "(prior to interpolation)", line= 2.8, cex.sub = .8) # make x-axis sub label closer to the x-axis
+  abline(v = ave_days,
+         lty = 2,
+         col = 'red') # add dotted line to represent mean value
+  text(x = ave_days + 5, 
+       y = 45, 
+       srt = 270,
+       label = substitute(paste(phantom() %~~% phantom(), ave_days, " days"), 
+                          list(ave_days = ave_days)),
+       col = 'red',
+       cex = .7) # position the mean value text
+  # PLOT SAVE AT 4.15 X 4.09 inches
+} ##############################################################################
+
+dev.off() # reset plotting environment
+  
+{ ##############################################################################
+  # Create a color ramp function
+  #color_ramp <- colorRampPalette(c("lightcyan", "blue", "black"))
+  ave_days <- as.numeric(ave_days_between_imagery_obs_2014_2022) # average of the days differences between imagery collected
+  # par(mar = c(5.1, 4.1, 4.1, 2.1)) # default margin
+  # par(mar = c(bottom, left, top, right))
+  par(mar = c(4.0, 3, 0.3, 0.1)) # customised margin
+  h1 <- days_between_imagery_obs_2014_2022 |> 
+    as.numeric() |> 
+    hist(xlab = '',
+         ylab = '',
+         main = '',
+         # main = 'Range of Days between Consecutive\n Pairs of Observation (2014-2023)',
+         xaxt = 'n',
+         #cex.main = .9,
+         cex.axis = .6,
+         #cex.sub = .8,
+         # col = color_ramp(max(h1$counts))[h1$counts],
+         col = 'bisque') # apply colour ramp on histogram
+  axis(side = 1, at = h1$breaks, cex.axis = .6) # re-adjust the x-axis ticks and values
+  text(h1$mids,
+       h1$counts,
+       labels=h1$counts, 
+       adj=c(0.5, -0.5),
+       cex = .6) # label each bin with their respective frequency
+  title(ylab="Frequency", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+  title(xlab = "Range of Days", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+  title(sub = "(post-interpolation)", line= 2.8, cex.sub = .8) # make x-axis sub label closer to the x-axis
+  abline(v = ave_days,
+         lty = 2,
+         col = 'red') # add dotted line to represent mean value
+  text(x = ave_days - 1.2, 
+       y = 25, 
+       srt = 90,
+       label = substitute(paste(phantom() %~~% phantom(), ave_days, " days"), 
+                          list(ave_days = ave_days)),
+       col = 'red',
+       cex = .7) # position the mean value text
+  
+  # PLOT SAVE AT 4.15 X 4.09 inches
+} ##############################################################################
+
+
+
+
+
+
+
+
+
+
 
 
 
