@@ -10,6 +10,7 @@
   library(gstat)
   library(colorRamps)
   library(pbapply)
+  library(ggspatial)
 }
 
 # Creating color ramp for precipitation plot
@@ -54,9 +55,8 @@ CHIRPS_raster_to_point_prec <- function(index, plot = T){
 
 precipitation_raster_to_point_list <- pblapply(seq_along(precipitation_filenames_2014_2023), CHIRPS_raster_to_point_prec)
 
-# Individual Visualisation example- simply run function againn with appropriate index
+# Individual Visualisation example- simply run function again with appropriate index
 CHIRPS_raster_to_point_prec(index = 120)
-
 
 # IDW ---------------------------------------------------------------------
 
@@ -81,7 +81,7 @@ gridded(IDW_precipitation_grid) <- T # cast grid from SpatialPoints object into 
 # IDW functions
 
 PRECIPITATION_IDW <-function(index, beta_vector){
-  IDW_CHIRPS_optimal_beta <- function(index = index, beta){
+  IDW_CHIRPS_optimal_beta <- function(index, beta){
     rast_data <- precipitation_raster_to_point_list[[index]]
     beta <- beta
     g <- gstat::gstat(formula = precipitation ~ 1, # interpolate based on total precipitation
@@ -96,19 +96,21 @@ PRECIPITATION_IDW <-function(index, beta_vector){
   } 
   
   beta_vector <- beta_vector 
-  IDW_CHIRPS_optimal_beta_list <- pblapply(beta_vector, function(x){IDW_CHIRPS_optimal_beta(index, beta = x)})
+  # iterate IDW model over different betas
+  IDW_CHIRPS_optimal_beta_list <- pblapply(beta_vector, function(x){IDW_CHIRPS_optimal_beta(index = index, beta = x)})
   result <- do.call(rbind, IDW_CHIRPS_optimal_beta_list) |> as.data.frame()
   
-  IDW_CHIRPS_prec <- function(index = index, plot = T){
+  IDW_CHIRPS_prec <- function(index, plot = T){
     # IDW model
     rast_data <- precipitation_raster_to_point_list[[index]]
-    opt_beta <- result$beta[which.min(result$SSR)]
+    opt_beta <- result$beta[which.min(result$SSR)] # save optimal beta with lowest sum of square of the residuals
+    # run optimal model with optimal number of folds and optimal beta
     IDW_precipitation <- gstat::gstat(formula = precipitation ~ 1, # interpolate based on total precipitation
                                       data = rast_data, 
                                       nmax = length(rast_data), 
                                       set = list(idp = opt_beta))
     
-    IDW_precipitation_pred <- predict(IDW_precipitation, IDW_precipitation_grid) # IDW interpolation using IDW model
+    IDW_precipitation_pred <- predict(IDW_precipitation, IDW_precipitation_grid) # IDW interpolation using optimal IDW model
     
     IDW_precipitation_raster <- raster(IDW_precipitation_pred) # convert IDW data into raster
     IDW_precipitation_raster_TMNR <- crop(IDW_precipitation_raster, roi_trans) # crop data to study area extent
@@ -125,64 +127,296 @@ PRECIPITATION_IDW <-function(index, beta_vector){
     return(IDW_precipitation_raster_TMNR)
   }
   
-  precipitation_IDW_list <- pblapply(1:index, IDW_CHIRPS_prec)
+  precipitation_IDW_list <- IDW_CHIRPS_prec(index = index)
   
   return(precipitation_IDW_list)
 }
 
+# Execute function to compute IDW precipitation rasters over the collection of data
 IDW_precipitation_rasters <- pblapply(1:length(precipitation_filenames_2014_2023), 
                                       function(x) {PRECIPITATION_IDW(index = x, beta_vector = 2:5)})
 
+# Save rasters in one folder on local machine or hard drive
+{
+  Save_IDW_precipitation_raster <- function(index, path){
+    
+    file_path <- paste0(path, gsub("\\.", " ", 'Prec.' |> paste0(names(IDW_precipitation_rasters[[index]]))))
+    
+    return(writeRaster(IDW_precipitation_rasters[[index]], 
+                       filename = file_path, format = "GTiff", overwrite = TRUE))
+  }
+    # # Bulk save
+    # pblapply(seq_along(IDW_precipitation_rasters),
+    #          function(x) {Save_IDW_precipitation_raster(index = x, 
+    #                                                     path = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Precipitation/')})
 
-##############################################################################################################
+}
 
-# #CHECK#
-# IDW_CHIRPS_optimal_beta <- function(index, beta){
-#   rast_data <- precipitation_raster_to_point_list[[index]]
-#   beta <- beta
-#   g <- gstat::gstat(formula = precipitation ~ 1, # interpolate based on total precipitation
-#                     data = rast_data, 
-#                     nmax = length(rast_data), 
-#                     set = list(idp = beta))
-#   set.seed(1)
-#   cv_list <- pblapply(seq(2,10, by = 1), function(x) {gstat.cv(g, nfold = x)}) # generate CV using different folds
-#   SSR <- sapply(1:length(cv_list), function (x) {sum((cv_list[[x]]@data$residual)^2)}) # calculate sum of square of the residuals for each nfold
-#   
-#   return(cbind(nfold = seq(2,10, by = 1), beta, SSR))
-# } 
-# 
-# beta_vector <- 2:5 
-# IDW_CHIRPS_optimal_beta_list <- pblapply(beta_vector, function(x){IDW_CHIRPS_optimal_beta(index = 120, beta = x)})
-# result <- do.call(rbind, IDW_CHIRPS_optimal_beta_list) |> as.data.frame()
-# 
-# IDW_CHIRPS_prec <- function(index, plot = T){
-#   # IDW model
-#   rast_data <- precipitation_raster_to_point_list[[index]]
-#   opt_beta <- result$beta[which.min(result$SSR)]
-#   IDW_precipitation <- gstat::gstat(formula = precipitation ~ 1, # interpolate based on total precipitation
-#                                     data = rast_data, 
-#                                     nmax = length(rast_data), 
-#                                     set = list(idp = opt_beta))
-#   
-#   IDW_precipitation_pred <- predict(IDW_precipitation, IDW_precipitation_grid) # IDW interpolation using IDW model
-#   
-#   IDW_precipitation_raster <- raster(IDW_precipitation_pred) # convert IDW data into raster
-#   IDW_precipitation_raster_TMNR <- crop(IDW_precipitation_raster, roi_trans) # crop data to study area extent
-#   IDW_precipitation_raster_TMNR <- mask(IDW_precipitation_raster_TMNR, roi_trans) # mask data to study area extent
-#   names(IDW_precipitation_raster_TMNR) <- paste("IDW", str_extract(precipitation_filenames_2014_2023[index], "\\d{4}.\\d{2}")) # rename IDW output
-#   
-#   if(plot == T){
-#     plot(IDW_precipitation_raster_TMNR,
-#          col = blue_ramp(5),
-#          main = paste(str_extract(precipitation_filenames_2014_2023[index], "\\d{4}.\\d{2}"), 
-#                       "IDW Precipitation (mm)"))
-#   }
-#   
-#   return(IDW_precipitation_raster_TMNR)
-# }
-# 
-# 
-# IDW_CHIRPS_prec(index = 120)
-# 
-# 
-# 
+# Visualise Precipitation rasters 30m x 30m spatial resolution
+plot(projectRaster(IDW_precipitation_rasters[[1]], crs = "+proj=longlat +datum=WGS84 +no_defs"), 
+     col = blue_ramp(5),
+     main = str_extract(precipitation_filenames_2014_2023[1], "\\d{4}.\\d{2}") |>
+       paste0('-01') |>
+       as.Date(format = "%Y.%m-%d") |>
+       format('%Y-%m') |>
+       paste('IDW'),
+     legend = T,
+     xlab = 'Latitude',
+     ylab = 'Longitude')
+
+# legend('bottom', 
+#        legend = round(seq(min(values(IDW_precipitation_rasters[[120]]), na.rm = T),
+#                                  max(values(IDW_precipitation_rasters[[120]]), na.rm = T), length.out = 5), 1),
+#        fill = blue_ramp(5),
+#        horiz = T,
+#        cex = .7,
+#        title = 'Precipitation (mm)')
+
+
+# Try plot using ggplot
+tit <- str_extract(precipitation_filenames_2014_2023[1], "\\d{4}.\\d{2}") |>
+  paste0('-01') |>
+  as.Date(format = "%Y.%m-%d") |>
+  format('%Y-%m') |>
+  paste('IDW')
+
+ggplot() +
+  layer_spatial(projectRaster(IDW_precipitation_rasters[[1]], crs = "+proj=longlat +datum=WGS84 +no_defs")) +
+  scale_fill_gradientn(colours = blue_ramp(5), na.value = NA) +
+  labs(title = tit, fill = "Precipitation (mm)") +
+  xlab('Latitude') +
+  ylab('Longitude') +
+  theme_classic() +
+  theme(legend.position = "top")
+
+
+# EDA for precipitation data ----------------------------------------------
+
+# TEMPORAL ANALYSIS
+# Calculate the median value of precipitation per raster
+median_precipitation_values <- pbsapply(seq_along(precipitation_filenames_2014_2023), function(index){
+  values(IDW_precipitation_rasters[[index]]) |>
+    na.omit() |>
+    median()
+})
+
+# Add the median values to a dataframe
+prec_EDA_df <- data.frame(date = seq(as.Date("2014-01-01"), as.Date("2023-12-01"), by = "month"),
+           median_prec = median_precipitation_values) 
+
+
+prec_EDA_df$year <- year(prec_EDA_df$date) # extract year from date and create a year column
+
+# Find the maximum median precipitation value for each year
+max_median_prec_df <- prec_EDA_df %>%
+  group_by(year) %>%
+  summarise(median_prec = max(median_prec)) %>%
+  select(median_prec) %>%
+  left_join(prec_EDA_df) %>%
+  select(-year) %>%
+  rename(max_median_prec = median_prec)
+
+# Find the minimum median precipitation value for each year
+min_median_prec_df <- prec_EDA_df %>%
+  group_by(year) %>%
+  summarise(median_prec = min(median_prec)) %>%
+  select(median_prec) %>%
+  left_join(prec_EDA_df) %>%
+  select(-year) %>%
+  rename(min_median_prec = median_prec)
+
+# Plot median value for precipitation
+median_precipitation_plot <- ggplot(prec_EDA_df, aes(x = date, y = median_prec, color = median_prec)) +
+  geom_line(linewidth = .8) +
+  geom_point(data = max_median_prec_df, aes(x = date, y = max_median_prec), color = 'deeppink', size = 1) +
+  geom_text(data = max_median_prec_df, aes(x = date, y = max_median_prec, label = format(date, '%Y-%m')), 
+                        vjust = -1, color = "deeppink", size = 2.1) +  # Label the max points)
+  geom_point(data = min_median_prec_df, aes(x = date, y = min_median_prec), color = 'salmon', size = 1) +
+  geom_text(data = min_median_prec_df, aes(x = date, y = min_median_prec, label = format(date, '%Y-%m')), 
+            vjust = 1.5, color = 'salmon', size = 2) +  # Label the max points)
+  geom_smooth(method = loess, se = F, color = 'black', linewidth = .3, linetype = 'dashed') +
+  scale_color_gradient(low = "lightskyblue", high = 'darkblue', guide = 'none', name = 'Median Precipitation (mm)') +
+  ylab('Median Precipitation (mm)') +
+  xlab('Period') +
+  theme_light() +
+  theme(legend.position = 'bottom',
+        legend.title= element_text(size = 9),
+        legend.text = element_text(size = 7))
+
+median_precipitation_plot
+
+# Save above plot
+ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/EDA plots/median_precipitation_plot.pdf", 
+       plot = median_precipitation_plot, width = 6.56, height = 3.5)
+
+# SPATIAL ANALYSIS
+{
+  stats <- mean # stats to be calculated from precipitation data
+  
+  # 2014
+  prec_stack_2014 <- stack(lapply(1:12, function(x) {IDW_precipitation_rasters[[x]]})) # stack the 2014 precipitation raster series
+  median_prec_raster_2014 <- calc(prec_stack_2014, fun = stats) # calculate median or mean value of the stack
+  median_prec_raster_2014@file@name <- '2014 Series' # rename raster
+  
+  # 2015
+  prec_stack_2015 <- stack(lapply(13:24, function(x) {IDW_precipitation_rasters[[x]]})) # stack the 2015 precipitation raster series
+  median_prec_raster_2015 <- calc(prec_stack_2015, fun = stats) # calculate median or mean value of the stack
+  median_prec_raster_2015@file@name <- '2015 Series' # rename raster
+  
+  # 2016
+  prec_stack_2016 <- stack(lapply(25:36, function(x) {IDW_precipitation_rasters[[x]]})) # stack the 2016 precipitation raster series
+  median_prec_raster_2016 <- calc(prec_stack_2016, fun = stats) # calculate median or mean value of the stack
+  median_prec_raster_2016@file@name <- '2016 Series' # rename raster
+  
+  # 2017
+  prec_stack_2017 <- stack(lapply(37:48, function(x) {IDW_precipitation_rasters[[x]]})) # stack the 2017 precipitation raster series
+  median_prec_raster_2017 <- calc(prec_stack_2017, fun = stats) # calculate median or mean value of the stack
+  median_prec_raster_2017@file@name <- '2017 Series' # rename raster
+  
+  # 2018
+  prec_stack_2018 <- stack(lapply(49:60, function(x) {IDW_precipitation_rasters[[x]]})) # stack the 2018 precipitation raster series
+  median_prec_raster_2018 <- calc(prec_stack_2018, fun = stats) # calculate median or mean value of the stack
+  median_prec_raster_2018@file@name <- '2018 Series' # rename raster
+  
+  # 2019
+  prec_stack_2019 <- stack(lapply(61:72, function(x) {IDW_precipitation_rasters[[x]]})) # stack the 2019 precipitation raster series
+  median_prec_raster_2019 <- calc(prec_stack_2019, fun = stats) # calculate median or mean value of the stack
+  median_prec_raster_2019@file@name <- '2019 Series' # rename raster
+  
+  # 2020
+  prec_stack_2020 <- stack(lapply(73:84, function(x) {IDW_precipitation_rasters[[x]]})) # stack the 2020 precipitation raster series
+  median_prec_raster_2020 <- calc(prec_stack_2020, fun = stats) # calculate median or mean value of the stack
+  median_prec_raster_2020@file@name <- '2020 Series' # rename raster
+  
+  # 2021
+  prec_stack_2021 <- stack(lapply(85:96, function(x) {IDW_precipitation_rasters[[x]]})) # stack the 2021 precipitation raster series
+  median_prec_raster_2021 <- calc(prec_stack_2021, fun = stats) # calculate median or mean value of the stack
+  median_prec_raster_2021@file@name <- '2021 Series' # rename raster
+  
+  # 2022
+  prec_stack_2022 <- stack(lapply(97:108, function(x) {IDW_precipitation_rasters[[x]]})) # stack the 2022 precipitation raster series
+  median_prec_raster_2022 <- calc(prec_stack_2022, fun = stats) # calculate median or mean value of the stack
+  median_prec_raster_2022@file@name <- '2022 Series' # rename raster
+  
+  # 2023
+  prec_stack_2023 <- stack(lapply(109:120, function(x) {IDW_precipitation_rasters[[x]]})) # stack the 2023 precipitation raster series
+  median_prec_raster_2023 <- calc(prec_stack_2023, fun = stats) # calculate median or mean value of the stack
+  median_prec_raster_2023@file@name <- '2023 Series' # rename raster
+  
+}
+
+{ # plot the median precipitation rasters for each year
+  par(mfrow = c(4,3))
+  plot(projectRaster(median_prec_raster_2014, crs = "+proj=longlat +datum=WGS84 +no_defs"), 
+       col = blue_ramp(5),
+       main = median_prec_raster_2014@file@name,
+       legend = T,
+       xlab = 'Latitude',
+       ylab = 'Longitude')
+  plot(projectRaster(median_prec_raster_2015, crs = "+proj=longlat +datum=WGS84 +no_defs"), 
+       col = blue_ramp(5),
+       main = median_prec_raster_2015@file@name,
+       legend = T,
+       xlab = 'Latitude',
+       ylab = 'Longitude')
+  plot(projectRaster(median_prec_raster_2016, crs = "+proj=longlat +datum=WGS84 +no_defs"), 
+       col = blue_ramp(5),
+       main = median_prec_raster_2016@file@name,
+       legend = T,
+       xlab = 'Latitude',
+       ylab = 'Longitude')
+  plot(projectRaster(median_prec_raster_2017, crs = "+proj=longlat +datum=WGS84 +no_defs"), 
+       col = blue_ramp(5),
+       main = median_prec_raster_2017@file@name,
+       legend = T,
+       xlab = 'Latitude',
+       ylab = 'Longitude')
+  plot(projectRaster(median_prec_raster_2018, crs = "+proj=longlat +datum=WGS84 +no_defs"), 
+       col = blue_ramp(5),
+       main = median_prec_raster_2018@file@name,
+       legend = T,
+       xlab = 'Latitude',
+       ylab = 'Longitude')
+  plot(projectRaster(median_prec_raster_2019, crs = "+proj=longlat +datum=WGS84 +no_defs"), 
+       col = blue_ramp(5),
+       main = median_prec_raster_2019@file@name,
+       legend = T,
+       xlab = 'Latitude',
+       ylab = 'Longitude')
+  plot(projectRaster(median_prec_raster_2020, crs = "+proj=longlat +datum=WGS84 +no_defs"), 
+       col = blue_ramp(5),
+       main = median_prec_raster_2020@file@name,
+       legend = T,
+       xlab = 'Latitude',
+       ylab = 'Longitude')
+  plot(projectRaster(median_prec_raster_2021, crs = "+proj=longlat +datum=WGS84 +no_defs"), 
+       col = blue_ramp(5),
+       main = median_prec_raster_2021@file@name,
+       legend = T,
+       xlab = 'Latitude',
+       ylab = 'Longitude')
+  plot(projectRaster(median_prec_raster_2022, crs = "+proj=longlat +datum=WGS84 +no_defs"), 
+       col = blue_ramp(5),
+       main = median_prec_raster_2022@file@name,
+       legend = T,
+       xlab = 'Latitude',
+       ylab = 'Longitude')
+  plot(projectRaster(median_prec_raster_2023, crs = "+proj=longlat +datum=WGS84 +no_defs"), 
+       col = blue_ramp(5),
+       main = median_prec_raster_2023@file@name,
+       legend = T,
+       xlab = 'Latitude',
+       ylab = 'Longitude')
+  
+}
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
