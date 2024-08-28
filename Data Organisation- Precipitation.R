@@ -56,7 +56,7 @@ CHIRPS_raster_to_point_prec <- function(index, plot = T){
 precipitation_raster_to_point_list <- pblapply(seq_along(precipitation_filenames_2014_2023), CHIRPS_raster_to_point_prec)
 
 # Individual Visualisation example- simply run function again with appropriate index
-CHIRPS_raster_to_point_prec(index = 120)
+CHIRPS_raster_to_point_prec(index = 1)
 
 # IDW ---------------------------------------------------------------------
 
@@ -305,68 +305,162 @@ ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data 
   
 }
 
-{ # plot the median precipitation rasters for each year
-  par(mfrow = c(4,3))
+# plot the median precipitation rasters for each year
+{ 
+  # par(mar = c(bottom, left, top, right))
+  # par(mar = c(8.0, 3, 1.3, 0.1)) # customised margin
+  # par(mfrow = c(3,4)) # layout control
+  par(mar = c(10, 3, 1.3, 0.5)) # customised margin
+  par(mfrow = c(4,3)) # layout control
   plot(projectRaster(median_prec_raster_2014, crs = "+proj=longlat +datum=WGS84 +no_defs"), 
        col = blue_ramp(5),
-       main = median_prec_raster_2014@file@name,
+       xlab = '',
+       ylab = '',
+       cex.main = .9,
+       cex.axis = .6,
        legend = T,
-       xlab = 'Latitude',
-       ylab = 'Longitude')
+       horizontal = T, # make legend horizontal
+       legend.shrink = 1, # stretch or compress legend
+       axis.args = list(cex.axis = .6, mgp = c(3, 0.2, 0)), # adjust legend lable size and position to ticks
+       legend.args = list(text = "Median Precipitation (mm)", side = 3, cex = 0.5)) # add legend title and adjust size
+  title(main=median_prec_raster_2014@file@name, line=.5, cex.main=.8) # make main title label closer to the top of the plot
+  title(ylab="Longitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+  title(xlab = "Latitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+  
   plot(projectRaster(median_prec_raster_2015, crs = "+proj=longlat +datum=WGS84 +no_defs"), 
        col = blue_ramp(5),
-       main = median_prec_raster_2015@file@name,
+       xlab = '',
+       ylab = '',
+       cex.main = .9,
+       cex.axis = .6,
        legend = T,
-       xlab = 'Latitude',
-       ylab = 'Longitude')
+       horizontal = T, # make legend horizontal
+       legend.shrink = 1, # stretch or compress legend
+       axis.args = list(cex.axis = .6, mgp = c(3, 0.2, 0)), # adjust legend lable size and position to ticks
+       legend.args = list(text = "Median Precipitation (mm)", side = 3, cex = 0.5)) # add legend title and adjust size
+  title(main=median_prec_raster_2015@file@name, line=.5, cex.main=.8) # make main title label closer to the top of the plot
+  title(ylab="Longitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+  title(xlab = "Latitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+  
   plot(projectRaster(median_prec_raster_2016, crs = "+proj=longlat +datum=WGS84 +no_defs"), 
        col = blue_ramp(5),
-       main = median_prec_raster_2016@file@name,
+       xlab = '',
+       ylab = '',
+       cex.main = .9,
+       cex.axis = .6,
        legend = T,
-       xlab = 'Latitude',
-       ylab = 'Longitude')
+       horizontal = T, # make legend horizontal
+       legend.shrink = 1, # stretch or compress legend
+       axis.args = list(cex.axis = .6, mgp = c(3, 0.2, 0)), # adjust legend lable size and position to ticks
+       legend.args = list(text = "Median Precipitation (mm)", side = 3, cex = 0.5)) # add legend title and adjust size
+  title(main=median_prec_raster_2016@file@name, line=.5, cex.main=.8) # make main title label closer to the top of the plot
+  title(ylab="Longitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+  title(xlab = "Latitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+  
   plot(projectRaster(median_prec_raster_2017, crs = "+proj=longlat +datum=WGS84 +no_defs"), 
        col = blue_ramp(5),
-       main = median_prec_raster_2017@file@name,
+       xlab = '',
+       ylab = '',
+       cex.main = .9,
+       cex.axis = .6,
        legend = T,
-       xlab = 'Latitude',
-       ylab = 'Longitude')
+       horizontal = T, # make legend horizontal
+       legend.shrink = 1, # stretch or compress legend
+       axis.args = list(cex.axis = .6, mgp = c(3, 0.2, 0)), # adjust legend lable size and position to ticks
+       legend.args = list(text = "Median Precipitation (mm)", side = 3, cex = 0.5)) # add legend title and adjust size
+  title(main=median_prec_raster_2017@file@name, line=.5, cex.main=.8) # make main title label closer to the top of the plot
+  title(ylab="Longitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+  title(xlab = "Latitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+  
   plot(projectRaster(median_prec_raster_2018, crs = "+proj=longlat +datum=WGS84 +no_defs"), 
        col = blue_ramp(5),
-       main = median_prec_raster_2018@file@name,
+       xlab = '',
+       ylab = '',
+       cex.main = .9,
+       cex.axis = .6,
        legend = T,
-       xlab = 'Latitude',
-       ylab = 'Longitude')
+       horizontal = T, # make legend horizontal
+       legend.shrink = 1, # stretch or compress legend
+       axis.args = list(cex.axis = .6, mgp = c(3, 0.2, 0)), # adjust legend lable size and position to ticks
+       legend.args = list(text = "Median Precipitation (mm)", side = 3, cex = 0.5)) # add legend title and adjust size
+  title(main=median_prec_raster_2018@file@name, line=.5, cex.main=.8) # make main title label closer to the top of the plot
+  title(ylab="Longitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+  title(xlab = "Latitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+  
   plot(projectRaster(median_prec_raster_2019, crs = "+proj=longlat +datum=WGS84 +no_defs"), 
        col = blue_ramp(5),
-       main = median_prec_raster_2019@file@name,
+       xlab = '',
+       ylab = '',
+       cex.main = .9,
+       cex.axis = .6,
        legend = T,
-       xlab = 'Latitude',
-       ylab = 'Longitude')
+       horizontal = T, # make legend horizontal
+       legend.shrink = 1, # stretch or compress legend
+       axis.args = list(cex.axis = .6, mgp = c(3, 0.2, 0)), # adjust legend lable size and position to ticks
+       legend.args = list(text = "Median Precipitation (mm)", side = 3, cex = 0.5)) # add legend title and adjust size
+  title(main=median_prec_raster_2019@file@name, line=.5, cex.main=.8) # make main title label closer to the top of the plot
+  title(ylab="Longitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+  title(xlab = "Latitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+  
   plot(projectRaster(median_prec_raster_2020, crs = "+proj=longlat +datum=WGS84 +no_defs"), 
        col = blue_ramp(5),
-       main = median_prec_raster_2020@file@name,
+       xlab = '',
+       ylab = '',
+       cex.main = .9,
+       cex.axis = .6,
        legend = T,
-       xlab = 'Latitude',
-       ylab = 'Longitude')
+       horizontal = T, # make legend horizontal
+       legend.shrink = 1, # stretch or compress legend
+       axis.args = list(cex.axis = .6, mgp = c(3, 0.2, 0)), # adjust legend lable size and position to ticks
+       legend.args = list(text = "Median Precipitation (mm)", side = 3, cex = 0.5)) # add legend title and adjust size
+  title(main=median_prec_raster_2020@file@name, line=.5, cex.main=.8) # make main title label closer to the top of the plot
+  title(ylab="Longitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+  title(xlab = "Latitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+  
   plot(projectRaster(median_prec_raster_2021, crs = "+proj=longlat +datum=WGS84 +no_defs"), 
        col = blue_ramp(5),
-       main = median_prec_raster_2021@file@name,
+       xlab = '',
+       ylab = '',
+       cex.main = .9,
+       cex.axis = .6,
        legend = T,
-       xlab = 'Latitude',
-       ylab = 'Longitude')
+       horizontal = T, # make legend horizontal
+       legend.shrink = 1, # stretch or compress legend
+       axis.args = list(cex.axis = .6, mgp = c(3, 0.2, 0)), # adjust legend lable size and position to ticks
+       legend.args = list(text = "Median Precipitation (mm)", side = 3, cex = 0.5)) # add legend title and adjust size
+  title(main=median_prec_raster_2021@file@name, line=.5, cex.main=.8) # make main title label closer to the top of the plot
+  title(ylab="Longitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+  title(xlab = "Latitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+  
   plot(projectRaster(median_prec_raster_2022, crs = "+proj=longlat +datum=WGS84 +no_defs"), 
        col = blue_ramp(5),
-       main = median_prec_raster_2022@file@name,
+       xlab = '',
+       ylab = '',
+       cex.main = .9,
+       cex.axis = .6,
        legend = T,
-       xlab = 'Latitude',
-       ylab = 'Longitude')
+       horizontal = T, # make legend horizontal
+       legend.shrink = 1, # stretch or compress legend
+       axis.args = list(cex.axis = .6, mgp = c(3, 0.2, 0)), # adjust legend lable size and position to ticks
+       legend.args = list(text = "Median Precipitation (mm)", side = 3, cex = 0.5)) # add legend title and adjust size
+  title(main=median_prec_raster_2022@file@name, line=.5, cex.main=.8) # make main title label closer to the top of the plot
+  title(ylab="Longitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+  title(xlab = "Latitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+  
   plot(projectRaster(median_prec_raster_2023, crs = "+proj=longlat +datum=WGS84 +no_defs"), 
        col = blue_ramp(5),
-       main = median_prec_raster_2023@file@name,
+       xlab = '',
+       ylab = '',
+       cex.main = .9,
+       cex.axis = .6,
        legend = T,
-       xlab = 'Latitude',
-       ylab = 'Longitude')
+       horizontal = T, # make legend horizontal
+       legend.shrink = 1, # stretch or compress legend
+       axis.args = list(cex.axis = .6, mgp = c(3, 0.2, 0)), # adjust legend lable size and position to ticks
+       legend.args = list(text = "Median Precipitation (mm)", side = 3, cex = 0.5)) # add legend title and adjust size
+  title(main=median_prec_raster_2023@file@name, line=.5, cex.main=.8) # make main title label closer to the top of the plot
+  title(ylab="Longitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+  title(xlab = "Latitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
   
 }
 dev.off()
