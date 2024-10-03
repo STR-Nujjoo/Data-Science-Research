@@ -115,38 +115,13 @@ yearly_sanpark_fire_shpfile <- function(data, index, plot = NULL){
 }
 
 # Visualise yearly SANPARKs fire data- Index range from 1 to 21
-yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 1, plot = T)
+yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 2, plot = T)
 
 # Visualisation in one layout
 {
   par(mfrow = c(5,5))
-  yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 1, plot = T) 
-  yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 2, plot = T)
-  yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 3, plot = T)
-  yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 4, plot = T)
-  yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 5, plot = T)
-  yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 6, plot = T)
-  yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 7, plot = T)
-  yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 8, plot = T)
-  yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 9, plot = T)
-  yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 10, plot = T)
-  yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 11, plot = T)
-  yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 12, plot = T)
-  yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 13, plot = T)
-  yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 14, plot = T)
-  yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 15, plot = T)
-  yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 16, plot = T)
-  yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 17, plot = T)
-  yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 18, plot = T)
-  yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 19, plot = T)
-  yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 20, plot = T)
-  yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 21, plot = T)
+  pblapply(seq_along(sanpark_fire_shpfile_list), 
+           function(x){ yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = x, plot = T)})
 }
-
-
-
-
-
-
 
 
