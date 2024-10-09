@@ -33,7 +33,10 @@ CHIRPS_precipitation_raster_extraction <- function(index, plot = NULL){
   large_extent <- extent(18.16773, 18.75474, -34.45613, -33.58649) # defining an extent larger than the study area for spatial interpolation
   precipitation_raster_crop <- crop(precipitation_raster, large_extent) # crop raster to extent
   values(precipitation_raster_crop) <- ifelse(values(precipitation_raster_crop)<1, NA, values(precipitation_raster_crop)) # convert huge negative values (e.g, -9999 to NA)
-  precipitation_raster_proj <- projectRaster(precipitation_raster_crop, crs = crs(roi_trans), res = 30, method = 'ngb') # project raster to EPSG:32734 (WGS 84 / UTM zone 34S)
+  precipitation_raster_proj <- projectRaster(precipitation_raster_crop,
+                                             crs = crs(roi_trans), # project raster to EPSG:32734 (WGS 84 / UTM zone 34S)
+                                             res = 30, # downsample spatial resolution to 30x30m
+                                             method = 'ngb') # nearest neighbour preserves the original values 
   precipitation_raster_cropTMNR <- crop(precipitation_raster_proj, roi_trans)
   precipitation_raster_maskTMNR <- mask(precipitation_raster_cropTMNR, roi_trans)
   
