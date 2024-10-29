@@ -34,9 +34,9 @@ CHIRPS_precipitation_raster_extraction <- function(index, plot = NULL){
   precipitation_raster_crop <- crop(precipitation_raster, large_extent) # crop raster to extent
   values(precipitation_raster_crop) <- ifelse(values(precipitation_raster_crop)<1, NA, values(precipitation_raster_crop)) # convert huge negative values (e.g, -9999 to NA)
   precipitation_raster_proj <- projectRaster(precipitation_raster_crop,
-                                             crs = crs(roi_trans), # project raster to EPSG:32734 (WGS 84 / UTM zone 34S)
+                                             crs = crs(roi_trans), 
                                              res = 30, # downsample spatial resolution to 30x30m
-                                             method = 'ngb') # nearest neighbour preserves the original values 
+                                             method = 'ngb') 
   precipitation_raster_cropTMNR <- crop(precipitation_raster_proj, roi_trans)
   precipitation_raster_maskTMNR <- mask(precipitation_raster_cropTMNR, roi_trans)
   
@@ -216,14 +216,14 @@ CHIRPS_precipitation_raster_list <- pblapply(seq_along(CHIRPS_precipitation_file
 
 # TEMPORAL ANALYSIS
 # Calculate the median value of precipitation per raster
-median_precipitation_values <- pbsapply(seq_along(precipitation_filenames_2014_2023), function(index){
-  values(IDW_precipitation_rasters[[index]]) |>
+median_precipitation_values <- pbsapply(seq_along(CHIRPS_precipitation_filenames_2002_2023), function(index){
+  values(CHIRPS_precipitation_raster_list[[index]]) |>
     na.omit() |>
     median()
 })
 
 # Add the median values to a dataframe
-prec_EDA_df <- data.frame(date = seq(as.Date("2014-01-01"), as.Date("2023-12-01"), by = "month"),
+prec_EDA_df <- data.frame(date = seq(as.Date("2002-01-01"), as.Date("2023-12-01"), by = "month"),
            median_prec = median_precipitation_values) 
 
 
