@@ -77,3 +77,9 @@ save(NDVI_rasters_after_interpolation, file = '/Volumes/Hard Drive (29-08-22)/Da
                                     path = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/NDVI 2014-2023 (with interpolation)/')})
   
 }
+
+# Load variables when necessary
+load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/NDVI 2002-2023 (without interpolation)/NDVI_rasters_before_interpolation.Rdata')
+
+
+
