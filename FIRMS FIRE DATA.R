@@ -30,10 +30,31 @@ firms_fire_shpfile_trans_df <- st_as_sf(firms_fire_shpfile_trans_intersect)
 firms_fire_shpfile_trans_df <- firms_fire_shpfile_trans_df %>%
   mutate(ACQ_YEAR = format(as.Date(ACQ_DATE), '%Y') |> as.factor(),
                                       ACQ_MONTH = format(as.Date(ACQ_DATE), '%m') |> as.factor(),
-                                      ACQ_YEARMONTH = format(as.Date(ACQ_DATE), '%Y/%m')|> as.factor())
+                                      ACQ_YEARMONTH = format(as.Date(ACQ_DATE), '%Y-%m')|> as.factor())
 
 firms_fire_shpfile_trans_df_2002_2023 <- firms_fire_shpfile_trans_df %>%
   filter(!ACQ_YEAR %in% '2024') # excluding year 2024
+
+
+empty_raster <- raster(extent(roi_trans), res = 30) # creating empty raster with 30x30 spatial resolution
+crs(empty_raster) <- crs(roi_trans) # assigning crs to empty raster
+# rasterise point shape file with 1s and 0s
+rasterised_point <- rasterize(as(firms_fire_shpfile_trans_df_2002_2023,'Spatial'), 
+                                empty_raster,
+                                field = 1,
+                                background = 0) |>
+  crop(roi_trans) |>
+  mask(roi_trans) |>
+  ratify() # make raster as a factor
+
+levels(rasterised_point) <- data.frame(ID = c(0, 1), fire_status = c("No Fire", "Fire")) # redefine levels
+
+plot(rasterised_point, col= c('lightgray','red'), main = '2002-2023', legend = F)
+plot(roi_trans, col = 'transparent', border = 'black', lwd = 1,
+     add = T)
+
+
+
 
 
 # VISUALISING FIRMS FIRE DATA FROM 2002-2023 ------------------------------
