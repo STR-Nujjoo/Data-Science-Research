@@ -43,6 +43,7 @@ RH_raster_func <- function(file, index, plot = NULL){
   return(RH_raster_projcropmask_TMNR)
 }
 
+RH_raster_func(RH_filenames, 2, T)
 # Processing relative humidity data extraction
 RH_raster_list <- pblapply(seq_along(RH_filenames), function(x){RH_raster_func(file = RH_filenames, index = x, plot = T)})
 
@@ -68,10 +69,6 @@ RH_raster_list <- pblapply(seq_along(RH_filenames), function(x){RH_raster_func(f
 #   })
 # }
 
-
-
-
-names(RH_raster_list[[1]])
 
 
 
