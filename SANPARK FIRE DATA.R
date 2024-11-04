@@ -63,65 +63,193 @@ sanpark_fire_shpfile_combind_list_fixed <- st_buffer(sanpark_fire_shpfile_combin
 sanpark_fire_shpfile_combind_list_fixed <- as(sanpark_fire_shpfile_combind_list_fixed, 'Spatial') # convert dataframe back to spatial features
 sanpark_fire_shpfile_combind_list_trans <- spTransform(sanpark_fire_shpfile_combind_list_fixed, CRS(proj4string(roi_trans))) # convert coordinate system to EPSG:32734 (WGS 84 / UTM zone 34S)
 sanpark_fire_shpfile_combind_list_trans_intersect <- intersect(sanpark_fire_shpfile_combind_list_trans, roi_trans) # crop polygon to ROI
+View(st_as_sf(sanpark_fire_shpfile_combind_list_trans_intersect))
+# Cleaning data
+sanpark_fire_shpfile_combind_list_trans_intersect <- st_as_sf(sanpark_fire_shpfile_combind_list_trans_intersect) %>% # convert spatial feature to spatial dataframe
+  mutate(FIRECAUSE = case_when(FIRECAUSE ==  "Accident"~"Accident",
+                               FIRECAUSE ==  "Arson"~"Arson",
+                               FIRECAUSE == "Arson - Vagrants" ~ "Vagrant",
+                               FIRECAUSE == "Lighting Strike" ~ "Lightning Strike",
+                               FIRECAUSE == "Lightning Strike" ~ "Lightning Strike",
+                               FIRECAUSE ==  "Prescribed"~"Prescribed",
+                               FIRECAUSE == "unknown"~"Unknown",
+                               FIRECAUSE == "Unknown"~"Unknown",
+                               FIRECAUSE == "Vagrant"~"Vagrant",
+                               FIRECAUSE ==  "Wildfire"~"Wildfire"),
+         
+         FIRETYPE = case_when(FIRETYPE=="cigarette"~"Cigarette",
+                    FIRETYPE=="Prescribed"~"Prescribed",
+                    FIRETYPE=="unknown"~"Unknown",
+                    FIRETYPE=="Wild Fire"~"Wildfire",
+                    FIRETYPE=="Wildfire"~"Wildfire",
+                    FIRETYPE=="WildFire"~"Wildfire"))  %>%
+  as('Spatial') # convert dataframe to spatial feature again
 
-# Visualisation of hotspots from 2002 to 2022
+# Removing prescribed burning from burnt area
+sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed <- st_as_sf(sanpark_fire_shpfile_combind_list_trans_intersect) %>%
+  filter(FIRECAUSE!="Prescribed") %>%
+  as('Spatial')
+st_as_sf(sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed) |> View()
+# Visualisation of hotspots from 2002 to 2022 (excluding prescribed burning)
 {
-  plot(roi_trans, col = 'transparent', border = 'black', lwd = 1, 
-       main = '2002-2022')
-  plot(sanpark_fire_shpfile_combind_list_trans_intersect, col = alpha('red',.3), border = 'red', add = T)
-  
-}
 
+  plot(veg_type_trans, col = veg_color_map[veg_type_trans$NTNL_VGTN_], border = 'transparent', main = '2002-2022')
+  plot(sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed, col = alpha('red',.2), lwd = .5,border = 'red', add = T)
+  plot(as(firms_fire_shpfile_trans_df_2002_2023, 'Spatial'), pch = 16, cex = .5, col = 'red', add = T)
+  }
+
+# PRESCRIBED BURNING VISUALISATION ----------------------------------------
+
+# filter out prescribed burnt region
+sanpark_fire_shpfile_combind_list_trans_intersect_prescribed <- st_as_sf(sanpark_fire_shpfile_combind_list_trans_intersect) %>%
+  filter(FIRECAUSE=="Prescribed") %>%
+  as('Spatial')
+
+{
+  plot(roi_trans, col = 'transparent', border = 'black', lwd = 1, main = "2012 Prescribed Burning")
+  plot(sanpark_fire_shpfile_combind_list_trans_intersect_prescribed, col = alpha('red',.3), border = 'red', add = T)
+  }
 
 # INDIVIDUAL YEAR FIRE HOTSPOTS VISUALISATION -----------------------------
-yearly_sanpark_fire_shpfile <- function(data, index, plot = NULL){
-  data <- data[[index]]
-  # Check if SANPARK fire data CRS is missing or different, and reproject it
-  if (is.na(proj4string(data))) {
-    # Assign the correct projection
-    proj4string(data) <- '+proj=tmerc +lat_0=0 +lon_0=19 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs' # Lo19 Hartebbesthoek94
-    # Reproject to the same CRS as roi_trans
-    sanpark_fire_shpfile_trans <- spTransform(data, CRS(proj4string(roi_trans)))
-  } else {
-    # Reproject to the same CRS as roi_trans
-    sanpark_fire_shpfile_trans <- spTransform(data, CRS(proj4string(roi_trans)))
-  }
+# Extract unique years of fire from SANParks
+SANPark_fire_year <- c(st_as_sf(sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed)$YEAR %>% unique())
+
+# Create function to plot yearly fire occurrences from SANPark
+yearly_sanpark_fire_plot <- function(data, index){
   
-  # check if geometry is valid
-  sanpark_fire_shpfile_trans_df <- st_as_sf(sanpark_fire_shpfile_trans) # convert spatial data to data frame
-  if(all(st_is_valid(sanpark_fire_shpfile_trans_df))==F){
-    sanpark_fire_shpfile_trans_df_fixed <- st_buffer(sanpark_fire_shpfile_trans_df, dist = 0) # hack to fix geometry
-    sanpark_fire_shpfile_trans_df_fixed <- as(sanpark_fire_shpfile_trans_df_fixed, 'Spatial') # convert back to spatial features
-  } else{
-    sanpark_fire_shpfile_trans_df_fixed <- as(sanpark_fire_shpfile_trans_df, 'Spatial') # convert back to spatial features
-  }
-  
-  sanpark_fire_shpfile_intersect <- intersect(sanpark_fire_shpfile_trans_df_fixed, roi_trans) # crop polygon to ROI
-  
-  if(plot == T){
-    # par(mar = c(5.1, 4.1, 4.1, 2.1)) # default margin
-    # par(mar = c(bottom, left, top, right))
-    par(mar = c(0.1, 0.1, 1.0, 0.1)) # customised margin
-    plot(roi_trans, col = 'transparent', border = 'black', lwd = 1, 
-         main = sanpark_fire_shpfile_intersect@data$YEAR[1])
-    plot(sanpark_fire_shpfile_intersect, col = alpha('red',.3), border = 'red', add = T)
-    
-    # plot(sanpark_fire_shpfile_trans, col = 'red', border = 'red')
-    # plot(roi_trans, col = 'transparent', border = 'black', lwd = 1, add = T)
-  }
-  
-  return(sanpark_fire_shpfile_intersect)
+    plot(roi_trans, col = 'transparent', border='black', lwd=1, main = SANPark_fire_year[index])
+    plot(st_as_sf(data) %>%
+           filter(YEAR==SANPark_fire_year[index]) %>%
+           as('Spatial'), col = alpha('red',.3), border = 'red', add=T)
 
 }
 
 # Visualise yearly SANPARKs fire data- Index range from 1 to 21
-yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = 2, plot = T)
+yearly_sanpark_fire_plot(data = sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed, index = 2)
 
 # Visualisation in one layout
 {
   par(mfrow = c(5,5))
-  pblapply(seq_along(sanpark_fire_shpfile_list), 
-           function(x){ yearly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_list, index = x, plot = T)})
+  par(mar = c(0.1, 0.1, 1.0, 0.1)) # customised margin
+  pblapply(seq_along(SANPark_fire_year), 
+           function(x){yearly_sanpark_fire_plot(data = sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed, index = x)})
 }
+
+# INDIVIDUAL MONTH FIRE HOTSPOTS VISUALISATION ----------------------------
+
+sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed_MONTHLY <- st_as_sf(sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed) |> # convert spatial data back to a spatial data frame
+  mutate(STARTDATE = as.Date(STARTDATE, format = '%Y%m%d'), # reformat date
+         YEARMONTH = format(as.Date(STARTDATE), '%Y-%m') |> as.factor()) %>% # extract year and month
+  arrange(STARTDATE) # rearrange date
+
+# create a list for the unique yearmonth fire
+Sanpark_unique_yearmonth_list <- levels(sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed_MONTHLY$YEARMONTH)
+
+# Remove 2007-01 and 2014-04 from the monthly sanpark fire raster list (polygon too small to detect fire, hence rasterised)
+Sanpark_unique_yearmonth_list <- Sanpark_unique_yearmonth_list[c(-16,-33)]
+
+monthly_sanpark_fire_shpfile <- function(data, index, plot=NULL){
+  data <- data %>%
+    filter(YEARMONTH == Sanpark_unique_yearmonth_list[index]) %>%
+    as('Spatial') # convert df to spatial data
+
+  if(plot==T){
+    par(mar = c(0.1, 0.1, 1.0, 0.1)) # customised margin
+    plot(roi_trans, col = 'transparent', border = 'black', lwd = 1, 
+         main = data$YEARMONTH[1])
+    plot(data, col = alpha('red',.3), border = 'red', add = T)
+  }
+  return(data)
+}
+
+# Visualise monthly SANPARKs fire data- Missing month means that no fire detected
+monthly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed_MONTHLY, 
+                             index = 1, 
+                             plot = T)
+
+monthly_sanpark_fire_shpfile_list <- pblapply(seq_along(Sanpark_unique_yearmonth_list), 
+         function(x){monthly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed_MONTHLY, 
+                                                  index = x, 
+                                                  plot = T)})
+
+
+# RASTERISE SHAPE FILE ----------------------------------------------------
+
+rasterise_polygons <- function(study_area, polygon_shapefile, index, resolution, plot = NULL){
+  empty_raster <- raster(extent(study_area), res = resolution) # creating empty raster with 30x30 spatial resolution
+  crs(empty_raster) <- crs(study_area) # assigning crs to empty raster
+  # rasterise polygon shape file with 1s and 0s
+  rasterised_polygon <- rasterize(polygon_shapefile[[index]], 
+                 empty_raster,
+                 field = 1,
+                 background = 0) |>
+    crop(study_area) |>
+    mask(study_area) |>
+    ratify() # make raster as a factor
+  
+  levels(rasterised_polygon) <- data.frame(ID = c(0, 1), fire_status = c("No Fire", "Fire")) # redefine levels
+  
+  if(plot ==T){
+    plot(rasterised_polygon, col= c('lightgray','red'), main = polygon_shapefile[[index]]@data$YEARMONTH[1], legend = F)
+    plot(study_area, col = 'transparent', border = 'black', lwd = 1,
+         add = T)
+  }
+  return(rasterised_polygon)
+}
+
+rasterise_polygons(study_area = roi_trans,
+                   polygon_shapefile = monthly_sanpark_fire_shpfile_list, 
+                   index = 16, 
+                   resolution = 30, 
+                   plot = T)
+
+monthly_sanpark_fire_raster_list <- pblapply(seq_along(monthly_sanpark_fire_shpfile_list),
+         function(x){rasterise_polygons(study_area = roi_trans,
+                                        polygon_shapefile = monthly_sanpark_fire_shpfile_list, 
+                                        index = x, 
+                                        resolution = 30, 
+                                        plot = T)})
+
+# rename SANparks fire rasters 
+# pblapply(seq_along(Sanpark_unique_yearmonth_list), function(x){names(monthly_sanpark_fire_raster_list[[x]]) <<- paste0("SANparks burnt area ", Sanpark_unique_yearmonth_list[[x]])})
+
+# Check if rasterisation is correct
+{
+  monthly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed_MONTHLY, 
+                               index = 26, 
+                               plot = T)
+  
+  rasterise_polygons(study_area = roi_trans,
+                     polygon_shapefile = monthly_sanpark_fire_shpfile_list, 
+                     index = 26, 
+                     resolution = 30, 
+                     plot = T)
+}
+
+# # Saving results
+# {
+#   # Save object
+#   save(monthly_sanpark_fire_raster_list,
+#        file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/SANparks/monthly_sanpark_fire_raster_list.Rdata')
+# 
+# 
+#   # Save rasters in one folder on local machine or hard drive
+#   Save_SANparks_fire_raster <- function(index, path){
+# 
+#     file_path <- paste0(path, gsub("\\.", " ", names(monthly_sanpark_fire_raster_list[[index]])))
+# 
+#     return(writeRaster(monthly_sanpark_fire_raster_list[[index]],
+#                        filename = file_path, format = "GTiff", overwrite = TRUE))
+#   }
+# 
+#   pblapply(seq_along(monthly_sanpark_fire_raster_list), function(x){
+#     Save_SANparks_fire_raster(index = x, path = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/SANparks/')
+# 
+#   })
+# }
+
+# Calculate area of polygon and convert to hectares
+sanpark_fire_shpfile_combind_list_trans_intersect_prescribed %>% st_as_sf() %>% st_area() / 10000
+
 
 
