@@ -118,6 +118,7 @@ FIRMS_yearly_fire_plots <- function(data, index){
   Spatialdata <- as(data[[index]], 'Spatial') # convert dataframe back to spatial feature
   
   # Plot fire hotspots
+  par(mar = c(0.1, 0.1, 1.0, 0.1)) # customised margin
   plot(roi_trans, col = 'transparent', border = 'black', lwd = 1, 
        main = data[[index]]$ACQ_YEAR[1])
   plot(Spatialdata, pch = 16, cex = .5, col = 'red', add = T)
