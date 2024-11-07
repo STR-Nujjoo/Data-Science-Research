@@ -21,20 +21,12 @@
 all_aerial_imagery_filenames <- list.files('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Unprocessed Variables/Aerial Imagery 2002-2023', pattern = 'tif')
 training_samples_filenames <- list.files('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Training Samples', pattern = '\\.shp$')
 
-RF_supervised_classification <- function(index, plotRawAerialImagery = NULL, plotPCAImagery=NULL, plottrainingsamples=NULL, Screeplot=NULL, plotLULC=NULL){
+RF_supervised_classification <- function(index, plotPCAImagery=NULL, plottrainingsamples=NULL, Screeplot=NULL, plotLULC=NULL){
   index <- index # call for specific raster
   # read rasterBrick
-  aerial_imagery <- brick(paste0('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Unprocessed Variables/Aerial Imagery 2002-2023/', all_aerial_imagery_filenames[index]))
+  aerial_imagery <- rast(paste0('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Unprocessed Variables/Aerial Imagery 2002-2023/', all_aerial_imagery_filenames[index]))
   names(aerial_imagery) <- c('B', 'G', 'R', 'NIR', 'SWIR1', 'SWIR2') # rename layers
-  
-  par(mar = c(0.1, 0.1, 1.0, 0.1)) # customised margin
-  if(plotRawAerialImagery == T){
-    # Visualisation of raw aerial imagery
-    plotRGB(aerial_imagery, r=3 , g=2 , b=1, 
-            stretch = 'lin', 
-            margin = T,
-            main = as.Date(gsub("\\.tif$", "", all_aerial_imagery_filenames[index]), format = "%Y%m%d"))
-  }
+
   
   # IMAGE ENHANCEMENT/REDUCTION THROUGH PCA ---------------------------------
   
@@ -45,7 +37,8 @@ RF_supervised_classification <- function(index, plotRawAerialImagery = NULL, plo
   # summary(pca)
   # cor(aerial_imagery_df[,c(-1,-2)]) %>% mean() # check if pca was valid (all values were close to 0 showing independence- therefore valid)
   if(Screeplot==T){
-    fviz_eig(pca)
+    par(mar = c(0.1, 0.1, 1.0, 0.1)) # customised margin
+    print(fviz_eig(pca))
   }
   
   # convert applied pca dataframe to raster
@@ -76,13 +69,17 @@ RF_supervised_classification <- function(index, plotRawAerialImagery = NULL, plo
   
   # plot PCA enhanced imagery with training samples
   if(plotPCAImagery==T){
+    par(mar = c(0.1, 0.1, 1.0, 0.1)) # customised margin
     # Visualisation of PCA version of aerial imagery
-    plotRGB(aerial_imagery_pca, r=3 , g=2 , b=1, 
-            stretch = 'lin', 
-            margin = T,
-            main = as.Date(gsub("\\.tif$", "", all_aerial_imagery_filenames[index]), format = "%Y%m%d"))
+    print(
+      plotRGB(aerial_imagery_pca, r=3 , g=2 , b=1, 
+              stretch = 'lin', 
+              margin = T,
+              main = as.Date(gsub("\\.tif$", "", all_aerial_imagery_filenames[index]), format = "%Y%m%d"))
+    )
+    
     if(plottrainingsamples==T){
-      plot(training_samples_df, add = T, col = training_samples_df$Classname)
+      print(plot(training_samples_df, add = T, col = training_samples_df$Classname))
     }
     
   }
@@ -133,28 +130,28 @@ RF_supervised_classification <- function(index, plotRawAerialImagery = NULL, plo
   
   if(plotLULC==T){
     # visualise LULC
-    tm_shape(LULCPredictions)+
-      tm_raster(style = "cat", title = "", palette = LULCpal)+ 
-      tm_layout(main.title= paste0(as.Date(gsub("\\.tif$", "", all_aerial_imagery_filenames[index]), format = "%Y%m%d"), ' LULC'),
-                main.title.size =.9,
-                main.title.position = c("center", "top"))+
-      tm_graticules(lines = F)
+    print(
+      tm_shape(LULCPredictions)+
+        tm_raster(style = "cat", title = "", palette = LULCpal)+ 
+        tm_layout(main.title= paste0(as.Date(gsub("\\.tif$", "", all_aerial_imagery_filenames[index]), format = "%Y%m%d"), ' LULC'),
+                  main.title.size =.9,
+                  main.title.position = c("center", "top"))+
+        tm_graticules(lines = F)
+    )
+
   }
   
   return(list(PCA_Summary = summary(pca), # return PCA info.
               random_forest_model = rfModel, # return rfModel
               Test_accuracy = accuracy_assessment$overall[1:2], # return overall and kappa accuracy
-              LULCRaster = LULCPredictions)) # return LULC raster
+              LULCRaster = LULCPredictions, # return LULC raster
+              LULC_nclass = nlevels(training_samples_df$Classname))) # number of classes for the LULC
 } 
 
 x <- RF_supervised_classification(index = 1, 
-                             plotRawAerialImagery = T, 
                              plotPCAImagery=T, 
                              plottrainingsamples=T, 
                              Screeplot=T, 
                              plotLULC=T)
-
-
-
 
 
