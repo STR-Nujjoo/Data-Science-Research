@@ -175,7 +175,7 @@ monthly_sanpark_fire_shpfile_list <- pblapply(seq_along(Sanpark_unique_yearmonth
          function(x){monthly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed_MONTHLY, 
                                                   index = x, 
                                                   plot = T)})
-View(sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed_MONTHLY)
+# View(sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed_MONTHLY)
 
 # RASTERISE SHAPE FILE ----------------------------------------------------
 
