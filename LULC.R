@@ -190,9 +190,22 @@ LULC <- lapply(seq_along(training_samples_filenames), function(x){LULC_raster_li
 #   
 # }
 
+tm_shape(xx)+
+  tm_raster(style = "cat", title = "", palette = c('#883C07', '#CCCCCC', '#00734C', '#D1FF73', '#000000', '#70A800', '#00A9E6'))+ 
+  tm_layout(main.title= paste0(as.Date(gsub("\\.tif$", "", aerial_imagery_filenames[index]), format = "%Y%m%d"), ' LULC'),
+            main.title.size =.9,
+            main.title.position = c("center", "top"),
+            legend.outside = F,
+            legend.text.size = .5)+
+  tm_graticules(lines = F)
 
+which(LULC[[1]]@data@attributes[[1]]$value == 'Cloud Cover')
+x <- classify(rast(LULC[[1]]), rcl = matrix(c(2, NA), ncol = 2, byrow = TRUE))
+xx <- ratify(raster(x)) |> na.omit()
+levels(xx) <- data.frame(ID = levels(xx)[[1]]$ID, value = c(LULC[[1]]@data@attributes[[1]]$value[-2])) # redefine levels
+xx@data@attributes
+values(xx) |>unique()
 # EDA ---------------------------------------------------------------------
-
 # Visualisation of PCA and LULC for my appendix
 aerial_imagery_pca <- projectRaster(aerial_imagery_pca, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb')
 par(mar = c(2, 2, 1.0, 0.1)) # customised margin
@@ -220,6 +233,12 @@ LULCexample <- tm_shape(LULCPredictions)+
 # tmap_save(LULCexample, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/Appendix plots/test.pdf", width = 6.56, height = 3)
 
 
+NDVI_rasters_after_interpolation[[1]]
+NDWI_rasters_after_interpolation[[1]]
+NBR_rasters_after_interpolation[[1]]
+x <- stack(NDVI_rasters_after_interpolation[[1]],
+      NDWI_rasters_after_interpolation[[1]],
+      NBR_rasters_after_interpolation[[1]]) |> rast()
+terra::layerCor(x, "pearson", na.rm = T)
 
-
-
+?layerCor
