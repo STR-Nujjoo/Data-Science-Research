@@ -20,7 +20,7 @@ NBR_colour_ramp <- colorRampPalette(c("brown", "yellow", "green"))(100)
 # Create a function to compute 
 NBR_function <- function(data, index, plot = NULL){
   data_name <- data[[index]]@file@name # extract name from raster
-  data <- clamp(data[[index]], 0, 1) # clamp value from 0 to 1- THIS STEP IS VERY IMPORTANT FOR THE NDVI CALC TO BE CORRECT!!!
+  data <- clamp(data[[index]], 0, 1) # clamp value from 0 to 1- THIS STEP IS VERY IMPORTANT FOR THE VI CALC TO BE CORRECT!!!
   NIR <- data[[4]] # select NIR band
   SWIR2 <- data[[6]] # select SWIR2 band
   
