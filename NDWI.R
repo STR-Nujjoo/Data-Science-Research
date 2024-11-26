@@ -19,11 +19,11 @@ NDWI_colour_ramp <- colorRampPalette(c("brown", "yellow", "green"))(100)
 # Create a function to compute 
 NDWI_function <- function(data, index, plot = NULL){
   data_name <- data[[index]]@file@name # extract name from raster
-  data <- clamp(data[[index]], 0, 1) # clamp value from 0 to 1- THIS STEP IS VERY IMPORTANT FOR THE NDVI CALC TO BE CORRECT!!!
+  data <- clamp(data[[index]], 0, 1) # clamp value from 0 to 1- THIS STEP IS VERY IMPORTANT FOR THE VI CALC TO BE CORRECT!!!
   NIR <- data[[4]] # select NIR band
-  SWIR1 <- data[[5]] # select SWIR1 band
+  G <- data[[2]] # select G band
   
-  NDWI <- (NIR-SWIR1) /(NIR+SWIR1) # NDWI computation
+  NDWI <- (G-NIR) /(G+NIR) # NDWI computation
   NDWI_reproj <- projectRaster(NDWI, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb') # projecting the raster for the sake of axis labels to be shown as lon-lat
   NDWI@file@name <- paste('NDWI:', as.Date(data_name, format = "%Y%m%d")) # rename raster
   
