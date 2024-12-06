@@ -80,4 +80,3 @@ save(NBR_rasters_after_interpolation, file = '/Volumes/Hard Drive (29-08-22)/Dat
   
 }
 
-
