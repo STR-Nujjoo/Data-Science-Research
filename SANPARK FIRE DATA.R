@@ -215,7 +215,7 @@ monthly_sanpark_fire_raster_list <- pblapply(seq_along(monthly_sanpark_fire_shpf
                                         plot = T)})
 
 # rename SANparks fire rasters 
-pblapply(seq_along(Sanpark_unique_yearmonth_list), function(x){names(monthly_sanpark_fire_raster_list[[x]]) <<- paste0("SANparks burnt area ", Sanpark_unique_yearmonth_list[[x]])})
+pblapply(seq_along(Sanpark_unique_yearmonth_list), function(x){names(monthly_sanpark_fire_raster_list[[x]]) <<- paste0("Fire ", Sanpark_unique_yearmonth_list[[x]])})
 
 # Check if rasterisation is correct
 {
@@ -230,12 +230,43 @@ pblapply(seq_along(Sanpark_unique_yearmonth_list), function(x){names(monthly_san
                      plot = T)
 }
 
+# GENERATING NO FIRE RASTER/0 RASTER --------------------------------------
+
+empty_raster <- raster(extent(roi_trans), res = 30) # creating empty raster with 30x30 spatial resolution
+crs(empty_raster) <- crs(roi_trans) # assigning crs to empty raster
+values(empty_raster) <- 0 # Populating the raster with 0
+
+# Create fire raster with levels
+No_fire_raster <- empty_raster |> 
+  crop(roi_trans) |> 
+  mask(roi_trans) |> 
+  ratify()
+
+levels(No_fire_raster) <- data.frame(ID = 0, fire_status = "No Fire") # redefine levels
+
+# Generate date for full envisaged timeframe of study
+full_timeframe <- seq(as.Date('2002-01-01'), as.Date('2023-12-01'), by = 'month')
+
+# Extract dates when fire was detected on a monthly basis
+Fire_dates <-sapply(seq_along(monthly_sanpark_fire_raster_list), function(x) monthly_sanpark_fire_shpfile_list[[x]]$YEARMONTH[1] |>paste0('-01'))
+
+# Exclude the fire dates to find out which dates had NO fire
+No_fire_dates <- full_timeframe[!full_timeframe %in% as.Date(Fire_dates)]
+
+# Replicate no fire rasters to fill in the gaps in the data
+No_fire_RASTERS <- replicate(length(No_fire_dates), No_fire_raster)
+
+# Name NO fire rasters 
+pblapply(seq_along(No_fire_dates), function(x){names(No_fire_RASTERS[[x]]) <<- paste0("Fire ", format(No_fire_dates, "%Y-%m")[x])})
+
 # # Saving results
 # {
 #   # Save object
 #   save(monthly_sanpark_fire_raster_list,
 #        file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/SANparks/monthly_sanpark_fire_raster_list.Rdata')
-# 
+#   save(No_fire_RASTERS,
+#        file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/SANparks/No_fire_RASTERS.Rdata')
+#   
 # 
 #   # Save rasters in one folder on local machine or hard drive
 #   Save_SANparks_fire_raster <- function(index, path){
@@ -250,5 +281,51 @@ pblapply(seq_along(Sanpark_unique_yearmonth_list), function(x){names(monthly_san
 #     Save_SANparks_fire_raster(index = x, path = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/SANparks/')
 # 
 #   })
+#   
+#   # Save rasters in one folder on local machine or hard drive
+#   Save_NO_fire_raster <- function(index, path){
+#     
+#     file_path <- paste0(path, gsub("\\.", " ", names(No_fire_RASTERS[[index]])))
+#     
+#     return(writeRaster(No_fire_RASTERS[[index]],
+#                        filename = file_path, format = "GTiff", overwrite = TRUE))
+#   }
+#   
+#   pblapply(seq_along(No_fire_RASTERS), function(x){
+#     Save_NO_fire_raster(index = x, path = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/SANparks/')
+#     
+#   })
 # }
+
+# reload filenames for fire
+fire_filenames <- list.files('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/SANparks/', pattern = '.tif')
+FIRE_DATA <- pblapply(seq_along(fire_filenames), 
+       function(x){raster(paste0('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/SANparks/',
+                                                          fire_filenames[x]))})
+
+
+
+# plot all the compiled fire data for visual inspection!
+lapply(seq_along(FIRE_DATA), function(x){
+  # Set color based on the condition
+  fire_color_condition <- if (all(values(FIRE_DATA[[x]]) %>% na.omit() == 0)) {
+    "lightgray"
+  } else {
+    c("lightgray", "red")
+  }
+  
+  plot(FIRE_DATA[[x]], 
+       col = fire_color_condition,
+       main = gsub("Fire\\.(\\d{4})\\.(\\d{2})", "\\1-\\2", names(FIRE_DATA[[x]])), 
+       legend = F)
+  plot(roi_trans, col = 'transparent', border = 'black', lwd = 1,
+       add = T)
+})
+
+
+
+
+
+
+
 
