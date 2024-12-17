@@ -596,10 +596,199 @@ weighted_inter_natural_colour_composite_net_RMSE <- (all_summary_weighted_averag
   mtext("Weighted Interpolation", side = 3, cex = .5)
 }
 
+# Replot the above to insert in thesis
+{
+  par(mfrow = c(2, 2))
+  par(mar = c(0.2, 0.1, 1.8, 0.1))
+  plotRGB(mask(l8_20181013_original, roi_trans), r=4 , g=3 , b=2,
+          margin = T,
+          stretch = 'lin',
+          cex.main = .6,
+          main = 'Original Aerial Imagery \n 2018-10-13')
+  plotRGB(mask(l8_20181013_interpoltedH, roi_trans), r=4 , g=3 , b=2,
+          margin = T,
+          stretch = 'lin',
+          cex.main = .6,
+          main = 'Horizontally Interpolated Aerial Imagery \n 2018-10-13 \n Net RMSE: 0.015')
+  plotRGB(mask(l8_20181013_interpoltedV, roi_trans), r=4 , g=3 , b=2,
+          margin = T,
+          stretch = 'lin',
+          cex.main = .6,
+          main = 'Vertically Interpolated Aerial Imagery \n 2018-10-13 \n Net RMSE: 0.019')
+  plotRGB(mask(l8_20181013_interpoltedW, roi_trans), r=4 , g=3 , b=2,
+          margin = T,
+          stretch = 'lin',
+          cex.main = .6,
+          main = 'Weighted Interpolated Aerial Imagery \n 2018-10-13 \n Net RMSE: 0.014')
+  
+}
+
+
+# Creating a function to quickly compute all prompted metrics for the interpolated imagery
+Interpolation_Metrics <- function(data, original = NULL, r, g, b){
+  # Original Imagery won't have RMSE as a metric
+  if(original==T){
+    # Net minimum pixel value for colour composite bands of interpolated imagery
+    orig_natural_colour_composite_net_min_pix_val <- (data[,r]$min_pix_val_orig + # red
+                                                         data[,g]$min_pix_val_orig + # green
+                                                         data[,b]$min_pix_val_orig) / 3 # blue
+    
+    # Net maximum pixel value for colour composite bands of interpolated imagery
+    orig_natural_colour_composite_net_max_pix_val <- (data[,r]$max_pix_val_orig + # red
+                                                         data[,g]$max_pix_val_orig + # green
+                                                         data[,b]$max_pix_val_orig) / 3 # blue
+    
+    # Net mean pixel value for colour composite bands of interpolated imagery
+    orig_natural_colour_composite_net_mean_pix_val <- (data[,r]$mean_pix_val_orig + # red
+                                                          data[,g]$mean_pix_val_orig + # green
+                                                          data[,b]$mean_pix_val_orig) / 3 # blue
+    
+    # Net standard deviation pixel value for colour composite bands of interpolated imagery
+    orig_natural_colour_composite_net_sd_pix_val <- (data[,r]$sd_pix_val_orig + # red
+                                                        data[,g]$sd_pix_val_orig + # green
+                                                        data[,b]$sd_pix_val_orig) / 3 # blue
+    
+    return(list(Net_Min = orig_natural_colour_composite_net_min_pix_val,
+                Net_Max = orig_natural_colour_composite_net_max_pix_val,
+                Net_Mean = orig_natural_colour_composite_net_mean_pix_val,
+                Net_sd = orig_natural_colour_composite_net_sd_pix_val))
+    
+  }else{
+    # Net minimum pixel value for colour composite bands of interpolated imagery
+    inter_natural_colour_composite_net_min_pix_val <- (data[,r]$min_pix_val_inter + # red
+                                                         data[,g]$min_pix_val_inter + # green
+                                                         data[,b]$min_pix_val_inter) / 3 # blue
+    
+    # Net maximum pixel value for colour composite bands of interpolated imagery
+    inter_natural_colour_composite_net_max_pix_val <- (data[,r]$max_pix_val_inter + # red
+                                                         data[,g]$max_pix_val_inter + # green
+                                                         data[,b]$max_pix_val_inter) / 3 # blue
+    
+    # Net mean pixel value for colour composite bands of interpolated imagery
+    inter_natural_colour_composite_net_mean_pix_val <- (data[,r]$mean_pix_val_inter + # red
+                                                          data[,g]$mean_pix_val_inter + # green
+                                                          data[,b]$mean_pix_val_inter) / 3 # blue
+    
+    # Net standard deviation pixel value for colour composite bands of interpolated imagery
+    inter_natural_colour_composite_net_sd_pix_val <- (data[,r]$sd_pix_val_inter + # red
+                                                        data[,g]$sd_pix_val_inter + # green
+                                                        data[,b]$sd_pix_val_inter) / 3 # blue
+    
+    # Calculate Net RMSE for colour composite bands
+    inter_natural_colour_composite_net_RMSE <- (data[,r]$rmse + # red
+                                                  data[,g]$rmse + # green
+                                                  data[,b]$rmse)/3 # blue
+    
+    return(list(Net_Min = inter_natural_colour_composite_net_min_pix_val,
+                Net_Max = inter_natural_colour_composite_net_max_pix_val,
+                Net_Mean = inter_natural_colour_composite_net_mean_pix_val,
+                Net_sd = inter_natural_colour_composite_net_sd_pix_val,
+                Net_RMSE = inter_natural_colour_composite_net_RMSE))
+    
+  }
+  
+}
+
+# Validating other sequence of imageriess
+L8_20190218 <- brick(paste0('Raw Data/Aerial Imagery/Landsat 8/', L8SR_image_collection[52])) 
+L8_20190306_original <- brick(paste0('Raw Data/Aerial Imagery/Landsat 8/', L8SR_image_collection[53])) 
+L8_20190306_original_df <- as.data.frame(L8_20190306_original, xy = T) # convert to dataframe
+L8_20190407 <- brick(paste0('Raw Data/Aerial Imagery/Landsat 8/', L8SR_image_collection[54])) 
+
+# Horizontal interpolation
+L8_20190306_interpoltedH <- (L8_20190218+L8_20190407)/2 # simple average
+L8_20190306_interpoltedH_df <- as.data.frame(L8_20190306_interpoltedH, xy = T) # convert to dataframe
+
+# Summary statistics for each bands for horizontal interpolation
+all_summary_L8_20190306_interpoltedH <- rbind(sapply(3:ncol(L8_20190306_interpoltedH_df), 
+                                                           function(x){interpolated_image_summary(L8_20190306_original_df,
+                                                                                                  L8_20190306_interpoltedH_df,
+                                                                                                  x)}))
+
+colnames(all_summary_L8_20190306_interpoltedH) <- names(L8_20190306_original) # rename columns
+L8_20190306_original_metrics <- Interpolation_Metrics(all_summary_L8_20190306_interpoltedH,T, r = 4, g = 3, b = 2)
+L8_20190306_interpolated_metrics <- Interpolation_Metrics(all_summary_L8_20190306_interpoltedH,F, r = 4, g = 3, b = 2)
+
+# Horizontal Interpolation
+L9_20220914_original <- trimmed_df_aerial_imagery_after_interpolation[[119]]
+L9_20220914_original_df <- as.data.frame(L9_20220914_original, xy = T) # convert to dataframe
+
+L9_20220823 <- trimmed_df_aerial_imagery_after_interpolation[[118]]
+L9_20221022 <- trimmed_df_aerial_imagery_after_interpolation[[120]]
+
+L9_20220914_interpolatedH <- (L9_20220823+L9_20221022)/2 # simple average
+L9_20220914_interpolatedH_df <- as.data.frame(L9_20220914_interpolatedH, xy = T) # convert to dataframe
+# Summary statistics for each bands for horizontal interpolation
+all_summary_L9_20220914_interpoltedH <- rbind(sapply(3:ncol(L9_20220914_interpolatedH_df), 
+                                                     function(x){interpolated_image_summary(L9_20220914_original_df,
+                                                                                            L9_20220914_interpolatedH_df,
+                                                                                            x)}))
+colnames(all_summary_L9_20220914_interpoltedH) <- names(L9_20220914_original)
+L9_20220914_original_metrics <- Interpolation_Metrics(all_summary_L9_20220914_interpoltedH,T, r = 3, g = 2, b = 1)
+L9_20220914_interpolated_metrics <- Interpolation_Metrics(all_summary_L9_20220914_interpoltedH,F,r = 3, g = 2, b = 1)
+
+# Vertical Interpolation
+L9_20180404 <- trimmed_df_aerial_imagery_after_interpolation[[61]]
+L9_20190407_original <- trimmed_df_aerial_imagery_after_interpolation[[74]]
+L9_20190407_original_df <- as.data.frame(L9_20190407_original, xy = T) # convert to dataframe
+L9_20200409 <- trimmed_df_aerial_imagery_after_interpolation[[86]]
+
+L9_20190407_interpolatedV <- (L9_20180404+L9_20200409)/2 # simple average
+L9_20190407_interpolatedV_df <- as.data.frame(L9_20190407_interpolatedV, xy = T) # convert to dataframe
+
+# Summary statistics for each bands for vertical interpolation
+all_summary_L9_20190407_interpolatedV <- rbind(sapply(3:ncol(L9_20190407_interpolatedV_df), 
+                                                     function(x){interpolated_image_summary(L9_20190407_original_df,
+                                                                                            L9_20190407_interpolatedV_df,
+                                                                                            x)}))
+colnames(all_summary_L9_20190407_interpolatedV) <- names(L9_20190407_original)
+L9_20190407_original_metrics <- Interpolation_Metrics(all_summary_L9_20190407_interpolatedV,T, r = 3, g = 2, b = 1)
+L9_20190407_interpolated_metrics <- Interpolation_Metrics(all_summary_L9_20190407_interpolatedV,F,r = 3, g = 2, b = 1)
 
 
 
- # # Check if the images have the same extent and resolution
+# Vertical Interpolation
+L8_20140425 <- trimmed_df_aerial_imagery_after_interpolation[[5]]
+L8_20150412_original <- trimmed_df_aerial_imagery_after_interpolation[[22]]
+L8_20150412_original_df <- as.data.frame(L8_20150412_original, xy = T) # convert to dataframe
+S2_20160406 <- trimmed_df_aerial_imagery_after_interpolation[[35]]
+
+L8_20150412_interpolatedV <- (L8_20140425+S2_20160406)/2 # simple average
+L8_20150412_interpolatedV_df <- as.data.frame(L8_20150412_interpolatedV, xy = T) # convert to dataframe
+
+# Summary statistics for each bands for vertical interpolation
+all_summary_L8_20150412_interpolatedV <- rbind(sapply(3:ncol(L8_20150412_interpolatedV_df), 
+                                                      function(x){interpolated_image_summary(L8_20150412_original_df,
+                                                                                             L8_20150412_interpolatedV_df,
+                                                                                             x)}))
+
+colnames(all_summary_L8_20150412_interpolatedV) <- names(L8_20150412_original)
+L8_20150412_original_metrics <- Interpolation_Metrics(all_summary_L8_20150412_interpolatedV,T, r = 3, g = 2, b = 1)
+L8_20150412_interpolated_metrics <- Interpolation_Metrics(all_summary_L8_20150412_interpolatedV,F,r = 3, g = 2, b = 1)
+
+par(mar = c(0.2, 0.1, 1.8, 0.1))
+plotRGB(L8_20150412_original, r=3 , g=2 , b=1,
+        margin = T,
+        stretch = 'lin',
+        cex.main = .6)
+
+plotRGB(L8_20150412_interpolatedV, r=3 , g=2 , b=1,
+        margin = T,
+        stretch = 'lin',
+        cex.main = .6)
+
+
+
+
+
+
+
+
+
+
+
+
+# # Check if the images have the same extent and resolution
 # if (!compareRaster(xfloat, x)) {
 #   stop("The images do not have the same extent and resolution.")
 # }
