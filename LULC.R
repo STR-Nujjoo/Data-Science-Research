@@ -190,6 +190,61 @@ LULC <- lapply(seq_along(training_samples_filenames), function(x){LULC_raster_li
 #   
 # }
 
+# EDA ---------------------------------------------------------------------
+
+# Extracting accuracy assessement
+LULC_accuracy_assessment <- lapply(seq_along(LULC_raster_list), function(x) LULC_raster_list[[x]]$Test_accuracy)
+
+# Extracting dates from LULC rasters
+LULC_dates <- pbsapply(seq_along(LULC_raster_list), function(index){sub("LULC ", "", LULC_raster_list[[index]]$LULCRaster@file@name)}) %>% 
+  as.Date("%Y%m%d")
+
+# Create a dataframe for the accuracy assessment
+LULC_accuracy_assessment_df <- data.frame(Date = LULC_dates, do.call('rbind', LULC_accuracy_assessment))
+LULC_accuracy_assessment_df$Year <- year(LULC_accuracy_assessment_df$Date) # extract year from date
+mean(LULC_accuracy_assessment_df$Accuracy) # mean value for overall accuracy
+mean(LULC_accuracy_assessment_df$Kappa) # mean value for kappa coefficient
+
+# Convert to long format
+LULC_accuracy_assessment_df_long <- pivot_longer(LULC_accuracy_assessment_df, col = c('Accuracy','Kappa'), names_to = 'Metrics_name', values_to = 'Metrics_value')
+LULC_accuracy_assessment_df_long$Metrics_name <- as.factor(LULC_accuracy_assessment_df_long$Metrics_name) # convert column into factor
+LULC_accuracy_assessment_df_long$Year <- as.factor(LULC_accuracy_assessment_df_long$Year) # convert column into factor
+
+LULC_AA_boxplot <- ggplot(LULC_accuracy_assessment_df_long, aes(x = Year, y = Metrics_value, fill = Metrics_name)) +
+  geom_boxplot() +
+  geom_hline(yintercept = mean(LULC_accuracy_assessment_df$Accuracy), 
+             linetype = 'dashed',
+             linewidth = .2,
+             color = 'red')+ # mean value for overall accuracy
+  geom_hline(yintercept = mean(LULC_accuracy_assessment_df$Kappa), 
+             linetype = 'dashed', 
+             linewidth = .2,
+             color = 'blue')+ # mean value for kappa coefficient
+  annotate('text', 
+           x=7-.1, 
+           y=mean(LULC_accuracy_assessment_df$Accuracy), 
+           label = paste('Mean Overall Accuracy: \n', mean(LULC_accuracy_assessment_df$Accuracy)|>round(3)),
+           size = 2, 
+           color = 'red')+
+  annotate('text',
+            x=7+.3, 
+            y=mean(LULC_accuracy_assessment_df$Kappa), 
+            label = paste('Mean Kappa Coefficient: \n', mean(LULC_accuracy_assessment_df$Kappa)|>round(3)),
+            size = 2,
+            color = 'blue')+
+  scale_fill_discrete(labels = c('Overall Accuracy', 'Kappa Coefficient')) +
+  xlab('Period') +
+  ylab('LULC Accuracy Assessment') +
+  labs(fill = '')+
+  theme_light()+
+  theme(legend.position = 'bottom')
+
+# Save above plot
+ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/EDA plots/LULC_AA_boxplot.pdf", 
+       plot = LULC_AA_boxplot, width = 6.56, height = 3.5)
+
+
+#####
 tm_shape(xx)+
   tm_raster(style = "cat", title = "", palette = c('#883C07', '#CCCCCC', '#00734C', '#D1FF73', '#000000', '#70A800', '#00A9E6'))+ 
   tm_layout(main.title= paste0(as.Date(gsub("\\.tif$", "", aerial_imagery_filenames[index]), format = "%Y%m%d"), ' LULC'),
@@ -205,7 +260,7 @@ xx <- ratify(raster(x)) |> na.omit()
 levels(xx) <- data.frame(ID = levels(xx)[[1]]$ID, value = c(LULC[[1]]@data@attributes[[1]]$value[-2])) # redefine levels
 xx@data@attributes
 values(xx) |>unique()
-# EDA ---------------------------------------------------------------------
+
 # Visualisation of PCA and LULC for my appendix
 aerial_imagery_pca <- projectRaster(aerial_imagery_pca, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb')
 par(mar = c(2, 2, 1.0, 0.1)) # customised margin
@@ -230,7 +285,11 @@ LULCexample <- tm_shape(LULCPredictions)+
   tm_graticules(lines = F)
 
 
-# tmap_save(LULCexample, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/Appendix plots/test.pdf", width = 6.56, height = 3)
+tmap_save(LULCexample, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/Appendix plots/LULCexample.pdf", width = 4, height = 4)
+
+
+
+
 
 
 NDVI_rasters_after_interpolation[[1]]
