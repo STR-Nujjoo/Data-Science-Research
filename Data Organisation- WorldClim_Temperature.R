@@ -143,7 +143,7 @@ median_temperature_plot <- ggplot(temp_EDA_df, aes(x = date, y = median_temp, co
             vjust = 1.5, color = 'salmon', size = 2) +  # Label the max points)
   geom_smooth(method = loess, se = F, color = 'black', linewidth = .3, linetype = 'dashed') +
   scale_color_gradient(low = "yellow", high = 'red', guide = 'none', name = 'Median Temperature (°C)') +
-  ylab('Median Total Temperature (°C)') +
+  ylab('Median AMT (°C)') +
   xlab('Period') +
   theme_light() +
   theme(legend.position = 'bottom',
@@ -252,8 +252,8 @@ temp_range <- function(data){
        legend = F)
   title(main=median_temp_raster_2014@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
   mtext(temp_range(median_temp_raster_2014), side = 3, cex = .5, line = .1) # add subtitle
-  title(ylab="Longitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
-  title(xlab = "Latitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+  title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+  title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
   
   plot(projectRaster(median_temp_raster_2015, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
        col = red_ramp,
@@ -265,8 +265,8 @@ temp_range <- function(data){
        legend = F)
   title(main=median_temp_raster_2015@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
   mtext(temp_range(median_temp_raster_2015), side = 3, cex = .5, line = .1) # add subtitle
-  title(ylab="Longitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
-  title(xlab = "Latitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+  title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+  title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
   
   plot(projectRaster(median_temp_raster_2016, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
        col = red_ramp,
@@ -278,8 +278,8 @@ temp_range <- function(data){
        legend = F)
   title(main=median_temp_raster_2016@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
   mtext(temp_range(median_temp_raster_2016), side = 3, cex = .5, line = .1) # add subtitle
-  title(ylab="Longitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
-  title(xlab = "Latitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+  title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+  title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
   
   plot(projectRaster(median_temp_raster_2017, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
        col = red_ramp,
@@ -291,8 +291,8 @@ temp_range <- function(data){
        legend = F)
   title(main=median_temp_raster_2017@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
   mtext(temp_range(median_temp_raster_2017), side = 3, cex = .5, line = .1) # add subtitle
-  title(ylab="Longitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
-  title(xlab = "Latitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+  title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+  title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
   
   plot(projectRaster(median_temp_raster_2018, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
        col = red_ramp,
@@ -304,8 +304,8 @@ temp_range <- function(data){
        legend = F)
   title(main=median_temp_raster_2018@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
   mtext(temp_range(median_temp_raster_2018), side = 3, cex = .5, line = .1) # add subtitle
-  title(ylab="Longitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
-  title(xlab = "Latitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+  title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+  title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
   
   plot(projectRaster(median_temp_raster_2019, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
        col = red_ramp,
@@ -317,8 +317,8 @@ temp_range <- function(data){
        legend = F)
   title(main=median_temp_raster_2019@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
   mtext(temp_range(median_temp_raster_2019), side = 3, cex = .5, line = .1) # add subtitle
-  title(ylab="Longitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
-  title(xlab = "Latitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+  title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+  title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
   
   plot(projectRaster(median_temp_raster_2020, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
        col = red_ramp,
@@ -330,8 +330,8 @@ temp_range <- function(data){
        legend = F)
   title(main=median_temp_raster_2020@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
   mtext(temp_range(median_temp_raster_2020), side = 3, cex = .5, line = .1) # add subtitle
-  title(ylab="Longitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
-  title(xlab = "Latitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+  title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+  title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
   
   plot(projectRaster(median_temp_raster_2021, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
        col = red_ramp,
@@ -343,8 +343,8 @@ temp_range <- function(data){
        legend = F)
   title(main=median_temp_raster_2021@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
   mtext(temp_range(median_temp_raster_2021), side = 3, cex = .5, line = .1) # add subtitle
-  title(ylab="Longitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
-  title(xlab = "Latitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+  title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+  title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
   
   plot(projectRaster(median_temp_raster_2022, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
        col = red_ramp,
@@ -356,8 +356,8 @@ temp_range <- function(data){
        legend = F)
   title(main=median_temp_raster_2022@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
   mtext(temp_range(median_temp_raster_2022), side = 3, cex = .5, line = .1) # add subtitle
-  title(ylab="Longitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
-  title(xlab = "Latitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+  title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+  title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
   
   plot(projectRaster(median_temp_raster_2023, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
        col = red_ramp,
@@ -374,7 +374,7 @@ temp_range <- function(data){
   # legend.args = list(text = "Median \nTotal \nPrecipitation \n(mm)", side = 4, cex = .5)) # add legend title and adjust size
   title(main=median_temp_raster_2023@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
   mtext(temp_range(median_temp_raster_2023), side = 3, cex = .5, line = .1) # add subtitle
-  title(ylab="Longitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
-  title(xlab = "Latitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+  title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+  title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
   
 }
