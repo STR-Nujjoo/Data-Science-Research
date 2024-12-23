@@ -303,8 +303,6 @@ FIRE_DATA <- pblapply(seq_along(fire_filenames),
        function(x){raster(paste0('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/SANparks/',
                                                           fire_filenames[x]))})
 
-
-
 # plot all the compiled fire data for visual inspection!
 lapply(seq_along(FIRE_DATA), function(x){
   # Set color based on the condition
@@ -322,10 +320,37 @@ lapply(seq_along(FIRE_DATA), function(x){
        add = T)
 })
 
+# EDA
+# Extract and plot 2014 to 2022 fire data (add to thesis)
+sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed_2014_2022 <- st_as_sf(sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed)%>%
+  filter(YEAR_extract %in% 2014:2022)%>%
+  as('Spatial')
+
+burnt_area_2014_2022 <- tm_shape(veg_type_trans)+
+  tm_polygons("NTNL_VGTN_", 
+              palette = veg_color_map,  # You can choose different color palettes like "Set3", "Dark2", etc.
+              title = "Vegetation Types",
+              border.col = "transparent",
+              legend.show = T) +
+  tm_shape(sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed_2014_2022)+
+  tm_polygons('Area_calc_in_ha',
+              palette = 'red',
+              alpha = .2,
+              border.col = 'red',
+              legend.show = F)+
+  tm_graticules(lines = F)+
+  tm_layout(legend.position = c("left", "top"), legend.text.size = 0.37)
+
+# Save the burnt area map as a PDF
+tmap_save(burnt_area_2014_2022, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/EDA plots/burnt_area_2014_2022.pdf", width = 4, height = 4)
 
 
+# remember to change this when 2023 fire data is obtained
+FIRE_DATA_2014_2022 <- sapply(145:252, function(x) FIRE_DATA[[x]]|>values()|>na.omit()|>max())
+fire_dates_2014_2022 <- seq(as.Date("2014-01-01"), as.Date("2022-12-01"), by = "month")
 
+fire_or_no_fire_df <- tibble(date = fire_dates_2014_2022, fire_status = factor(FIRE_DATA_2014_2022))
 
-
-
-
+nrow(fire_or_no_fire_df) 
+sum(fire_or_no_fire_df$fire_status==0) # no fire events from 2014-2022
+sum(fire_or_no_fire_df$fire_status==1) # fire events from 2014-2022
