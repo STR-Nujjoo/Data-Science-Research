@@ -43,7 +43,7 @@ RH_raster_func <- function(file, index, plot = NULL){
   return(RH_raster_projcropmask_TMNR)
 }
 
-RH_raster_func(RH_filenames, 2, T)
+RH_raster_func(RH_filenames, 1, T)
 # Processing relative humidity data extraction
 RH_raster_list <- pblapply(seq_along(RH_filenames), function(x){RH_raster_func(file = RH_filenames, index = x, plot = T)})
 
@@ -70,7 +70,67 @@ RH_raster_list <- pblapply(seq_along(RH_filenames), function(x){RH_raster_func(f
 # }
 
 
+# EDA for RH data ----------------------------------------------
+# Trim data from 2014 to 2023
+RH_raster_list_2014_2023 <- RH_raster_list[145:264]
 
+# TEMPORAL ANALYSIS
+# Calculate the median value of RH per raster
+median_RH_values <- pbsapply(seq_along(RH_raster_list_2014_2023), function(index){
+  values(RH_raster_list_2014_2023[[index]]) |>
+    na.omit() |>
+    median()
+})
+
+
+# Add the median values to a dataframe
+RH_EDA_df <- data.frame(date = seq(as.Date("2014-01-01"), as.Date("2023-12-01"), by = "month"),
+                          median_RH = median_RH_values) 
+
+
+RH_EDA_df$year <- year(RH_EDA_df$date) # extract year from date and create a year column
+
+# Find the maximum median RH value for each year
+max_median_RH_df <- RH_EDA_df %>%
+  group_by(year) %>%
+  summarise(median_RH = max(median_RH)) %>%
+  select(median_RH) %>%
+  left_join(RH_EDA_df) %>%
+  select(-year) %>%
+  rename(max_median_RH = median_RH)
+
+# Find the minimum median RH value for each year
+min_median_RH_df <- RH_EDA_df %>%
+  group_by(year) %>%
+  summarise(median_RH = min(median_RH)) %>%
+  select(median_RH) %>%
+  left_join(RH_EDA_df) %>%
+  select(-year) %>%
+  rename(min_median_RH = median_RH)
+
+# Plot median value for RH
+median_RH_plot <- ggplot(RH_EDA_df, aes(x = date, y = median_RH, color = median_RH)) +
+  geom_line(linewidth = .8) +
+  geom_point(data = max_median_RH_df, aes(x = date, y = max_median_RH), color = 'deeppink', size = 1) +
+  geom_text(data = max_median_RH_df, aes(x = date, y = max_median_RH, label = format(date, '%Y-%m')), 
+            vjust = -1, color = "deeppink", size = 2) +  # Label the max points)
+  geom_point(data = min_median_RH_df, aes(x = date, y = min_median_RH), color = 'salmon', size = 1) +
+  geom_text(data = min_median_RH_df, aes(x = date, y = min_median_RH, label = format(date, '%Y-%m')), 
+            vjust = 1.5, color = 'salmon', size = 2) +  # Label the max points)
+  geom_smooth(method = loess, se = F, color = 'black', linewidth = .3, linetype = 'dashed') +
+  scale_color_gradientn(colours = c('wheat','cyan','purple'), guide = 'none', name = 'Median Average RH (%)') +
+  ylab('Median ARH (%)') +
+  xlab('Period') +
+  theme_light() +
+  theme(legend.position = 'bottom',
+        legend.title= element_text(size = 9),
+        legend.text = element_text(size = 7))
+
+median_RH_plot
+
+# Save above plot
+ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/EDA plots/median_RH_plot.pdf", 
+       plot = median_RH_plot, width = 6.56, height = 3.5)
 
 
 
