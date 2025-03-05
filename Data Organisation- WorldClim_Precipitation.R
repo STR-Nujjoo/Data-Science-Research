@@ -11,6 +11,7 @@
   library(gstat)
   library(colorRamps)
   library(pbapply)
+  library(plotly)
 }
 
 # Creating color ramp for precipitation plot
