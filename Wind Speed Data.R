@@ -264,8 +264,9 @@ median_ANSWS_plot_bilnr <- ggplot(ANSWS_EDA_df, aes(x = date, y = median_ANSWS, 
 
 median_ANSWS_plot_bilnr
 
-Windspeed_plots <- cowplot::plot_grid(median_ANSWS_plot_nn, ANSWS_nn_boxplot,
-          median_ANSWS_plot_bilnr, ANSWS_bilnr_boxplot, nrow = 2, ncol = 2)
+Windspeed_plots <- cowplot::plot_grid(ANSWS_nn_boxplot,median_ANSWS_plot_nn,
+                                      ANSWS_bilnr_boxplot, median_ANSWS_plot_bilnr,
+                                      nrow = 2, ncol = 2)
 
 # Save above plot
 ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/EDA plots/Windspeed_plots.pdf",
