@@ -11,6 +11,7 @@
   library(gstat)
   library(colorRamps)
   library(pbapply)
+  library(plotly)
 }
 
 # Creating color ramp for temperature plot
@@ -119,6 +120,7 @@ max_median_temp_df <- temp_EDA_df %>%
   distinct() %>%  # remove repetitive rows
   arrange(date) %>%
   slice(-c(6,8,10)) # manually remove incorrect maximum
+
 
 # Find the minimum median temperature value for each year
 min_median_temp_df <- temp_EDA_df %>%
