@@ -298,3 +298,44 @@ trimmed_aerial_imagery_plot <- ggplot(df_aerial_imagery_2014_2023, aes(x = day, 
 trimmed_aerial_imagery_plot
 ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/EDA plots/trimmed_aerial_imagery_plot.pdf", 
        plot = trimmed_aerial_imagery_plot, width = 10, height= 3)
+
+
+
+# Wildfire Intuition based on Vegetation Indices and Climatologica --------
+
+# creating dataframe to visualise which month are more prone to wildfire
+df_fire_prone_months <- data.frame(var = factor(rep(c('NDVI','NDMI','NBR','TP','AMT','ANSWS','ARH'),each = 12)),
+                                   month = factor(rep(month.abb,times = 7))) %>%
+  as_tibble() %>%
+  mutate(status = factor(case_when(var=='NDVI' & month %in% c('Feb', 'Mar', 'Apr', 'Dec') ~ 'Fire-prone',
+                            var=='NDVI' & month %in% c('Jun', 'Jul', 'Aug') ~ 'Non fire-prone',
+                            var=='NDMI' & month %in% c('Jan', 'Feb', 'Mar', 'Nov', 'Dec') ~ 'Fire-prone',
+                            var=='NDMI' & month %in% c('May','Jun', 'Jul', 'Aug') ~ 'Non fire-prone',
+                            var=='NBR' & month %in% c('Jan', 'Feb', 'Mar', 'Nov', 'Dec') ~ 'Fire-prone',
+                            var=='NBR' & month %in% c('May','Jun', 'Jul', 'Aug', 'Sep') ~ 'Non fire-prone',
+                            var=='TP' & month %in% c('Jan', 'Feb', 'Mar', 'Oct', 'Nov', 'Dec') ~ 'Fire-prone',
+                            var=='TP' & month %in% c('May','Jun', 'Jul', 'Aug') ~ 'Non fire-prone',
+                            var=='AMT' & month %in% c('Jan', 'Feb', 'Mar', 'Dec') ~ 'Fire-prone',
+                            var=='AMT' & month %in% c('May','Jun', 'Jul', 'Aug') ~ 'Non fire-prone',
+                            var=='ANSWS' & month %in% c('Jan', 'Feb', 'Mar', 'Dec') ~ 'Fire-prone',
+                            var=='ANSWS' & month %in% c('Apr', 'May', 'Jul', 'Aug') ~ 'Non fire-prone',
+                            var=='ARH' & month %in% c('Apr', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov') ~ 'Fire-prone',
+                            var=='ARH' & month %in% c('Jan', 'Feb', 'Mar', 'Dec') ~ 'Non fire-prone',
+                            TRUE ~ 'Neutral')))
+
+# reorder levels for plotting
+df_fire_prone_months$var <- factor(df_fire_prone_months$var, levels = rev(c('NDVI','NDMI','NBR','TP','AMT','ANSWS','ARH')), ordered = T) 
+df_fire_prone_months$month <- factor(df_fire_prone_months$month, levels = month.abb, ordered = T)
+
+fire_prone_months_plot <- ggplot(df_fire_prone_months, aes(x = month, y = var, fill = status))+
+  geom_tile(color = 'lightgray', lwd = .01) +
+  scale_fill_manual(labels = c('Fire-prone', 'Neutral', 'Non fire-prone'),
+                    values = c('red', 'white', 'green')) +
+  xlab('Month') +
+  ylab('Variable')+
+  theme_minimal()+
+  theme(legend.title = element_blank())
+
+ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/EDA plots/fire_prone_months_plot.pdf", 
+       plot = fire_prone_months_plot, width = 6.56, height= 3)
+
