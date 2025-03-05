@@ -89,6 +89,7 @@ RH_EDA_df <- data.frame(date = seq(as.Date("2014-01-01"), as.Date("2023-12-01"),
 
 
 RH_EDA_df$year <- year(RH_EDA_df$date) # extract year from date and create a year column
+RH_EDA_df$median_RH <- RH_EDA_df$median_RH * 100 # express median RH as %
 
 # Find the maximum median RH value for each year
 max_median_RH_df <- RH_EDA_df %>%
