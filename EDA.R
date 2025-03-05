@@ -334,7 +334,7 @@ fire_prone_months_plot <- ggplot(df_fire_prone_months, aes(x = month, y = var, f
   xlab('Month') +
   ylab('Variable')+
   theme_minimal()+
-  theme(legend.title = element_blank())
+  theme(legend.position = 'top', legend.title = element_blank())
 
 ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/EDA plots/fire_prone_months_plot.pdf", 
        plot = fire_prone_months_plot, width = 6.56, height= 3)
