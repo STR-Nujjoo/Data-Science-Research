@@ -29,6 +29,7 @@ sanpark_fire_shpfile_list <- pblapply(seq_along(sanpark_fire_data), function(x){
   readOGR(paste0('Raw Data/SANParks fire data/1962-2022/', sanpark_fire_data[x]))
 }) # read in all shapefiles in a list
 
+
 # Rearrange data columns for consistency and assign original coordinate system to shapefiles
 sanpark_fire_shpfile_df_list <- pblapply(seq_along(sanpark_fire_data), function(x) {
   proj4string(sanpark_fire_shpfile_list[[x]]) <- '+proj=tmerc +lat_0=0 +lon_0=19 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs' # Lo19 Hartebbesthoek94
@@ -325,6 +326,13 @@ lapply(seq_along(FIRE_DATA), function(x){
 sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed_2014_2022 <- st_as_sf(sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed)%>%
   filter(YEAR_extract %in% 2014:2022)%>%
   as('Spatial')
+
+# Finding all the causes of fire
+firecause_summary <- st_as_sf(sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed_2014_2022) %>% 
+  data.frame() %>% 
+  select('FIRECAUSE') %>% 
+  table() %>%
+  as_tibble()
 
 burnt_area_2014_2022 <- tm_shape(veg_type_trans)+
   tm_polygons("NTNL_VGTN_", 
