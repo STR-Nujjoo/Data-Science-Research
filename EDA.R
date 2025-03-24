@@ -342,7 +342,7 @@ ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data 
 # Show an example of an aerial imagery with 5% CC prior to 2014 as compared to a good one after 2014.
 AI_name <- list.files('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Unprocessed Variables/Aerial Imagery 2002-2023/')
 bad_AI <- brick(paste0('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Unprocessed Variables/Aerial Imagery 2002-2023/', AI_name[76]))
-good_AI <- brick(paste0('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Unprocessed Variables/Aerial Imagery 2002-2023/', AI_name[197]))
+good_AI <- brick(paste0('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Unprocessed Variables/Aerial Imagery 2002-2023/', AI_name[160]))
 
 # par(mfrow = c(1,2))
 par(mar = c(0.2, 0.1, 1.8, 0.1))

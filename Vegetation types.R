@@ -45,7 +45,6 @@ tm_shape(st_as_sf(veg_type_trans)) +
                 labels.size = 0.7,  # Adjusts label size for clarity
                 col = "transparent",  # Color of the grid lines
                 ticks= T) +  
-  tm_layout(legend.outside.position = "bottom", legend.outside = T, legend.title.size= 0.8, legend.text.size = 0.6)
-
+  tm_layout(legend.outside = F, legend.title.size= 0.8, legend.text.size = 0.6)
 
 
