@@ -349,6 +349,10 @@ LULC_imputed_from_7classesLULC_list <- pblapply(seq_along(LULC_CloudCover_index)
   Imputating_shadows_from_7classesLULC(index = x, plt_mask=T, plt_imputed = T)
 })
 
+# # Save output as an .Rdata file
+# save(LULC_imputed_from_7classesLULC_list,
+#      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/LULC 2014-2023 (post-processing)/LULC_imputed_from_7classesLULC_list.Rdata')
+
 # FUNCTION THAT REMOVE CLOUD COVER AND REPLACE IT BY NEAREST NEIGHBOUR PIXELS- taking output from previous function
 Imputing_cloudcover_from_7classesLULC <- function(index, plt_mask=NULL, plt_imputed = NULL){
   index <- index
@@ -462,6 +466,10 @@ LULC_imputed_NO_shadows_CC_list <- pblapply(seq_along(LULC_CloudCover_index), fu
   Imputing_cloudcover_from_7classesLULC(index = x, plt_mask=T, plt_imputed = T)
 })
 
+# Save output as an .Rdata file
+# save(LULC_imputed_NO_shadows_CC_list,
+#      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/LULC 2014-2023 (post-processing)/LULC_imputed_NO_shadows_CC_list.Rdata')
+
 # FUNCTION THAT REMOVE SHADOWS AND REPLACE IT BY NEAREST NEIGHBOUR PIXELS- on remaining LULC which do not contain cloud cover
 Imputing_shadows_from_6classesLULC <- function(index, plt_mask=NULL, plt_imputed = NULL){
   index <- index
@@ -571,10 +579,16 @@ Imputing_shadows_from_6classesLULC <- function(index, plt_mask=NULL, plt_imputed
   return(raster_imputation_mask)
 }
 
+
 # List to output removal of shadows (Those LULC were free from cloud cover!)
 LULC_imputed_NO_shadows_never_had_CC_list <- pblapply(seq_along(LULC_NOCloudCover_index), function(x){
   Imputing_shadows_from_6classesLULC(index = x, plt_mask=T, plt_imputed = T)
 })
+
+
+# # Save output as an .Rdata file
+# save(LULC_imputed_NO_shadows_never_had_CC_list,
+#      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/LULC 2014-2023 (post-processing)/LULC_imputed_NO_shadows_never_had_CC_list.Rdata')
 
 
 # Combining imputed rasters in one list
@@ -604,7 +618,7 @@ abline(v = coordinates(LULC_noCloudCover_noShadow_full_list[[1]])[180,]['x'], co
 abline(h = coordinates(LULC_noCloudCover_noShadow_full_list[[1]])[116000,]['y'], col = 'blue') # ≤
 abline(h = coordinates(LULC_noCloudCover_noShadow_full_list[[1]])[87000,]['y'], col = 'cyan') # ≥
 
-# Define thresholds to exclude actual waterbodies- This is set do not change!
+# Define thresholds to exclude actual waterbodies- This is set, so do not change!
 threshold1 <- which(coordinates(LULC_noCloudCover_noShadow_full_list[[1]])[,1]>coordinates(LULC_noCloudCover_noShadow_full_list[[1]])[225,]['x'])
 threshold2 <- which(coordinates(LULC_noCloudCover_noShadow_full_list[[1]])[,1]<coordinates(LULC_noCloudCover_noShadow_full_list[[1]])[180,]['x'])
 threshold3 <- which(coordinates(LULC_noCloudCover_noShadow_full_list[[1]])[,2]<coordinates(LULC_noCloudCover_noShadow_full_list[[1]])[116000,]['y'])
@@ -613,6 +627,7 @@ threshold4 <- which(coordinates(LULC_noCloudCover_noShadow_full_list[[1]])[,2]>c
 # Combine threshold without repeating index
 outside_enclosure_index <- unique(c(threshold1, threshold2, threshold3, threshold4))
 
+# FUNCTION TO REMOVE MISCLASSIFIED WATER BODIES, MASK AND IMPUTE THEM WITH MORE REALISTIC CLASS
 impute_misclassified_waterbodies <- function(index, plt_mask=NULL, plt_imputed = NULL){
   index <- index
   initial_LULC <- LULC_noCloudCover_noShadow_full_list[[index]] # call in LULC after shadows and cloud cover have been removed!
@@ -718,6 +733,25 @@ FINAL_LULC <- pblapply(seq_along(LULC_noCloudCover_noShadow_full_list), function
   impute_misclassified_waterbodies(index=x, plt_mask=T, plt_imputed = T)
 })
 
+# # Save output as an .Rdata file
+# save(FINAL_LULC,
+#      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/LULC 2014-2023 (post-processing)/FINAL_LULC.Rdata')
+
+# {
+#   Save_raster <- function(data, index, path){
+#     
+#     file_path <- paste0(path, data[[index]]@file@name)
+#     
+#     return(writeRaster(data[[index]],
+#                        filename = file_path, format = "GTiff", overwrite = TRUE))
+#   }
+#   
+#   # Bulk Save!!!!
+#   pblapply(seq_along(FINAL_LULC),
+#            function(x) {Save_raster(data = FINAL_LULC,
+#                                     index = x,
+#                                     path = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/LULC 2014-2023 (post-processing)/')})
+# }  
 
 # EDA ---------------------------------------------------------------------
 
@@ -772,12 +806,11 @@ LULC_AA_boxplot <- ggplot(LULC_accuracy_assessment_df_long, aes(x = Year, y = Me
 ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/EDA plots/LULC_AA_boxplot.pdf", 
        plot = LULC_AA_boxplot, width = 6.56, height = 3.5)
 
-
 # Plot example of the geoimputation process
-LULC_with_shadow_plot <- tm_shape(LULC[[LULC_NOCloudCover_index[15]]])+ # leave the index as 15 here!
+LULC_with_shadow_plot <- tm_shape(LULC[[119]])+ # leave the index as 119 here!
   tm_raster(style = "cat", title = "", palette = c('#883C07', '#00734C', '#D1FF73', '#000000', '#70A800', '#00A9E6'))+
-  tm_layout(main.title= LULC[[LULC_NOCloudCover_index[15]]]@file@name, #...and here!
-            main.title.size =.7,
+  tm_layout(main.title= paste0(LULC[[119]]@file@name,' (original)'), #...and here!
+            main.title.size =.6,
             main.title.position = c("center", "top"),
             legend.outside = F,
             legend.text.size = .5)+
@@ -785,112 +818,42 @@ LULC_with_shadow_plot <- tm_shape(LULC[[LULC_NOCloudCover_index[15]]])+ # leave 
 
 LULC_with_shadowMasked_plot <- tm_shape(initial_LULC_mask)+
   tm_raster(style = "cat", title = "", palette = c('#883C07', '#00734C', '#D1FF73', 'white','#70A800', '#00A9E6'))+
-  tm_layout(main.title= paste0('LULC ', gsub("\\.tif$", "", aerial_imagery_filenames[LULC_NOCloudCover_index[15]]), ' (masked)') ,
-            main.title.size =.7,
+  tm_layout(main.title= paste0(LULC[[119]]@file@name, ' (shadows masked)') ,
+            main.title.size =.6,
             main.title.position = c("center", "top"),
             legend.outside = F,
             legend.text.size = .5)+
   tm_graticules(lines = F); LULC_with_shadowMasked_plot
 
-LULC_with_shadowImputed_plot <- tm_shape(raster_imputation_mask)+
+LULC_with_shadowImputed_plot <- tm_shape(LULC_imputed_NO_shadows_never_had_CC_list[[94]])+
   tm_raster(style = "cat", title = "", palette = c('#883C07', '#00734C', '#D1FF73', '#70A800', '#00A9E6'))+
-  tm_layout(main.title= paste0('LULC ', gsub("\\.tif$", "", aerial_imagery_filenames[LULC_NOCloudCover_index[15]]), ' (imputed)'),
-            main.title.size =.7,
+  tm_layout(main.title= paste0(LULC_imputed_NO_shadows_never_had_CC_list[[94]]@file@name, ' (shadows imputed)'),
+            main.title.size =.6,
             main.title.position = c("center", "top"),
             legend.outside = F,
             legend.text.size = .5)+
   tm_graticules(lines = F); LULC_with_shadowImputed_plot
 
-geoimputation_plot <- tmap_arrange(LULC_with_shadow_plot, LULC_with_shadowMasked_plot, LULC_with_shadowImputed_plot, nrow = 2)
-tmap_save(geoimputation_plot, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/EDA plots/geoimputation_plot.pdf", width = 6.56, height = 6)
+LULC_with_misclassified_waterbodies_masked_plot <- tm_shape(initial_LULC_mask_raster)+
+  tm_raster(style = "cat", title = "", palette = c('#883C07', '#00734C', '#D1FF73', '#70A800', '#00A9E6'))+
+  tm_layout(main.title= paste0(LULC_imputed_NO_shadows_never_had_CC_list[[94]]@file@name, ' (misclassified water bodies masked)'),
+            main.title.size =.6,
+            main.title.position = c("center", "top"),
+            legend.outside = F,
+            legend.text.size = .5)+
+  tm_graticules(lines = F); LULC_with_misclassified_waterbodies_masked_plot
 
+LULC_final_imputation_plot <-  tm_shape(FINAL_LULC[[119]])+
+  tm_raster(style = "cat", title = "", palette = c('#883C07', '#00734C', '#D1FF73', '#70A800', '#00A9E6'))+
+  tm_layout(main.title= paste0(LULC_imputed_NO_shadows_never_had_CC_list[[94]]@file@name, ' (final imputation)'),
+            main.title.size =.6,
+            main.title.position = c("center", "top"),
+            legend.outside = F,
+            legend.text.size = .5)+
+  tm_graticules(lines = F); LULC_final_imputation_plot
 
-#####
-# tm_shape(xx)+
-#   tm_raster(style = "cat", title = "", palette = c('#883C07', '#CCCCCC', '#00734C', '#D1FF73', '#000000', '#70A800', '#00A9E6'))+ 
-#   tm_layout(main.title= paste0(as.Date(gsub("\\.tif$", "", aerial_imagery_filenames[index]), format = "%Y%m%d"), ' LULC'),
-#             main.title.size =.9,
-#             main.title.position = c("center", "top"),
-#             legend.outside = F,
-#             legend.text.size = .5)+
-#   tm_graticules(lines = F)
-# 
-# which(LULC[[1]]@data@attributes[[1]]$value == 'Cloud Cover')
-# x <- classify(rast(LULC[[1]]), rcl = matrix(c(2, NA), ncol = 2, byrow = TRUE))
-# xx <- ratify(raster(x)) |> na.omit()
-# levels(xx) <- data.frame(ID = levels(xx)[[1]]$ID, value = c(LULC[[1]]@data@attributes[[1]]$value[-2])) # redefine levels
-# xx@data@attributes
-# values(xx) |>unique()
-# 
-# Visualisation of PCA and LULC for my appendix
-# aerial_imagery_pca <- projectRaster(aerial_imagery_pca, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb')
-# plotRGB(aerial_imagery_pca, r=3 , g=2 , b=1,
-#         stretch = 'lin',
-#         margin = T
-#         # main = paste0(as.Date(gsub("\\.tif$", "", aerial_imagery_filenames[index]), format = "%Y%m%d"), ' PCA')
-#         )
-# # Add longitude (x-axis) and latitude (y-axis) labels
-# axis(1, at = seq(extent(aerial_imagery_pca)[1], extent(aerial_imagery_pca)[2], length.out = 23), 
-#      labels = seq(extent(aerial_imagery_pca)[1], extent(aerial_imagery_pca)[2],length.out = 23)%>%round(2))
-# axis(2, at = seq(extent(aerial_imagery_pca)[3], extent(aerial_imagery_pca)[4], length.out = 23), 
-#      labels = seq(extent(aerial_imagery_pca)[3], extent(aerial_imagery_pca)[4], length.out = 23)%>%round(2))
-# 
-# 
-# LULCexample <- tm_shape(LULCPredictions)+
-#   tm_raster(style = "cat", title = "", palette = LULCpal)+ 
-#   tm_layout(main.title= paste0(as.Date(gsub("\\.tif$", "", aerial_imagery_filenames[index]), format = "%Y%m%d"), ' LULC'),
-#             main.title.size =.9,
-#             main.title.position = c("center", "top"),
-#             legend.outside = F,
-#             legend.text.size = .5)+
-#   tm_graticules(lines = F)
-# 
-# 
-# tmap_save(LULCexample, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/Appendix plots/LULCexample.pdf", width = 4, height = 4)
-# 
-# 
-# 
-# pblapply(seq_along(1:5), function (x){
-  # x <- x
-  # tm_shape(LULC[[x]])+
-  #   tm_raster(style = "cat", title = "", palette =  # if all classes are present
-  #               if(nrow(LULC[[x]]@data@attributes[[1]]) == 7){
-  #                 LULCpal <-  c('#883C07', '#CCCCCC', '#00734C', '#D1FF73', '#000000', '#70A800', '#00A9E6')
-  #                 # if cloud cover is not part of the training samples
-  #               }else if(nrow(LULC[[x]]@data@attributes[[1]]) == 6 & LULC[[x]]@data@attributes[[1]]$value[2] != 'Cloud Cover'){
-  #                 LULCpal <-  c('#883C07', '#00734C', '#D1FF73', '#000000', '#70A800', '#00A9E6')
-  #                 # if shadow is not part of the training samples
-  #               }else if(nrow(LULC[[x]]@data@attributes[[1]]) == 6 & LULC[[x]]@data@attributes[[1]]$value[5] != 'Shadow'){
-  #                 LULCpal <-   c('#883C07', '#CCCCCC', '#00734C', '#D1FF73', '#70A800', '#00A9E6')
-  #               }else if(nrow(LULC[[x]]@data@attributes[[1]]) == 5){
-  #                 LULCpal <- c('#883C07', '#00734C', '#D1FF73', '#70A800', '#00A9E6')
-  #               })+
-  #   tm_layout(main.title= LULC[[x]]@file@name,
-  #             main.title.size =.9,
-  #             main.title.position = c("center", "top"),
-  #             legend.outside = F,
-  #             legend.text.size = .5)+
-  #   tm_graticules(lines = F)
-# }
-  # )
-# 
-# 
-# 
-# 
-# # NDVI_rasters_after_interpolation[[1]]
-# # NDWI_rasters_after_interpolation[[1]]
-# # NBR_rasters_after_interpolation[[1]]
-# # x <- stack(NDVI_rasters_after_interpolation[[1]],
-# #       NDWI_rasters_after_interpolation[[1]],
-# #       NBR_rasters_after_interpolation[[1]]) |> rast()
-# # terra::layerCor(x, "pearson", na.rm = T)
-# # 
-# # ?layerCor
-# 
-# 
-# pblapply(seq_along(training_samples_filenames), function(x){
-#   LULC_raster_list[[x]]$random_forest_model
-#   
-# })
-
+geoimputation_plot <- tmap_arrange(LULC_with_shadow_plot, LULC_with_shadowMasked_plot,
+                                   LULC_with_shadowImputed_plot, LULC_with_misclassified_waterbodies_masked_plot, 
+                                   LULC_final_imputation_plot, nrow = 3, ncol = 2)
+tmap_save(geoimputation_plot, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/EDA plots/geoimputation_plot.pdf", width = 6, height = 7, dpi = 600)
 
