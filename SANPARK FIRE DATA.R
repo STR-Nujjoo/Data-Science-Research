@@ -304,6 +304,10 @@ FIRE_DATA <- pblapply(seq_along(fire_filenames),
        function(x){raster(paste0('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/SANparks/',
                                                           fire_filenames[x]))})
 
+# All fire event save in order
+# save(FIRE_DATA,
+#      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/SANparks/FIRE_DATA.Rdata')
+
 # plot all the compiled fire data for visual inspection!
 lapply(seq_along(FIRE_DATA), function(x){
   # Set color based on the condition
