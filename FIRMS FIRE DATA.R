@@ -98,6 +98,7 @@ FIRMS_monthly_fire_plots <- function(data, index){
                                               index = x)})
 }
 
+firms_fire_shpfile_trans_df_2002_2023_monthly_list[[1]]$ACQ_YEARMONTH |> levels()
 
 # VISUALISING FIRMS DATA YEARLY FROM 2002-2023 ----------------------------
 
