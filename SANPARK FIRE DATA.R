@@ -357,7 +357,7 @@ burnt_area_2014_2022 <- tm_shape(veg_type_trans)+
 tmap_save(burnt_area_2014_2022, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/EDA plots/burnt_area_2014_2022.pdf", width = 4, height = 4)
 
 
-# remember to change this when 2023 fire data is obtained
+# remember to change this when 2023 fire data is obtained- 2023 data was not available at the time of the project unfortunately.
 FIRE_DATA_2014_2022 <- sapply(145:252, function(x) FIRE_DATA[[x]]|>values()|>na.omit()|>max())
 fire_dates_2014_2022 <- seq(as.Date("2014-01-01"), as.Date("2022-12-01"), by = "month")
 
@@ -366,3 +366,15 @@ fire_or_no_fire_df <- tibble(date = fire_dates_2014_2022, fire_status = factor(F
 nrow(fire_or_no_fire_df) 
 sum(fire_or_no_fire_df$fire_status==0) # no fire events from 2014-2022
 sum(fire_or_no_fire_df$fire_status==1) # fire events from 2014-2022
+
+
+# Fire period recorded by SANParks from 2014 to 2022 in terms of year-month
+Sanparks_yearmonth_fire_recorded <- levels(sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed_MONTHLY$YEARMONTH)[33:length(levels(sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed_MONTHLY$YEARMONTH))]
+Sanparks_yearmonth_fire_recorded <- as.Date(paste0(Sanparks_yearmonth_fire_recorded, "-01"), format = "%Y-%m-%d") # convert the latter into date format
+
+# Fire period recorded by FIRMS from 2014 to 2022 in terms of year-month
+FIRMS_yearmonth_fire_recorded <- levels(firms_fire_shpfile_trans_df_2002_2023_monthly_list[[1]]$ACQ_YEARMONTH)[15:27]
+FIRMS_yearmonth_fire_recorded <- as.Date(paste0(FIRMS_yearmonth_fire_recorded, "/01"), format = "%Y/%m/%d")
+
+# Which period was a fire detected by FIRMS but not mapped by SANParks
+FIRMS_yearmonth_fire_recorded[which(FIRMS_yearmonth_fire_recorded %in% Sanparks_yearmonth_fire_recorded==F)]
