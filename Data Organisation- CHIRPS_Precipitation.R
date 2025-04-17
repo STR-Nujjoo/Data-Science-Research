@@ -273,7 +273,7 @@ ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data 
 
 # SPATIAL ANALYSIS
 {
-  stats <- mean # stats to be calculated from precipitation data
+  stats <- median # stats to be calculated from precipitation data
   
   # 2014
   prec_stack_2014 <- stack(lapply(1:12, function(x) {IDW_precipitation_rasters[[x]]})) # stack the 2014 precipitation raster series
