@@ -89,10 +89,16 @@ FIRMS_monthly_fire_plots <- function(data, index){
    
 }
 
+# converting 2022 data into polygon
+FIRMS_monthly_fire_plots(data = firms_fire_shpfile_trans_df_2002_2023_monthly_list,
+                         index = 27)
+plot(st_convex_hull(st_union(firms_fire_shpfile_trans_df_2002_2023_monthly_list[[27]])), 
+     add = T, border = 'red', col = alpha('red',.3))
+
 # NOTE THAT THE MISSING MONTHS MEANS THAT NASA-FIRMS DID NOT DETECT ANY FIRES DURING THAT PERIOD!
 # monthly plot
 {
-  par(mfrow = c(6,5))
+  par(mfrow = c(3,3))
   lapply(1:length(firms_fire_shpfile_trans_df_2002_2023_monthly_list),
          function(x){FIRMS_monthly_fire_plots(data = firms_fire_shpfile_trans_df_2002_2023_monthly_list,
                                               index = x)})
