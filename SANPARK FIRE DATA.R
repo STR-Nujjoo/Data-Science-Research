@@ -64,6 +64,21 @@ sanpark_fire_shpfile_combind_list_fixed <- st_buffer(sanpark_fire_shpfile_combin
 sanpark_fire_shpfile_combind_list_fixed <- as(sanpark_fire_shpfile_combind_list_fixed, 'Spatial') # convert dataframe back to spatial features
 sanpark_fire_shpfile_combind_list_trans <- spTransform(sanpark_fire_shpfile_combind_list_fixed, CRS(proj4string(roi_trans))) # convert coordinate system to EPSG:32734 (WGS 84 / UTM zone 34S)
 sanpark_fire_shpfile_combind_list_trans_intersect <- intersect(sanpark_fire_shpfile_combind_list_trans, roi_trans) # crop polygon to ROI
+
+# # 425,426,430,431,434 : SANPARKS
+# plot(roi_trans, col = 'transparent', border='black', lwd=1, main = st_as_sf(sanpark_fire_shpfile_combind_list_trans)[434,]$STARTDATE)
+# plot(st_as_sf(sanpark_fire_shpfile_combind_list_trans)[434,]$geometry, col = 'red', add = T)
+# 
+# 
+# plot(roi_trans, col = 'transparent', border='black', lwd = 1, main = st_as_sf(sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed)[126,]$STARTDATE)
+# plot(st_as_sf(sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed)[126,]$geometry, col = 'red', add = T)
+# # 22,26,27 : FIRMS
+# plot(firms_fire_shpfile_trans_df_2002_2023_monthly_list[[27]]$geometry, 
+#      col = 'green',pch = 16, cex = .5, main = firms_fire_shpfile_trans_df_2002_2023_monthly_list[[27]]$ACQ_DATE |> unique(), add = T)
+# 
+# 
+
+
 # View(st_as_sf(sanpark_fire_shpfile_combind_list_trans_intersect))
 # Cleaning data
 sanpark_fire_shpfile_combind_list_trans_intersect <- st_as_sf(sanpark_fire_shpfile_combind_list_trans_intersect) %>% # convert spatial feature to spatial dataframe
@@ -172,6 +187,7 @@ monthly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_combind_list_trans_inte
                              index = 24, 
                              plot = T)
 
+par(mfrow = c(3,3))
 monthly_sanpark_fire_shpfile_list <- pblapply(seq_along(Sanpark_unique_yearmonth_list), 
          function(x){monthly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed_MONTHLY, 
                                                   index = x, 
@@ -378,3 +394,7 @@ FIRMS_yearmonth_fire_recorded <- as.Date(paste0(FIRMS_yearmonth_fire_recorded, "
 
 # Which period was a fire detected by FIRMS but not mapped by SANParks
 FIRMS_yearmonth_fire_recorded[which(FIRMS_yearmonth_fire_recorded %in% Sanparks_yearmonth_fire_recorded==F)]
+
+
+
+
