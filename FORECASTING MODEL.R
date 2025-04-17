@@ -79,6 +79,7 @@ combined_array <- abind(precipitation_stack|> as.array(),
                         temperature_stack|> as.array(),
                         along = 4) # Shape: ([1] height/row, [2] width/column, [3] time_steps, [4] variables/channels)
 
+dim(combined_array)
 # CHECK
 # when combining the array the 1st array is the precipitation at the 1st time step
 all(combined_array[,,1,1]|>raster()|>values() == precipitation_list[[1]]|>values()) 
