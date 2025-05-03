@@ -857,3 +857,7 @@ geoimputation_plot <- tmap_arrange(LULC_with_shadow_plot, LULC_with_shadowMasked
                                    LULC_final_imputation_plot, nrow = 3, ncol = 2)
 tmap_save(geoimputation_plot, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/EDA plots/geoimputation_plot.pdf", width = 6, height = 7, dpi = 600)
 
+
+
+
+
