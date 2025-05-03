@@ -101,6 +101,8 @@ sanpark_fire_shpfile_combind_list_trans_intersect <- st_as_sf(sanpark_fire_shpfi
                     FIRETYPE=="WildFire"~"Wildfire"))  %>%
   
   mutate(STARTDATE = as.Date(STARTDATE, format = '%Y%m%d'), # reformat date
+         STARTDATE = case_when(STARTDATE== as.Date('2020-12-17', format = '%Y-%m-%d')~as.Date('2021-04-18', format = '%Y-%m-%d'), # correct erroneous entry
+                               T ~ as.Date(STARTDATE, format = '%Y%m%d')),
          YEARMONTH = format(as.Date(STARTDATE), '%Y-%m') |> as.factor(), # extract year and month
          YEAR_extract = year(STARTDATE) |> as.factor(), # extract year only 
          Area_calc_in_ha = as.numeric(st_area(geometry)/10000)) %>% # calculate missing areas in ha
@@ -165,7 +167,7 @@ sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed_MONTHLY <- 
 # create a list for the unique yearmonth fire
 Sanpark_unique_yearmonth_list <- unique(sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed_MONTHLY$YEARMONTH)
 
-# Remove 2007-01 and 2010-01from the monthly sanpark fire raster list (polygon too small to detect fire, hence rasterised)
+# Remove 2007-01 and 2010-01 from the monthly sanpark fire raster list (polygon too small to detect fire, hence rasterised)
 Sanpark_unique_yearmonth_list <- Sanpark_unique_yearmonth_list[c(-16,-24)]
 
 monthly_sanpark_fire_shpfile <- function(data, index, plot=NULL){
@@ -242,7 +244,7 @@ pblapply(seq_along(Sanpark_unique_yearmonth_list), function(x){names(monthly_san
   
   rasterise_polygons(study_area = roi_trans,
                      polygon_shapefile = monthly_sanpark_fire_shpfile_list, 
-                     index = 26, 
+                     index = 34, 
                      resolution = 30, 
                      plot = T)
 }
@@ -276,43 +278,43 @@ No_fire_RASTERS <- replicate(length(No_fire_dates), No_fire_raster)
 # Name NO fire rasters 
 pblapply(seq_along(No_fire_dates), function(x){names(No_fire_RASTERS[[x]]) <<- paste0("Fire ", format(No_fire_dates, "%Y-%m")[x])})
 
-# # Saving results
-# {
-#   # Save object
-#   save(monthly_sanpark_fire_raster_list,
-#        file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/SANparks/monthly_sanpark_fire_raster_list.Rdata')
-#   save(No_fire_RASTERS,
-#        file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/SANparks/No_fire_RASTERS.Rdata')
-#   
-# 
-#   # Save rasters in one folder on local machine or hard drive
-#   Save_SANparks_fire_raster <- function(index, path){
-# 
-#     file_path <- paste0(path, gsub("\\.", " ", names(monthly_sanpark_fire_raster_list[[index]])))
-# 
-#     return(writeRaster(monthly_sanpark_fire_raster_list[[index]],
-#                        filename = file_path, format = "GTiff", overwrite = TRUE))
-#   }
-# 
-#   pblapply(seq_along(monthly_sanpark_fire_raster_list), function(x){
-#     Save_SANparks_fire_raster(index = x, path = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/SANparks/')
-# 
-#   })
-#   
-#   # Save rasters in one folder on local machine or hard drive
-#   Save_NO_fire_raster <- function(index, path){
-#     
-#     file_path <- paste0(path, gsub("\\.", " ", names(No_fire_RASTERS[[index]])))
-#     
-#     return(writeRaster(No_fire_RASTERS[[index]],
-#                        filename = file_path, format = "GTiff", overwrite = TRUE))
-#   }
-#   
-#   pblapply(seq_along(No_fire_RASTERS), function(x){
-#     Save_NO_fire_raster(index = x, path = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/SANparks/')
-#     
-#   })
-# }
+# Saving results
+{
+  # Save object
+  save(monthly_sanpark_fire_raster_list,
+       file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/SANparks/monthly_sanpark_fire_raster_list.Rdata')
+  save(No_fire_RASTERS,
+       file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/SANparks/No_fire_RASTERS.Rdata')
+
+
+  # Save rasters in one folder on local machine or hard drive
+  Save_SANparks_fire_raster <- function(index, path){
+
+    file_path <- paste0(path, gsub("\\.", " ", names(monthly_sanpark_fire_raster_list[[index]])))
+
+    return(writeRaster(monthly_sanpark_fire_raster_list[[index]],
+                       filename = file_path, format = "GTiff", overwrite = TRUE))
+  }
+
+  pblapply(seq_along(monthly_sanpark_fire_raster_list), function(x){
+    Save_SANparks_fire_raster(index = x, path = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/SANparks/')
+
+  })
+
+  # Save rasters in one folder on local machine or hard drive
+  Save_NO_fire_raster <- function(index, path){
+
+    file_path <- paste0(path, gsub("\\.", " ", names(No_fire_RASTERS[[index]])))
+
+    return(writeRaster(No_fire_RASTERS[[index]],
+                       filename = file_path, format = "GTiff", overwrite = TRUE))
+  }
+
+  pblapply(seq_along(No_fire_RASTERS), function(x){
+    Save_NO_fire_raster(index = x, path = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/SANparks/')
+
+  })
+}
 
 # reload filenames for fire
 fire_filenames <- list.files('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/SANparks/', pattern = '.tif')
@@ -320,7 +322,7 @@ FIRE_DATA <- pblapply(seq_along(fire_filenames),
        function(x){raster(paste0('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/SANparks/',
                                                           fire_filenames[x]))})
 
-# All fire event save in order
+# # All fire event save in order
 # save(FIRE_DATA,
 #      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/SANparks/FIRE_DATA.Rdata')
 
