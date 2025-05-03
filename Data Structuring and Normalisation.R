@@ -47,6 +47,9 @@ function (x) {FINAL_LULC[[which(!final_lulc_names %in% duplicate_aerial_imagerie
 # exclude 2023 period from LULC- we're only dealing with 108 periods now from 2014 to 2022
 LULC_2014_2022 <- lapply(1:108, function (x) {LULC[[x]]})
 
+lapply(1:108, function (x) {names(LULC_2014_2022[[x]]) <- LULC_2014_2022[[x]]@file@name
+names(LULC_2014_2022[[x]]) <<- gsub('[.]','', names(LULC_2014_2022[[x]]))}) # rename layers
+
 # # Visualising the LULC to check if everything is in order
 # pblapply(seq_along(LULC_2014_2022), function (x) {
 #   tm_shape(LULC_2014_2022[[x]])+
@@ -112,6 +115,9 @@ NDVI <- lapply(seq_along(which(!NDVI_names %in% duplicate_aerial_imageries_to_re
 
 # exclude 2023 period from NDVI- we're only dealing with 108 periods now from 2014 to 2022
 NDVI_2014_2022 <- lapply(1:108, function (x) {NDVI[[x]]})
+lapply(1:108, function (x) {names(NDVI_2014_2022[[x]]) <- NDVI_2014_2022[[x]]@file@name
+names(NDVI_2014_2022[[x]]) <<- gsub('[.]','', names(NDVI_2014_2022[[x]]))}) # rename layers
+
 
 # # Visualising the NDVI to check if everything is in order
 # lapply(seq_along(NDVI_2014_2022), function(x) {plot(NDVI_2014_2022[[x]],
@@ -131,10 +137,14 @@ NDMI <- lapply(seq_along(which(!NDMI_names %in% duplicate_aerial_imageries_to_re
 # exclude 2023 period from NDMI- we're only dealing with 108 periods now from 2014 to 2022
 NDMI_2014_2022 <- lapply(1:108, function (x) {NDMI[[x]]})
 
-# Visualising the NDMI to check if everything is in order
-lapply(seq_along(NDMI_2014_2022), function(x) {plot(NDMI_2014_2022[[x]],
-                                                    col = NDMI_colour_ramp,
-                                                    main = NDMI_2014_2022[[x]]@file@name)})
+lapply(1:108, function (x) {names(NDMI_2014_2022[[x]]) <- NDMI_2014_2022[[x]]@file@name
+names(NDMI_2014_2022[[x]]) <<- gsub('[.]','', names(NDMI_2014_2022[[x]]))}) # rename layers
+
+# # Visualising the NDMI to check if everything is in order
+# lapply(seq_along(NDMI_2014_2022), function(x) {plot(NDMI_2014_2022[[x]],
+#                                                     col = NDMI_colour_ramp,
+#                                                     main = NDMI_2014_2022[[x]]@file@name)})
+
 
 # NBR ---------------------------------------------------------------------
 
@@ -149,6 +159,9 @@ NBR <- lapply(seq_along(which(!NBR_names %in% duplicate_aerial_imageries_to_remo
 # exclude 2023 period from NBR- we're only dealing with 108 periods now from 2014 to 2022
 NBR_2014_2022 <- lapply(1:108, function (x) {NBR[[x]]})
 
+lapply(1:108, function (x) {names(NBR_2014_2022[[x]]) <- NBR_2014_2022[[x]]@file@name
+names(NBR_2014_2022[[x]]) <<- gsub('[.]','', names(NBR_2014_2022[[x]]))}) # rename layers
+
 # # Visualising the NBR to check if everything is in order
 # lapply(seq_along(NBR_2014_2022), function(x) {plot(NBR_2014_2022[[x]],
 #                                                     col = NBR_colour_ramp,
@@ -162,6 +175,7 @@ ATP_2002_2022 <- lapply(1:252, function(x) {WorldClimCHIRPS_precipitation_raster
 # exclude 2023 period from ATP- we're only dealing with 108 periods now from 2014 to 2022
 ATP_2014_2022 <- lapply(145:252, function(x) {ATP_2002_2022[[x]]})
 
+
 # # Visualising the ATP to check if everything is in order
 # lapply(seq_along(ATP_2014_2022), function (x) {plot(ATP_2014_2022[[x]], 
 #                                                     main = names(ATP_2014_2022[[x]]), 
@@ -171,6 +185,11 @@ ATP_2014_2022 <- lapply(145:252, function(x) {ATP_2002_2022[[x]]})
 
 # exclude 2023 period from AMT- we will deal with 252 periods from 2002 to 2022 as a form of sensitivity analysis at a later stage
 AMT_2002_2022 <- lapply(1:252, function(x) {WorldClim_S3LST_temperature_raster_list[[x]]})
+
+lapply(241:252, function(x){
+  names(AMT_2002_2022[[x]]) <- names(ATP_2002_2022[[x]])
+  names(AMT_2002_2022[[x]]) <<- sub('TP','AMT', names(AMT_2002_2022[[x]]))
+}) # rename last few layers
 
 # In 2022, there is a slight resolution and extent difference due to acquisition from 2 different platform. 
 # Resample the latter for consistency in the data
@@ -214,27 +233,42 @@ ARH_2014_2022 <- lapply(145:252, function(x) {ARH_2002_2022[[x]]})
 
 # Elevation ---------------------------------------------------------------
 
-# elevation is a static variable therefore replicated to match the 2002 to 2014 period
+# elevation is a static variable therefore replicated to match the 2002 to 2022 period
 elevation_replicated_for_2002_to_2022 <- replicate(252, elevation_raster_trans)
 
-# elevation is a static variable therefore replicated to match the 2002 to 2014 period
-elevation_replicated_for_2014_to_2022 <- replicate(108, elevation_raster_trans)
+lapply(seq_along(elevation_replicated_for_2002_to_2022), function(x){
+  names(elevation_replicated_for_2002_to_2022[[x]]) <- names(ATP_2002_2022[[x]])
+  names(elevation_replicated_for_2002_to_2022[[x]]) <<- sub('TP','Elev', names(elevation_replicated_for_2002_to_2022[[x]]))
+}) # rename layers although variables are static
+
+# elevation is a static variable therefore replicated to match the 2014 to 2022 period
+elevation_replicated_for_2014_to_2022 <- lapply(145:252, function(x) {elevation_replicated_for_2002_to_2022[[x]]})
 
 # Slope -------------------------------------------------------------------
 
-# slope is a static variable therefore replicated to match the 2002 to 2014 period
+# slope is a static variable therefore replicated to match the 2002 to 2022 period
 slope_replicated_for_2002_to_2022 <- replicate(252, slope_raster_trans)
 
-# slope is a static variable therefore replicated to match the 2002 to 2014 period
-slope_replicated_for_2014_to_2022 <- replicate(108, slope_raster_trans)
+lapply(seq_along(slope_replicated_for_2002_to_2022), function(x){
+  names(slope_replicated_for_2002_to_2022[[x]]) <- names(ATP_2002_2022[[x]])
+  names(slope_replicated_for_2002_to_2022[[x]]) <<- sub('TP','Slope', names(slope_replicated_for_2002_to_2022[[x]]))
+}) # rename layers although variables are static
+
+# slope is a static variable therefore replicated to match the 2014 to 2022 period
+slope_replicated_for_2014_to_2022 <- lapply(145:252, function(x) {slope_replicated_for_2002_to_2022[[x]]})
 
 # Aspect ------------------------------------------------------------------
 
-# aspect is a static variable therefore replicated to match the 2002 to 2014 period
+# aspect is a static variable therefore replicated to match the 2002 to 2022 period
 aspect_replicated_for_2002_to_2022 <- replicate(252, aspect_raster_trans)
 
-# aspect is a static variable therefore replicated to match the 2002 to 2014 period
-aspect_replicated_for_2014_to_2022 <- replicate(108, aspect_raster_trans)
+lapply(seq_along(aspect_replicated_for_2002_to_2022), function(x){
+  names(aspect_replicated_for_2002_to_2022[[x]]) <- names(ATP_2002_2022[[x]])
+  names(aspect_replicated_for_2002_to_2022[[x]]) <<- sub('TP','Aspect', names(aspect_replicated_for_2002_to_2022[[x]]))
+}) # rename layers although variables are static
+
+# aspect is a static variable therefore replicated to match the 2014 to 2022 period
+aspect_replicated_for_2014_to_2022 <- lapply(145:252, function(x) {aspect_replicated_for_2002_to_2022[[x]]})
 
 # Fire --------------------------------------------------------------------
 
@@ -270,7 +304,7 @@ ANSWS_2014_2022_stack <- stack(ANSWS_2014_2022) |> resample(LULC_2014_2022[[1]],
 ARH_2014_2022_stack <- stack(ARH_2014_2022) |> resample(LULC_2014_2022[[1]], method = 'ngb') |> stack()
 elevation_replicated_for_2014_to_2022_stack <- stack(elevation_replicated_for_2014_to_2022) |> resample(LULC_2014_2022[[1]], method = 'ngb') |> stack()
 slope_replicated_for_2014_to_2022_stack <- stack(slope_replicated_for_2014_to_2022) |> resample(LULC_2014_2022[[1]], method = 'ngb') |> stack()
-aspect_replicated_for_2014_to_2022 <- stack(aspect_replicated_for_2014_to_2022) |> resample(LULC_2014_2022[[1]], method = 'ngb') |> stack()
+aspect_replicated_for_2014_to_2022_stack <- stack(aspect_replicated_for_2014_to_2022) |> resample(LULC_2014_2022[[1]], method = 'ngb') |> stack()
 
 # response variable
 FIRE_2014_2022_stack <- stack(FIRE_2014_2022) |> resample(LULC_2014_2022[[1]], method = 'ngb') |> stack()
@@ -287,6 +321,82 @@ aspect_replicated_for_2002_to_2022_stack <- stack(aspect_replicated_for_2002_to_
 # response variable
 FIRE_2002_2022_stack <- stack(FIRE_2002_2022) |> resample(ATP_2002_2022[[1]], method = 'ngb') |> stack()
 
+# Applying min-max normalisation to stack raster --------------------------
+
+# Function to be applied on the raster values; return: rasterLayer object
+raster_stack_minmax_norm <- function(stack_raster, index) {
+  
+  data <- stack_raster # raster stack
+  min_val <-  min(minValue(data)) # global minimum of raster stack
+  max_val <- max(maxValue(data)) # global maximum of raster stack
+  index <- index # raster index
+  val <- data[[index]] # relevant raster only
+  
+  x <- (val - min_val) / (max_val - min_val) # normalisation calculation
+  x[is.na(values(x))] <- 0 # convert all NA values after normalisation to 0
+  return(x)
+}
+
+# Normalising the 2014 to 2022 stack using the min-max normalisation function with all NAs converted to 0
+LULC_2014_2022_stack_norm <- pblapply(1:nlayers(LULC_2014_2022_stack), 
+                                      function(x) {raster_stack_minmax_norm(LULC_2014_2022_stack, x)}) |> stack()
+
+NDVI_2014_2022_stack_norm <- pblapply(1:nlayers(NDVI_2014_2022_stack), 
+                                      function(x) {raster_stack_minmax_norm(NDVI_2014_2022_stack, x)}) |> stack()
+
+NDMI_2014_2022_stack_norm <- pblapply(1:nlayers(NDMI_2014_2022_stack), 
+                                      function(x) {raster_stack_minmax_norm(NDMI_2014_2022_stack, x)}) |> stack()
+
+NBR_2014_2022_stack_norm <- pblapply(1:nlayers(NBR_2014_2022_stack), 
+                                     function(x) {raster_stack_minmax_norm(NBR_2014_2022_stack, x)}) |> stack()
+
+ATP_2014_2022_stack_norm <- pblapply(1:nlayers(ATP_2014_2022_stack), 
+                                     function(x) {raster_stack_minmax_norm(ATP_2014_2022_stack, x)}) |> stack()
+
+AMT_2014_2022_stack_norm <- pblapply(1:nlayers(AMT_2014_2022_stack), 
+                                     function(x) {raster_stack_minmax_norm(AMT_2014_2022_stack, x)}) |> stack()
+
+ANSWS_2014_2022_stack_norm <- pblapply(1:nlayers(ANSWS_2014_2022_stack), 
+                                       function(x) {raster_stack_minmax_norm(ANSWS_2014_2022_stack, x)}) |> stack()
+
+ARH_2014_2022_stack_norm <- pblapply(1:nlayers(ARH_2014_2022_stack), 
+                                     function(x) {raster_stack_minmax_norm(ARH_2014_2022_stack, x)}) |> stack()
+
+elevation_replicated_for_2014_to_2022_stack_norm <- pblapply(1:nlayers(elevation_replicated_for_2014_to_2022_stack), 
+                                                        function(x) {raster_stack_minmax_norm(elevation_replicated_for_2014_to_2022_stack, x)}) |> stack()
+
+slope_replicated_for_2014_to_2022_stack_norm <- pblapply(1:nlayers(slope_replicated_for_2014_to_2022_stack), 
+                                                         function(x) {raster_stack_minmax_norm(slope_replicated_for_2014_to_2022_stack, x)}) |> stack()
+
+aspect_replicated_for_2014_to_2022_stack_norm <- pblapply(1:nlayers(aspect_replicated_for_2014_to_2022_stack), 
+                                                          function(x) {raster_stack_minmax_norm(aspect_replicated_for_2014_to_2022_stack, x)}) |> stack()
+
+FIRE_2014_2022_stack_norm <- pblapply(1:nlayers(FIRE_2014_2022_stack), 
+                                      function(x) {raster_stack_minmax_norm(FIRE_2014_2022_stack, x)}) |> stack()
+
+# Normalising the 2002 to 2022 stack using the min-max normalisation function with all NAs converted to 0
+ATP_2002_2022_stack_norm <- pblapply(1:nlayers(ATP_2002_2022_stack), 
+                                     function(x) {raster_stack_minmax_norm(ATP_2002_2022_stack, x)}) |> stack()
+
+AMT_2002_2022_stack_norm <- pblapply(1:nlayers(AMT_2002_2022_stack), 
+                                     function(x) {raster_stack_minmax_norm(AMT_2002_2022_stack, x)}) |> stack()
+
+ANSWS_2002_2022_stack_norm <- pblapply(1:nlayers(ANSWS_2002_2022_stack), 
+                                       function(x) {raster_stack_minmax_norm(ANSWS_2002_2022_stack, x)}) |> stack()
+
+ARH_2002_2022_stack_norm <- pblapply(1:nlayers(ARH_2002_2022_stack), 
+                                     function(x) {raster_stack_minmax_norm(ARH_2002_2022_stack, x)}) |> stack()
+
+elevation_replicated_for_2002_to_2022_stack_norm <- pblapply(1:nlayers(elevation_replicated_for_2002_to_2022_stack), 
+                                                             function(x) {raster_stack_minmax_norm(elevation_replicated_for_2002_to_2022_stack, x)}) |> stack()
+
+slope_replicated_for_2002_to_2022_stack_norm <- pblapply(1:nlayers(slope_replicated_for_2002_to_2022_stack), 
+                                                    function(x) {raster_stack_minmax_norm(slope_replicated_for_2002_to_2022_stack, x)}) |> stack()
+
+aspect_replicated_for_2002_to_2022_stack_norm <- pblapply(1:nlayers(aspect_replicated_for_2002_to_2022_stack), 
+                                                          function(x) {raster_stack_minmax_norm(aspect_replicated_for_2002_to_2022_stack, x)}) |> stack()
+
+
 # Reshape for ConvLSTM format  --------------------------------------------
 predictor_variables_2014_2022 <- abind(LULC_2014_2022_stack|> as.array(),
                         NDVI_2014_2022_stack|> as.array(),
@@ -298,13 +408,10 @@ predictor_variables_2014_2022 <- abind(LULC_2014_2022_stack|> as.array(),
                         ARH_2014_2022_stack|> as.array(),
                         elevation_replicated_for_2014_to_2022_stack|> as.array(),
                         slope_replicated_for_2014_to_2022_stack|> as.array(),
-                        aspect_replicated_for_2014_to_2022|> as.array(),
+                        aspect_replicated_for_2014_to_2022_stack|> as.array(),
                         along = 4) # Shape: ([1] height/row, [2] width/column, [3] time_steps, [4] variables/channels)
 
 
 
-predictor_variables_2014_2022[, , 1, 1]
-predictor_variables_2014_2022[is.na(predictor_variables_2014_2022)] <- 0
-NDVI_2014_2022[[1]]|> is.na()
-predictor_variables_2014_2022
-predictor_variables_2014_2022|> dim()
+
+
