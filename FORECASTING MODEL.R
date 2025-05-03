@@ -784,6 +784,12 @@ model <- keras_model_sequential() %>%
     return_sequences = TRUE,
     activation = "tanh"
   ) %>%
+
+  # check the difference between the 2 last layers
+  # layer_conv_2d(filters = 1, 
+  #               kernel_size = c(1,1),
+  #               activation = "sigmoid")
+
   layer_conv_3d(
     filters = 1,
     kernel_size = c(1, 1, 1),
@@ -857,22 +863,29 @@ WS_visualisation(raster = predicted_raster, 'quantile')
 
 # Must loop model to predict on final input in the model to be able to perform an autoregressive forecasting
 
+last_known_data <- testX
 
 # # Assuming `model` is your trained Convolutional LSTM model
 # # `last_known_data` is the last known input array, shape: (1, height, width, channels)
-# forecast_steps <- 12  # Example: forecast for 12 months
-# predicted_array <- array(NA, dim = c(forecast_steps, nrow(last_known_data), ncol(last_known_data), nlayers(last_known_data)))
-# 
-# # Start with the last known data
-# current_input <- array(last_known_data, dim = c(1, nrow(last_known_data), ncol(last_known_data), nlayers(last_known_data)))
-# 
-# for (t in 1:forecast_steps) {
-#   # Predict the next step
-#   next_output <- predict(model, current_input)
-#   
-#   # Store the output
-#   predicted_array[t,,,] <- next_output
-#   
-#   # Use the output as input for the next step
-#   current_input <- array(next_output, dim = c(1, nrow(last_known_data), ncol(last_known_data), nlayers(last_known_data)))
-# }
+forecast_steps <- 4  # Example: forecast for 'n' months
+predicted_array <- array(NA, dim = c(1, forecast_steps, 32, 32, 1))
+dim(predicted_array)
+
+# Start with the last known data
+current_input <- last_known_data
+dim(current_input)
+tensorflow::set_random_seed(1)
+for (t in 1:forecast_steps) {
+  # Predict the next step
+  next_output <- predict(model, current_input)
+  dim(next_output)
+  crange(next_output)
+
+  # Store the output
+  predicted_array[1,t,,,] <- next_output
+
+  # Use the output as input for the next step
+  current_input <- next_output
+}
+
+
