@@ -349,7 +349,7 @@ str(median_prec_stack_df)
 
 median_prec_map <- ggplot()+
   geom_raster(data = median_prec_stack_df, aes(x = x, y = y, fill = value))+
-  scale_fill_gradientn(colours = blue_ramp, 'Median\n TP (mm)',
+  scale_fill_gradientn(colours = blue_ramp, 'Median\n TP\n (mm)',
                        breaks = seq(min(median_prec_stack_df$value),max(median_prec_stack_df$value),length.out = 11),
                        labels = round(seq(min(median_prec_stack_df$value),max(median_prec_stack_df$value),length.out = 11),2)) +
   facet_wrap(~ variable, nrow = 4, ncol = 3)+
