@@ -222,6 +222,8 @@ names(median_NDVI_stack_2014_to_2023) <- c('Median NDVI 2014',
                                            'Median NDVI 2021',
                                            'Median NDVI 2022',
                                            'Median NDVI 2023') # rename raster stack
+# save(median_NDVI_stack_2014_to_2023, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/Median Rasters/median_NDVI_stack_2014_to_2023.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/Median Rasters/median_NDVI_stack_2014_to_2023.Rdata')
 
 # Converting stack into a dataframe
 median_NDVI_stack_df <- as.data.frame(projectRaster(median_NDVI_stack_2014_to_2023, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), xy  = T) %>%
