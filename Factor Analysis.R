@@ -249,8 +249,8 @@ dfnorm_2014_2022 <- reduce(dfnorm_2014_2022_list, inner_join, by = c("x", "y", "
 # str(dfnorm_2014_2022)
 
 # save dataframe
-# save(dfnorm_2014_2022, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/dfnorm_2014_2022.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/dfnorm_2014_2022.Rdata')
+# save(dfnorm_2014_2022, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/dfnorm_2014_2022.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/dfnorm_2014_2022.Rdata')
 
 # Example on how to convert the tabular data into raster format again after normalisation
 x <- dfnorm_2014_2022 %>%
@@ -295,41 +295,42 @@ dfnorm_2014_2022$Fire_Value <- as.factor(dfnorm_2014_2022$Fire_Value) # convert 
 # 
 # plot(rf_dfnorm_2014_2022$err.rate[,1], type = 'l')
 # 
-# newdataX <- dfnorm_2014_2022 %>%
-#   filter(Year %in% c(2019)) %>%
-#   dplyr::select(-c(1:4,16))
-# newdataY <- dfnorm_2014_2022 %>%
-#   filter(Year %in% c(2019)) %>%
-#   dplyr::select(16) %>%
-#   as.vector()
+newdataX <- dfnorm_2014_2022 %>%
+  filter(Year %in% c(2019)) %>%
+  dplyr::select(-c(1:4,16))
+newdataY <- dfnorm_2014_2022 %>%
+  filter(Year %in% c(2019)) %>%
+  dplyr::select(16) %>%
+  as.vector()
 # 
 # y <- predict(rf_dfnorm_2014_2022, newdataX) |> as.vector()|>as.numeric()
 # 
 # (sum(newdataY$Fire_Value==y)/length(y))*100
 # 
-# # create combinations of hyperparameters
-# rf_gridsearch <- expand.grid(mtry = 2:11,
-#                        splitrule = 'gini', # gini for classification
-#                        min.node.size=2) 
-# 
-# # use ranger to run all these models
-# set.seed(1)
-# rf_gridsearch_Model_dfnorm_2014_2022_subset <- train(Fire_Value ~., 
-#                        data =  dfnorm_2014_2022_subset[,-c(1:4)],
-#                        method = 'ranger',
-#                        num.trees = 100,
-#                        verbose = T,
-#                        trControl = trainControl(method = 'oob', verboseIter = T, allowParallel = T),
-#                        tuneGrid = rf_gridsearch,
-#                        importance = 'permutation') # Variable importance according to Mean Decrease in Accuracy (MDA)
-# 
-# # save model
-# # save(rf_gridsearch_Model_dfnorm_2014_2022_subset, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/rf_gridsearch_Model_dfnorm_2014_2022_subset.Rdata')
-# 
-# varImp(rf_gridsearch_Model_dfnorm_2014_2022_subset)
-# y <- predict(rf_gridsearch_Model_dfnorm_2014_2022_subset, newdataX) |> as.vector()|>as.numeric()
-# 
-# (sum(newdataY$Fire_Value==y)/length(y))*100
+# create combinations of hyperparameters
+rf_gridsearch <- expand.grid(mtry = 2:(ncol(dfnorm_2014_2022_subset) - 1),
+                       splitrule = c('gini', 'hellinger'), # gini for classification
+                       min.node.size=seq(1, 16, 5))
+
+# use ranger to run all these models
+set.seed(1)
+rf_gridsearch_Model_dfnorm_2014_2022_subset <- train(Fire_Value ~.,
+                       data =  dfnorm_2014_2022_subset,
+                       method = 'ranger',
+                       num.trees = 100,
+                       verbose = T,
+                       trControl = trainControl(method = 'oob', verboseIter = T, allowParallel = T),
+                       tuneGrid = rf_gridsearch,
+                       importance = 'permutation') # Variable importance according to Mean Decrease in Accuracy (MDA)
+# rerun above using ranger
+# keep.probs = T
+# save model
+# save(rf_gridsearch_Model_dfnorm_2014_2022_subset, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/rf_gridsearch_Model_dfnorm_2014_2022_subset.Rdata')
+
+varImp(rf_gridsearch_Model_dfnorm_2014_2022_subset)
+y <- predict(rf_gridsearch_Model_dfnorm_2014_2022_subset, newdataX) |> as.vector()|>as.numeric()
+
+(sum(newdataY$Fire_Value==y)/length(y))*100
 
 
 
@@ -350,10 +351,23 @@ dfnorm_2014_2022_subset <- dfnorm_2014_2022 %>%
 
 dfnorm_2014_2022_subset$x_norm <- minmax_norm(dfnorm_2014_2022_subset$x)
 dfnorm_2014_2022_subset$y_norm <- minmax_norm(dfnorm_2014_2022_subset$y)
+# x <- dfnorm_2014_2022_subset[,17:18]
+# save(x, file = '/Users/tanweernujjoo/Desktop/dfsubset_xynorm.Rdata')
+
 
 distance_matrix <- parDist(as.matrix(dfnorm_2014_2022_subset[,c('x_norm','y_norm')]),
                            method = "euclidean", 
                            threads = 4)
+
+?dist
+
+head(distance_matrix)
+distance_matrix[1]
+class(distance_matrix)
+
+str(distance_matrix)
+distance_matrix[2]
+diag(distance_matrix)
 
 model.non.spatial <- spatialRF::rf(
   data = dfnorm_2014_2022_subset,
@@ -398,7 +412,7 @@ model.non.spatial <- spatialRF::rf(
 #   x = plant_richness_df[, predictor.variable.names],
 #   cor.threshold = 0.6,
 #   preference.order = preference.order
-# ) %>% 
+# ) %>%
 #   spatialRF::auto_vif(
 #     vif.threshold = 2.5,
 #     preference.order = preference.order
