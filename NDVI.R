@@ -11,6 +11,7 @@
   library(gstat)
   library(colorRamps)
   library(pbapply)
+  library(reshape2)
 }
 
 # Colour ramp for NDVI
@@ -211,178 +212,206 @@ median_NDVI_stack_2014_to_2023 <- stack(median_NDVI_raster_2014,
                                         median_NDVI_raster_2021,
                                         median_NDVI_raster_2022,
                                         median_NDVI_raster_2023)
+names(median_NDVI_stack_2014_to_2023) <- c('Median NDVI 2014', 
+                                           'Median NDVI 2015',
+                                           'Median NDVI 2016',
+                                           'Median NDVI 2017',
+                                           'Median NDVI 2018',
+                                           'Median NDVI 2019',
+                                           'Median NDVI 2020',
+                                           'Median NDVI 2021',
+                                           'Median NDVI 2022',
+                                           'Median NDVI 2023') # rename raster stack
 
-# Find the range in full range in the NDVI timeframe
-zlim_NDVI <- range(c(minValue(median_NDVI_stack_2014_to_2023), 
-                     maxValue(median_NDVI_stack_2014_to_2023)))
-# Function to extract NDVI range and print neatly
-NDVI_range <- function(data){
-  range <- round(range(c(minValue(data), maxValue(data))),1)
-  return(paste('Median NDVI Range from ', range[1], 'to', range[2]))
-}
+# Converting stack into a dataframe
+median_NDVI_stack_df <- as.data.frame(projectRaster(median_NDVI_stack_2014_to_2023, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), xy  = T) %>%
+  melt(id.vars= c('x','y'), na.rm = T) %>%
+  as_tibble() %>%
+  # Find the range of NDVI value for each median series of each year
+  mutate(variable = as.factor(case_when(variable == 'Median.NDVI.2014'~ paste0('2014 Series\n Median NDVI Range from ', round(minValue(median_NDVI_raster_2014),1), ' to ', round(maxValue(median_NDVI_raster_2014),1)),
+                                        variable == 'Median.NDVI.2015'~paste0('2015 Series\n Median NDVI Range from ', round(minValue(median_NDVI_raster_2015),1), ' to ', round(maxValue(median_NDVI_raster_2015),1)),
+                                        variable == 'Median.NDVI.2016'~paste0('2016 Series\n Median NDVI Range from ', round(minValue(median_NDVI_raster_2016),1), ' to ', round(maxValue(median_NDVI_raster_2016),1)),
+                                        variable == 'Median.NDVI.2017'~paste0('2017 Series\n Median NDVI Range from ', round(minValue(median_NDVI_raster_2017),1), ' to ', round(maxValue(median_NDVI_raster_2017),1)),
+                                        variable == 'Median.NDVI.2018'~paste0('2018 Series\n Median NDVI Range from ', round(minValue(median_NDVI_raster_2018),1), ' to ', round(maxValue(median_NDVI_raster_2018),1)),
+                                        variable == 'Median.NDVI.2019'~paste0('2019 Series\n Median NDVI Range from ', round(minValue(median_NDVI_raster_2019),1), ' to ', round(maxValue(median_NDVI_raster_2019),1)),
+                                        variable == 'Median.NDVI.2020'~paste0('2020 Series\n Median NDVI Range from ', round(minValue(median_NDVI_raster_2020),1), ' to ', round(maxValue(median_NDVI_raster_2020),1)),
+                                        variable == 'Median.NDVI.2021'~paste0('2021 Series\n Median NDVI Range from ', round(minValue(median_NDVI_raster_2021),1), ' to ', round(maxValue(median_NDVI_raster_2021),1)),
+                                        variable == 'Median.NDVI.2022'~paste0('2022 Series\n Median NDVI Range from ', round(minValue(median_NDVI_raster_2022),1), ' to ', round(maxValue(median_NDVI_raster_2022),1)),
+                                        variable == 'Median.NDVI.2023'~paste0('2023 Series\n Median NDVI Range from ', round(minValue(median_NDVI_raster_2023),1), ' to ', round(maxValue(median_NDVI_raster_2023),1)))))
 
+head(median_NDVI_stack_df)
+str(median_NDVI_stack_df)
 
-# plot the median NDVI rasters for each year
-{ 
-  
-  # par(mar = c(bottom, left, top, right))
-  # par(mar = c(8.0, 3, 1.3, 0.1)) # customised margin
-  # par(mfrow = c(3,4)) # layout control
-  par(mar = c(4, 3, 1.8, 0.5)) # customised margin
-  par(mfrow = c(4,3)) # layout control
-  plot(projectRaster(median_NDVI_raster_2014, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
-       col = NDVI_colour_ramp,
-       xlab = '',
-       ylab = '',
-       zlim = zlim_NDVI, # this makes a better global representation of the data in terms of colour
-       cex.main = .9,
-       cex.axis = .6,
-       legend = F)
-  title(main=median_NDVI_raster_2014@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
-  mtext(NDVI_range(median_NDVI_raster_2014), side = 3, cex = .5, line = .1) # add subtitle
-  title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
-  title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
-  
-  plot(projectRaster(median_NDVI_raster_2015, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
-       col = NDVI_colour_ramp,
-       xlab = '',
-       ylab = '',
-       zlim = zlim_NDVI, # this makes a better global representation of the data in terms of colour
-       cex.main = .9,
-       cex.axis = .6,
-       legend = F)
-  title(main=median_NDVI_raster_2015@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
-  mtext(NDVI_range(median_NDVI_raster_2015), side = 3, cex = .5, line = .1) # add subtitle
-  title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
-  title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
-  
-  plot(projectRaster(median_NDVI_raster_2016, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
-       col = NDVI_colour_ramp,
-       xlab = '',
-       ylab = '',
-       zlim = zlim_NDVI, # this makes a better global representation of the data in terms of colour
-       cex.main = .9,
-       cex.axis = .6,
-       legend = F)
-  title(main=median_NDVI_raster_2016@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
-  mtext(NDVI_range(median_NDVI_raster_2016), side = 3, cex = .5, line = .1) # add subtitle
-  title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
-  title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
-  
-  plot(projectRaster(median_NDVI_raster_2017, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
-       col = NDVI_colour_ramp,
-       xlab = '',
-       ylab = '',
-       zlim = zlim_NDVI, # this makes a better global representation of the data in terms of colour
-       cex.main = .9,
-       cex.axis = .6,
-       legend = F)
-  title(main=median_NDVI_raster_2017@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
-  mtext(NDVI_range(median_NDVI_raster_2017), side = 3, cex = .5, line = .1) # add subtitle
-  title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
-  title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
-  
-  plot(projectRaster(median_NDVI_raster_2018, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
-       col = NDVI_colour_ramp,
-       xlab = '',
-       ylab = '',
-       zlim = zlim_NDVI, # this makes a better global representation of the data in terms of colour
-       cex.main = .9,
-       cex.axis = .6,
-       legend = F)
-  title(main=median_NDVI_raster_2018@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
-  mtext(NDVI_range(median_NDVI_raster_2018), side = 3, cex = .5, line = .1) # add subtitle
-  title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
-  title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
-  
-  plot(projectRaster(median_NDVI_raster_2019, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
-       col = NDVI_colour_ramp,
-       xlab = '',
-       ylab = '',
-       zlim = zlim_NDVI, # this makes a better global representation of the data in terms of colour
-       cex.main = .9,
-       cex.axis = .6,
-       legend = F)
-  title(main=median_NDVI_raster_2019@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
-  mtext(NDVI_range(median_NDVI_raster_2019), side = 3, cex = .5, line = .1) # add subtitle
-  title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
-  title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
-  
-  plot(projectRaster(median_NDVI_raster_2020, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
-       col = NDVI_colour_ramp,
-       xlab = '',
-       ylab = '',
-       zlim = zlim_NDVI, # this makes a better global representation of the data in terms of colour
-       cex.main = .9,
-       cex.axis = .6,
-       legend = F)
-  title(main=median_NDVI_raster_2020@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
-  mtext(NDVI_range(median_NDVI_raster_2020), side = 3, cex = .5, line = .1) # add subtitle
-  title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
-  title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
-  
-  plot(projectRaster(median_NDVI_raster_2021, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
-       col = NDVI_colour_ramp,
-       xlab = '',
-       ylab = '',
-       zlim = zlim_NDVI, # this makes a better global representation of the data in terms of colour
-       cex.main = .9,
-       cex.axis = .6,
-       legend = F)
-  title(main=median_NDVI_raster_2021@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
-  mtext(NDVI_range(median_NDVI_raster_2021), side = 3, cex = .5, line = .1) # add subtitle
-  title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
-  title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
-  
-  plot(projectRaster(median_NDVI_raster_2022, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
-       col = NDVI_colour_ramp,
-       xlab = '',
-       ylab = '',
-       zlim = zlim_NDVI, # this makes a better global representation of the data in terms of colour
-       cex.main = .9,
-       cex.axis = .6,
-       legend = F)
-  title(main=median_NDVI_raster_2022@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
-  mtext(NDVI_range(median_NDVI_raster_2022), side = 3, cex = .5, line = .1) # add subtitle
-  title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
-  title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
-  
-  plot(projectRaster(median_NDVI_raster_2023, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
-       col = NDVI_colour_ramp,
-       xlab = '',
-       ylab = '',
-       zlim = zlim_NDVI, # this makes a better global representation of the data in terms of colour
-       cex.main = .9,
-       cex.axis = .6,
-       legend = T,
-       horizontal = F, # make legend horizontal or vertical
-       legend.shrink = 1, # stretch or compress legend
-       axis.args = list(cex.axis = .6))
-  #mgp = c(3, 0.2, 0)), # adjust legend lable size and position to ticks
-  # legend.args = list(text = "Median \nNDVI", side = 4, cex = .5)) # add legend title and adjust size
-  title(main=median_NDVI_raster_2023@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
-  mtext(NDVI_range(median_NDVI_raster_2023), side = 3, cex = .5, line = .1) # add subtitle
-  title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
-  title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
-  
-}
+median_NDVI_map <- ggplot()+
+  geom_raster(data = median_NDVI_stack_df, aes(x = x, y = y, fill = value))+
+  scale_fill_gradientn(colours = NDVI_colour_ramp, 'Median\n NDVI',
+                       breaks = seq(min(median_NDVI_stack_df$value),max(median_NDVI_stack_df$value),length.out = 11),
+                       labels = round(seq(min(median_NDVI_stack_df$value),max(median_NDVI_stack_df$value),length.out = 11),2)) +
+  facet_wrap(~ variable, nrow = 4, ncol = 3)+
+  xlab('Longitude')+
+  ylab('Latitude')+
+  theme_bw()+
+  theme(panel.grid.major= element_blank(),
+        strip.text = element_text(size=5),
+        legend.position = 'right')+
+  guides(fill = guide_colorbar(barwidth = .4, barheight = 30))
 
+# save plot
+ggsave('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/EDA plots/median_NDVI_map.pdf', 
+       plot = median_NDVI_map, width = 6.56, height = 8)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# # Find the range in full range in the NDVI timeframe
+# zlim_NDVI <- range(c(min(minValue(median_NDVI_stack_2014_to_2023)), 
+#                      max(maxValue(median_NDVI_stack_2014_to_2023))))
+# # Function to extract NDVI range and print neatly
+# NDVI_range <- function(data){
+#   range <- round(range(c(minValue(data), maxValue(data))),1)
+#   return(paste('Median NDVI Range from ', range[1], 'to', range[2]))
+# }
+# 
+# 
+# # plot the median NDVI rasters for each year
+# { 
+#   
+#   # par(mar = c(bottom, left, top, right))
+#   # par(mar = c(8.0, 3, 1.3, 0.1)) # customised margin
+#   # par(mfrow = c(3,4)) # layout control
+#   par(mar = c(4, 3, 1.8, 0.5)) # customised margin
+#   par(mfrow = c(4,3)) # layout control
+#   plot(projectRaster(median_NDVI_raster_2014, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
+#        col = NDVI_colour_ramp,
+#        xlab = '',
+#        ylab = '',
+#        zlim = zlim_NDVI, # this makes a better global representation of the data in terms of colour
+#        cex.main = .9,
+#        cex.axis = .6,
+#        legend = F)
+#   title(main=median_NDVI_raster_2014@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
+#   mtext(NDVI_range(median_NDVI_raster_2014), side = 3, cex = .5, line = .1) # add subtitle
+#   title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+#   title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+#   
+#   plot(projectRaster(median_NDVI_raster_2015, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
+#        col = NDVI_colour_ramp,
+#        xlab = '',
+#        ylab = '',
+#        zlim = zlim_NDVI, # this makes a better global representation of the data in terms of colour
+#        cex.main = .9,
+#        cex.axis = .6,
+#        legend = F)
+#   title(main=median_NDVI_raster_2015@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
+#   mtext(NDVI_range(median_NDVI_raster_2015), side = 3, cex = .5, line = .1) # add subtitle
+#   title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+#   title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+#   
+#   plot(projectRaster(median_NDVI_raster_2016, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
+#        col = NDVI_colour_ramp,
+#        xlab = '',
+#        ylab = '',
+#        zlim = zlim_NDVI, # this makes a better global representation of the data in terms of colour
+#        cex.main = .9,
+#        cex.axis = .6,
+#        legend = F)
+#   title(main=median_NDVI_raster_2016@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
+#   mtext(NDVI_range(median_NDVI_raster_2016), side = 3, cex = .5, line = .1) # add subtitle
+#   title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+#   title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+#   
+#   plot(projectRaster(median_NDVI_raster_2017, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
+#        col = NDVI_colour_ramp,
+#        xlab = '',
+#        ylab = '',
+#        zlim = zlim_NDVI, # this makes a better global representation of the data in terms of colour
+#        cex.main = .9,
+#        cex.axis = .6,
+#        legend = F)
+#   title(main=median_NDVI_raster_2017@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
+#   mtext(NDVI_range(median_NDVI_raster_2017), side = 3, cex = .5, line = .1) # add subtitle
+#   title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+#   title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+#   
+#   plot(projectRaster(median_NDVI_raster_2018, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
+#        col = NDVI_colour_ramp,
+#        xlab = '',
+#        ylab = '',
+#        zlim = zlim_NDVI, # this makes a better global representation of the data in terms of colour
+#        cex.main = .9,
+#        cex.axis = .6,
+#        legend = F)
+#   title(main=median_NDVI_raster_2018@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
+#   mtext(NDVI_range(median_NDVI_raster_2018), side = 3, cex = .5, line = .1) # add subtitle
+#   title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+#   title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+#   
+#   plot(projectRaster(median_NDVI_raster_2019, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
+#        col = NDVI_colour_ramp,
+#        xlab = '',
+#        ylab = '',
+#        zlim = zlim_NDVI, # this makes a better global representation of the data in terms of colour
+#        cex.main = .9,
+#        cex.axis = .6,
+#        legend = F)
+#   title(main=median_NDVI_raster_2019@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
+#   mtext(NDVI_range(median_NDVI_raster_2019), side = 3, cex = .5, line = .1) # add subtitle
+#   title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+#   title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+#   
+#   plot(projectRaster(median_NDVI_raster_2020, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
+#        col = NDVI_colour_ramp,
+#        xlab = '',
+#        ylab = '',
+#        zlim = zlim_NDVI, # this makes a better global representation of the data in terms of colour
+#        cex.main = .9,
+#        cex.axis = .6,
+#        legend = F)
+#   title(main=median_NDVI_raster_2020@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
+#   mtext(NDVI_range(median_NDVI_raster_2020), side = 3, cex = .5, line = .1) # add subtitle
+#   title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+#   title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+#   
+#   plot(projectRaster(median_NDVI_raster_2021, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
+#        col = NDVI_colour_ramp,
+#        xlab = '',
+#        ylab = '',
+#        zlim = zlim_NDVI, # this makes a better global representation of the data in terms of colour
+#        cex.main = .9,
+#        cex.axis = .6,
+#        legend = F)
+#   title(main=median_NDVI_raster_2021@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
+#   mtext(NDVI_range(median_NDVI_raster_2021), side = 3, cex = .5, line = .1) # add subtitle
+#   title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+#   title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+#   
+#   plot(projectRaster(median_NDVI_raster_2022, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
+#        col = NDVI_colour_ramp,
+#        xlab = '',
+#        ylab = '',
+#        zlim = zlim_NDVI, # this makes a better global representation of the data in terms of colour
+#        cex.main = .9,
+#        cex.axis = .6,
+#        legend = F)
+#   title(main=median_NDVI_raster_2022@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
+#   mtext(NDVI_range(median_NDVI_raster_2022), side = 3, cex = .5, line = .1) # add subtitle
+#   title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+#   title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+#   
+#   plot(projectRaster(median_NDVI_raster_2023, crs = "+proj=longlat +datum=WGS84 +no_defs", method = 'ngb'), 
+#        col = NDVI_colour_ramp,
+#        xlab = '',
+#        ylab = '',
+#        zlim = zlim_NDVI, # this makes a better global representation of the data in terms of colour
+#        cex.main = .9,
+#        cex.axis = .6,
+#        legend = T,
+#        horizontal = F, # make legend horizontal or vertical
+#        legend.shrink = 1, # stretch or compress legend
+#        axis.args = list(cex.axis = .6))
+#   #mgp = c(3, 0.2, 0)), # adjust legend lable size and position to ticks
+#   # legend.args = list(text = "Median \nNDVI", side = 4, cex = .5)) # add legend title and adjust size
+#   title(main=median_NDVI_raster_2023@file@name, line=1.1, cex.main=.8) # make main title label closer to the top of the plot
+#   mtext(NDVI_range(median_NDVI_raster_2023), side = 3, cex = .5, line = .1) # add subtitle
+#   title(ylab="Latitude", line=2, cex.lab=.8) # make y axis label closer to the y-axis
+#   title(xlab = "Longitude", line= 2, cex.lab = .8) # make x axis label closer to the y-axis
+#   
+# }
 
