@@ -377,7 +377,7 @@ str(median_ANSWS_stack_df)
 
 median_ANSWS_map <- ggplot()+
   geom_raster(data = median_ANSWS_stack_df, aes(x = x, y = y, fill = value))+
-  scale_fill_gradientn(colours = wind_color_ramp, 'Median\n ANSWS (m/s)',
+  scale_fill_gradientn(colours = wind_color_ramp, 'Median\n ANSWS\n (m/s)',
                        breaks = seq(min(median_ANSWS_stack_df$value),max(median_ANSWS_stack_df$value),length.out = 11),
                        labels = round(seq(min(median_ANSWS_stack_df$value),max(median_ANSWS_stack_df$value),length.out = 11),2)) +
   facet_wrap(~ variable, nrow = 4, ncol = 3)+
@@ -392,7 +392,6 @@ median_ANSWS_map <- ggplot()+
 # save plot
 ggsave('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/Appendix plots/median_ANSWS_map.pdf', 
        plot = median_ANSWS_map, width = 6.56, height = 8)
-
 
 
 # # Find the range in full range in the ANSWS timeframe
