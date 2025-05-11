@@ -261,7 +261,7 @@ str(median_temp_stack_df)
 
 median_temp_map <- ggplot()+
   geom_raster(data = median_temp_stack_df, aes(x = x, y = y, fill = value))+
-  scale_fill_gradientn(colours = red_ramp, 'Median\n AMT (ºC)',
+  scale_fill_gradientn(colours = red_ramp, 'Median\n AMT\n (ºC)',
                        breaks = seq(min(median_temp_stack_df$value),max(median_temp_stack_df$value),length.out = 11),
                        labels = round(seq(min(median_temp_stack_df$value),max(median_temp_stack_df$value),length.out = 11),2)) +
   facet_wrap(~ variable, nrow = 4, ncol = 3)+
