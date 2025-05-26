@@ -1798,10 +1798,10 @@ dfnorm_2014_2022_subset$y_norm <- minmax_norm(dfnorm_2014_2022_subset$y)
 # x <- dfnorm_2014_2022_subset[,17:18]
 # save(x, file = '/Users/tanweernujjoo/Desktop/dfsubset_xynorm.Rdata')
 
-
-distance_matrix <- parDist(as.matrix(dfnorm_2014_2022_subset[,c('x_norm','y_norm')]),
-                           method = "euclidean", 
-                           threads = 4)
+# 
+# distance_matrix <- parDist(as.matrix(dfnorm_2014_2022_subset[,c('x_norm','y_norm')]),
+#                            method = "euclidean", 
+#                            threads = 4)
 
 ?dist
 
