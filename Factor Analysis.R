@@ -37,7 +37,7 @@ minmax_norm <- function(x){
 
 
 # Converting stacked rasters into dataframe [2014-2022] -------------------
-lulc_2014_2022_df <- as.data.frame(LULC_2014_2022_stack, xy = T, na.rm = T) # converting stacked LULC into dataframe
+lulc_2014_2022_df <- as.data.frame(LULC_2014_2022_stack, xy = T) # converting stacked LULC into dataframe
 lulc_2014_2022_df_xy <- lulc_2014_2022_df[,1:2] # extracting xy coordinates from LULC dataframe
 lulc_2014_2022_dfX <- lulc_2014_2022_df[,-c(1:2)] # LULC dataframe with only predictor variables
 lulc_2014_2022_dfX <- apply(lulc_2014_2022_dfX, 2, function(x){as.numeric(as.factor(x))}) |> as.data.frame() # converting the classes into numeric
@@ -49,6 +49,7 @@ lulc_2014_2022_dfXxy_long <- lulc_2014_2022_dfXxy %>%
     names_to = "LULC",
     values_to = "LULC_Class"
   ) %>% 
+  na.omit() %>%
   mutate(Date = as.Date(str_extract(LULC, "\\d{8}"), '%Y%m%d'), # extract date from columns name
          Year = year(Date)|>as.integer(), # extract year from date
          Month = month(Date)|>as.integer()) %>% # extract month from date
@@ -60,7 +61,7 @@ lulc_2014_2022_dfXxy_long$LULC_Class <- minmax_norm(lulc_2014_2022_dfXxy_long$LU
 # head(lulc_2014_2022_dfXxy_long); str(lulc_2014_2022_dfXxy_long)
 
 
-ndvi_2014_2022_df <- as.data.frame(NDVI_2014_2022_stack, xy = T, na.rm = T) # converting stacked NDVI into dataframe
+ndvi_2014_2022_df <- as.data.frame(NDVI_2014_2022_stack, xy = T) # converting stacked NDVI into dataframe
 ndvi_2014_2022_dfXxy_long <-  ndvi_2014_2022_df %>%
   # convert dataframe into long format where there is only one NDVI column
   pivot_longer(
@@ -68,6 +69,7 @@ ndvi_2014_2022_dfXxy_long <-  ndvi_2014_2022_df %>%
     names_to = "NDVI",
     values_to = "NDVI_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Date = as.Date(str_extract(NDVI, "\\d{8}"), '%Y%m%d'), # extract date from columns name
          Year = year(Date)|>as.integer(), # extract year from date
          Month = month(Date)|>as.integer()) %>% # extract month from date
@@ -79,7 +81,7 @@ ndvi_2014_2022_dfXxy_long$NDVI_Value <- minmax_norm(ndvi_2014_2022_dfXxy_long$ND
 # head(ndvi_2014_2022_dfXxy_long); str(ndvi_2014_2022_dfXxy_long)
 
 
-ndmi_2014_2022_df <- as.data.frame(NDMI_2014_2022_stack, xy = T, na.rm = T) # converting stacked NDMI into dataframe
+ndmi_2014_2022_df <- as.data.frame(NDMI_2014_2022_stack, xy = T) # converting stacked NDMI into dataframe
 ndmi_2014_2022_dfXxy_long <-  ndmi_2014_2022_df %>%
   # convert dataframe into long format where there is only one NDMI column
   pivot_longer(
@@ -87,6 +89,7 @@ ndmi_2014_2022_dfXxy_long <-  ndmi_2014_2022_df %>%
     names_to = "NDMI",
     values_to = "NDMI_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Date = as.Date(str_extract(NDMI, "\\d{8}"), '%Y%m%d'), # extract date from columns name
          Year = year(Date)|>as.integer(), # extract year from date
          Month = month(Date)|>as.integer()) %>% # extract month from date
@@ -97,7 +100,7 @@ ndmi_2014_2022_dfXxy_long$y <- round(ndmi_2014_2022_dfXxy_long$y, 5) # round y c
 ndmi_2014_2022_dfXxy_long$NDMI_Value <- minmax_norm(ndmi_2014_2022_dfXxy_long$NDMI_Value) # apply min-max normalisation
 # head(ndmi_2014_2022_dfXxy_long); str(ndmi_2014_2022_dfXxy_long)
 
-nbr_2014_2022_df <- as.data.frame(NBR_2014_2022_stack, xy = T, na.rm = T) # converting stacked NBR into dataframe
+nbr_2014_2022_df <- as.data.frame(NBR_2014_2022_stack, xy = T) # converting stacked NBR into dataframe
 nbr_2014_2022_dfXxy_long <-  nbr_2014_2022_df %>%
   # convert dataframe into long format where there is only one NBR column
   pivot_longer(
@@ -105,6 +108,7 @@ nbr_2014_2022_dfXxy_long <-  nbr_2014_2022_df %>%
     names_to = "NBR",
     values_to = "NBR_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Date = as.Date(str_extract(NBR, "\\d{8}"), '%Y%m%d'), # extract date from columns name
          Year = year(Date)|>as.integer(), # extract year from date
          Month = month(Date)|>as.integer()) %>% # extract month from date
@@ -116,7 +120,7 @@ nbr_2014_2022_dfXxy_long$NBR_Value <- minmax_norm(nbr_2014_2022_dfXxy_long$NBR_V
 # head(nbr_2014_2022_dfXxy_long); str(nbr_2014_2022_dfXxy_long)
 
 
-atp_2014_2022_df <- as.data.frame(ATP_2014_2022_stack, xy = T, na.rm = T) # converting stacked ATP into dataframe
+atp_2014_2022_df <- as.data.frame(ATP_2014_2022_stack, xy = T) # converting stacked ATP into dataframe
 atp_2014_2022_dfXxy_long <-  atp_2014_2022_df %>%
   # convert dataframe into long format where there is only one ATP column
   pivot_longer(
@@ -124,6 +128,7 @@ atp_2014_2022_dfXxy_long <-  atp_2014_2022_df %>%
     names_to = "TP",
     values_to = "TP_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(TP, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(TP, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'TP_Value')) # select relevant columns only
@@ -133,7 +138,7 @@ atp_2014_2022_dfXxy_long$y <- round(atp_2014_2022_dfXxy_long$y, 5) # round y coo
 atp_2014_2022_dfXxy_long$TP_Value <- minmax_norm(atp_2014_2022_dfXxy_long$TP_Value) # apply min-max normalisation
 # head(atp_2014_2022_dfXxy_long); str(atp_2014_2022_dfXxy_long)
 
-amt_2014_2022_df <- as.data.frame(AMT_2014_2022_stack, xy = T, na.rm = T) # converting stacked AMT into dataframe
+amt_2014_2022_df <- as.data.frame(AMT_2014_2022_stack, xy = T) # converting stacked AMT into dataframe
 amt_2014_2022_dfXxy_long <-  amt_2014_2022_df %>%
   # convert dataframe into long format where there is only one AMT column
   pivot_longer(
@@ -141,6 +146,7 @@ amt_2014_2022_dfXxy_long <-  amt_2014_2022_df %>%
     names_to = "AMT",
     values_to = "AMT_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(AMT, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(AMT, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'AMT_Value')) # select relevant columns only
@@ -150,7 +156,7 @@ amt_2014_2022_dfXxy_long$y <- round(amt_2014_2022_dfXxy_long$y, 5) # round y coo
 amt_2014_2022_dfXxy_long$AMT_Value <- minmax_norm(amt_2014_2022_dfXxy_long$AMT_Value) # apply min-max normalisation
 # head(amt_2014_2022_dfXxy_long); str(amt_2014_2022_dfXxy_long)
 
-answs_2014_2022_df <- as.data.frame(ANSWS_2014_2022_stack, xy = T, na.rm = T) # converting stacked ANSWS into dataframe
+answs_2014_2022_df <- as.data.frame(ANSWS_2014_2022_stack, xy = T) # converting stacked ANSWS into dataframe
 answs_2014_2022_dfXxy_long <-  answs_2014_2022_df %>%
   # convert dataframe into long format where there is only one ANSWS column
   pivot_longer(
@@ -158,6 +164,7 @@ answs_2014_2022_dfXxy_long <-  answs_2014_2022_df %>%
     names_to = "ANSWS",
     values_to = "ANSWS_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(ANSWS, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(ANSWS, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'ANSWS_Value')) # select relevant columns only
@@ -167,7 +174,7 @@ answs_2014_2022_dfXxy_long$y <- round(answs_2014_2022_dfXxy_long$y, 5) # round y
 answs_2014_2022_dfXxy_long$ANSWS_Value <- minmax_norm(answs_2014_2022_dfXxy_long$ANSWS_Value) # apply min-max normalisation
 # head(answs_2014_2022_dfXxy_long); str(answs_2014_2022_dfXxy_long)
 
-arh_2014_2022_df <- as.data.frame(ARH_2014_2022_stack, xy = T, na.rm = T) # converting stacked ARH into dataframe
+arh_2014_2022_df <- as.data.frame(ARH_2014_2022_stack, xy = T) # converting stacked ARH into dataframe
 arh_2014_2022_dfXxy_long <-  arh_2014_2022_df %>%
   # convert dataframe into long format where there is only one ARH column
   pivot_longer(
@@ -175,6 +182,7 @@ arh_2014_2022_dfXxy_long <-  arh_2014_2022_df %>%
     names_to = "ARH",
     values_to = "ARH_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(ARH, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(ARH, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'ARH_Value')) # select relevant columns only
@@ -185,7 +193,7 @@ arh_2014_2022_dfXxy_long$ARH_Value <- minmax_norm(arh_2014_2022_dfXxy_long$ARH_V
 # head(arh_2014_2022_dfXxy_long); str(arh_2014_2022_dfXxy_long)
 
 
-elev_2014_2022_df <- as.data.frame(elevation_replicated_for_2014_to_2022_stack, xy = T, na.rm = T) # converting stacked elevation into dataframe
+elev_2014_2022_df <- as.data.frame(elevation_replicated_for_2014_to_2022_stack, xy = T) # converting stacked elevation into dataframe
 elev_2014_2022_dfXxy_long <-  elev_2014_2022_df %>%
   # convert dataframe into long format where there is only one elevation column
   pivot_longer(
@@ -193,6 +201,7 @@ elev_2014_2022_dfXxy_long <-  elev_2014_2022_df %>%
     names_to = "Elev",
     values_to = "Elev_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(Elev, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Elev, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Elev_Value')) # select relevant columns only
@@ -202,7 +211,7 @@ elev_2014_2022_dfXxy_long$y <- round(elev_2014_2022_dfXxy_long$y, 5) # round y c
 elev_2014_2022_dfXxy_long$Elev_Value <- minmax_norm(elev_2014_2022_dfXxy_long$Elev_Value) # apply min-max normalisation
 # head(elev_2014_2022_dfXxy_long); str(elev_2014_2022_dfXxy_long)
 
-slope_2014_2022_df <- as.data.frame(slope_replicated_for_2014_to_2022_stack, xy = T, na.rm = T) # converting stacked slope into dataframe
+slope_2014_2022_df <- as.data.frame(slope_replicated_for_2014_to_2022_stack, xy = T) # converting stacked slope into dataframe
 slope_2014_2022_dfXxy_long <-  slope_2014_2022_df %>%
   # convert dataframe into long format where there is only one slope column
   pivot_longer(
@@ -210,6 +219,7 @@ slope_2014_2022_dfXxy_long <-  slope_2014_2022_df %>%
     names_to = "Slope",
     values_to = "Slope_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(Slope, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Slope, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Slope_Value')) # select relevant columns only
@@ -220,7 +230,7 @@ slope_2014_2022_dfXxy_long$Slope_Value <- minmax_norm(slope_2014_2022_dfXxy_long
 # head(slope_2014_2022_dfXxy_long); str(slope_2014_2022_dfXxy_long)
 
 
-aspect_2014_2022_df <- as.data.frame(aspect_replicated_for_2014_to_2022_stack, xy = T, na.rm = T) # converting stacked aspect into dataframe
+aspect_2014_2022_df <- as.data.frame(aspect_replicated_for_2014_to_2022_stack, xy = T) # converting stacked aspect into dataframe
 aspect_2014_2022_dfXxy_long <-  aspect_2014_2022_df %>%
   # convert dataframe into long format where there is only one aspect column
   pivot_longer(
@@ -228,6 +238,7 @@ aspect_2014_2022_dfXxy_long <-  aspect_2014_2022_df %>%
     names_to = "Aspect",
     values_to = "Aspect_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(Aspect, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Aspect, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Aspect_Value')) # select relevant columns only
@@ -237,7 +248,7 @@ aspect_2014_2022_dfXxy_long$y <- round(aspect_2014_2022_dfXxy_long$y, 5) # round
 aspect_2014_2022_dfXxy_long$Aspect_Value <- minmax_norm(aspect_2014_2022_dfXxy_long$Aspect_Value) # apply min-max normalisation
 # head(aspect_2014_2022_dfXxy_long); str(aspect_2014_2022_dfXxy_long)
 
-fire_2014_2022_df <- as.data.frame(FIRE_2014_2022_stack, xy = T, na.rm = T) # converting stacked fire into dataframe
+fire_2014_2022_df <- as.data.frame(FIRE_2014_2022_stack, xy = T) # converting stacked fire into dataframe
 fire_2014_2022_dfXxy_long <-  fire_2014_2022_df %>%
   # convert dataframe into long format where there is only one fire column
   pivot_longer(
@@ -245,6 +256,7 @@ fire_2014_2022_dfXxy_long <-  fire_2014_2022_df %>%
     names_to = "Fire",
     values_to = "Fire_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(Fire, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Fire, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Fire_Value')) # select relevant columns only
@@ -253,7 +265,6 @@ fire_2014_2022_dfXxy_long$x <- round(fire_2014_2022_dfXxy_long$x, 5) # round x c
 fire_2014_2022_dfXxy_long$y <- round(fire_2014_2022_dfXxy_long$y, 5) # round y coordinates to 5 d.p
 
 # head(fire_2014_2022_dfXxy_long); str(fire_2014_2022_dfXxy_long)
-
 
 # Add all the normalised dataframe in one list ----------------------------
 dfnorm_2014_2022_list <- list(lulc_2014_2022_dfXxy_long, 
@@ -269,30 +280,51 @@ dfnorm_2014_2022_list <- list(lulc_2014_2022_dfXxy_long,
                               aspect_2014_2022_dfXxy_long,
                               fire_2014_2022_dfXxy_long)
 
-
 # Combine all the normalised dataframe into one [2014-2022] ---------------
 dfnorm_2014_2022 <- reduce(dfnorm_2014_2022_list, inner_join, by = c("x", "y", "Year", "Month")) # merge all the table on the common columns (to preserve both spatial-temporal consistency!)
+# remove waterbodies
+dfnorm_2014_2022 <- dfnorm_2014_2022 %>%
+  filter(LULC_Class!=1) # filter out water bodies as they won't contain fire events- water bodies = 1 after normalisation. Before normalisation it was 5.
 # str(dfnorm_2014_2022)
 
 # save dataframe
 # save(dfnorm_2014_2022, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/dfnorm_2014_2022.Rdata')
 # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/dfnorm_2014_2022.Rdata')
 
-# multicollinearity test on 2014 to 2022 dataset
-multicollinearity_reduction_via_pearson_correlation_2014_2022 <- spatialRF::auto_cor(
-  x = dfnorm_2014_2022[colnames(dfnorm_2014_2022)[-c(1,2,3,4,16)]],
-  cor.threshold = 0.5,
-) 
+Fire_periods <- resampled_dfnorm_2014_2022 %>%
+  group_by(Year, Month, Fire_Value) %>%
+  tally() %>% # compute the number of pixels with and without fire 
+  filter(Fire_Value==1) %>% # extract the ones with fire only
+  dplyr::select(Year, Month)
+
+fully_resampled_dfnorm_2014_2022 <- resampled_dfnorm_2014_2022 %>%
+  inner_join(Fire_periods, by = c('Year', 'Month')) %>% # only retain period with fire events
+  filter(LULC_Class!=1) # filter out water bodies as they won't contain fire events- water bodies = 1 after normalisation. Before normalisation it was 5.
+
+# save dataframe
+# save(fully_resampled_dfnorm_2014_2022, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/fully_resampled_dfnorm_2014_2022.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/fully_resampled_dfnorm_2014_2022.Rdata')
+
+  
+# xx <- rasterFromXYZ(fully_resampled_dfnorm_2014_2022, res = c(30,30), crs = crs(roi_trans))
+# plot(xx, col = fire_color_condition_func(xx), cex.main = .9, main = '2014-01')
+
+
+# # multicollinearity test on 2014 to 2022 dataset
+# multicollinearity_reduction_via_pearson_correlation_2014_2022 <- spatialRF::auto_cor(
+#   x = dfnorm_2014_2022[colnames(dfnorm_2014_2022)[-c(1,2,3,4,16)]],
+#   cor.threshold = 0.5,
+# ) 
 
 # VIF test on 2014 to 2022 dataset
-VIF_2014_2022 <- spatialRF::auto_vif(x = dfnorm_2014_2022[colnames(dfnorm_2014_2022)[-c(1,2,3,4,16)]], 
+VIF_2014_2022 <- spatialRF::auto_vif(x = fully_resampled_dfnorm_2014_2022[colnames(fully_resampled_dfnorm_2014_2022)[-c(1,2,3,4,16)]], 
                            vif.threshold = 5)
 
 VIF_2014_2022$vif
 
 # Converting stacked rasters into dataframe [2002-2022] -------------------
 
-atp_2002_2022_df <- as.data.frame(ATP_2002_2022_stack, xy = T, na.rm = T) # converting stacked ATP into dataframe
+atp_2002_2022_df <- as.data.frame(ATP_2002_2022_stack, xy = T) # converting stacked ATP into dataframe
 atp_2002_2022_dfXxy_long <-  atp_2002_2022_df %>%
   # convert dataframe into long format where there is only one ATP column
   pivot_longer(
@@ -300,6 +332,7 @@ atp_2002_2022_dfXxy_long <-  atp_2002_2022_df %>%
     names_to = "TP",
     values_to = "TP_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(TP, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(TP, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'TP_Value')) # select relevant columns only
@@ -310,7 +343,7 @@ atp_2002_2022_dfXxy_long$TP_Value <- minmax_norm(atp_2002_2022_dfXxy_long$TP_Val
 # head(atp_2002_2022_dfXxy_long); str(atp_2002_2022_dfXxy_long)
 
 
-amt_2002_2022_df <- as.data.frame(AMT_2002_2022_stack, xy = T, na.rm = T) # converting stacked AMT into dataframe
+amt_2002_2022_df <- as.data.frame(AMT_2002_2022_stack, xy = T) # converting stacked AMT into dataframe
 amt_2002_2022_dfXxy_long <-  amt_2002_2022_df %>%
   # convert dataframe into long format where there is only one AMT column
   pivot_longer(
@@ -318,6 +351,7 @@ amt_2002_2022_dfXxy_long <-  amt_2002_2022_df %>%
     names_to = "AMT",
     values_to = "AMT_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(AMT, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(AMT, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'AMT_Value')) # select relevant columns only
@@ -327,7 +361,7 @@ amt_2002_2022_dfXxy_long$y <- round(amt_2002_2022_dfXxy_long$y, 5) # round y coo
 amt_2002_2022_dfXxy_long$AMT_Value <- minmax_norm(amt_2002_2022_dfXxy_long$AMT_Value) # apply min-max normalisation
 # head(amt_2002_2022_dfXxy_long); str(amt_2002_2022_dfXxy_long)
 
-answs_2002_2022_df <- as.data.frame(ANSWS_2002_2022_stack, xy = T, na.rm = T) # converting stacked ANSWS into dataframe
+answs_2002_2022_df <- as.data.frame(ANSWS_2002_2022_stack, xy = T) # converting stacked ANSWS into dataframe
 answs_2002_2022_dfXxy_long <-  answs_2002_2022_df %>%
   # convert dataframe into long format where there is only one ANSWS column
   pivot_longer(
@@ -335,6 +369,7 @@ answs_2002_2022_dfXxy_long <-  answs_2002_2022_df %>%
     names_to = "ANSWS",
     values_to = "ANSWS_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(ANSWS, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(ANSWS, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'ANSWS_Value')) # select relevant columns only
@@ -344,7 +379,7 @@ answs_2002_2022_dfXxy_long$y <- round(answs_2002_2022_dfXxy_long$y, 5) # round y
 answs_2002_2022_dfXxy_long$ANSWS_Value <- minmax_norm(answs_2002_2022_dfXxy_long$ANSWS_Value) # apply min-max normalisation
 # head(answs_2002_2022_dfXxy_long); str(answs_2002_2022_dfXxy_long)
 
-arh_2002_2022_df <- as.data.frame(ARH_2002_2022_stack, xy = T, na.rm = T) # converting stacked ARH into dataframe
+arh_2002_2022_df <- as.data.frame(ARH_2002_2022_stack, xy = T) # converting stacked ARH into dataframe
 arh_2002_2022_dfXxy_long <-  arh_2002_2022_df %>%
   # convert dataframe into long format where there is only one ARH column
   pivot_longer(
@@ -352,6 +387,7 @@ arh_2002_2022_dfXxy_long <-  arh_2002_2022_df %>%
     names_to = "ARH",
     values_to = "ARH_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(ARH, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(ARH, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'ARH_Value')) # select relevant columns only
@@ -361,7 +397,7 @@ arh_2002_2022_dfXxy_long$y <- round(arh_2002_2022_dfXxy_long$y, 5) # round y coo
 arh_2002_2022_dfXxy_long$ARH_Value <- minmax_norm(arh_2002_2022_dfXxy_long$ARH_Value) # apply min-max normalisation
 # head(arh_2002_2022_dfXxy_long); str(arh_2002_2022_dfXxy_long)
 
-elev_2002_2022_df <- as.data.frame(elevation_replicated_for_2002_to_2022_stack, xy = T, na.rm = T) # converting stacked elevation into dataframe
+elev_2002_2022_df <- as.data.frame(elevation_replicated_for_2002_to_2022_stack, xy = T) # converting stacked elevation into dataframe
 elev_2002_2022_dfXxy_long <-  elev_2002_2022_df %>%
   # convert dataframe into long format where there is only one elevation column
   pivot_longer(
@@ -369,6 +405,7 @@ elev_2002_2022_dfXxy_long <-  elev_2002_2022_df %>%
     names_to = "Elev",
     values_to = "Elev_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(Elev, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Elev, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Elev_Value')) # select relevant columns only
@@ -378,7 +415,7 @@ elev_2002_2022_dfXxy_long$y <- round(elev_2002_2022_dfXxy_long$y, 5) # round y c
 elev_2002_2022_dfXxy_long$Elev_Value <- minmax_norm(elev_2002_2022_dfXxy_long$Elev_Value) # apply min-max normalisation
 # head(elev_2002_2022_dfXxy_long); str(elev_2002_2022_dfXxy_long)
 
-slope_2002_2022_df <- as.data.frame(slope_replicated_for_2002_to_2022_stack, xy = T, na.rm = T) # converting stacked slope into dataframe
+slope_2002_2022_df <- as.data.frame(slope_replicated_for_2002_to_2022_stack, xy = T) # converting stacked slope into dataframe
 slope_2002_2022_dfXxy_long <-  slope_2002_2022_df %>%
   # convert dataframe into long format where there is only one slope column
   pivot_longer(
@@ -386,6 +423,7 @@ slope_2002_2022_dfXxy_long <-  slope_2002_2022_df %>%
     names_to = "Slope",
     values_to = "Slope_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(Slope, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Slope, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Slope_Value')) # select relevant columns only
@@ -396,7 +434,7 @@ slope_2002_2022_dfXxy_long$Slope_Value <- minmax_norm(slope_2002_2022_dfXxy_long
 # head(slope_2002_2022_dfXxy_long); str(slope_2002_2022_dfXxy_long)
 
 
-aspect_2002_2022_df <- as.data.frame(aspect_replicated_for_2002_to_2022_stack, xy = T, na.rm = T) # converting stacked aspect into dataframe
+aspect_2002_2022_df <- as.data.frame(aspect_replicated_for_2002_to_2022_stack, xy = T) # converting stacked aspect into dataframe
 aspect_2002_2022_dfXxy_long <-  aspect_2002_2022_df %>%
   # convert dataframe into long format where there is only one aspect column
   pivot_longer(
@@ -404,6 +442,7 @@ aspect_2002_2022_dfXxy_long <-  aspect_2002_2022_df %>%
     names_to = "Aspect",
     values_to = "Aspect_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(Aspect, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Aspect, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Aspect_Value')) # select relevant columns only
@@ -413,7 +452,7 @@ aspect_2002_2022_dfXxy_long$y <- round(aspect_2002_2022_dfXxy_long$y, 5) # round
 aspect_2002_2022_dfXxy_long$Aspect_Value <- minmax_norm(aspect_2002_2022_dfXxy_long$Aspect_Value) # apply min-max normalisation
 # head(aspect_2002_2022_dfXxy_long); str(aspect_2002_2022_dfXxy_long)
 
-fire_2002_2022_df <- as.data.frame(FIRE_2002_2022_stack, xy = T, na.rm = T) # converting stacked fire into dataframe
+fire_2002_2022_df <- as.data.frame(FIRE_2002_2022_stack, xy = T) # converting stacked fire into dataframe
 fire_2002_2022_dfXxy_long <-  fire_2002_2022_df %>%
   # convert dataframe into long format where there is only one fire column
   pivot_longer(
@@ -421,6 +460,7 @@ fire_2002_2022_dfXxy_long <-  fire_2002_2022_df %>%
     names_to = "Fire",
     values_to = "Fire_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(Fire, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Fire, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Fire_Value')) # select relevant columns only
@@ -443,17 +483,18 @@ dfnorm_2002_2022_list <- list(atp_2002_2022_dfXxy_long,
 
 # Combine all the normalised dataframe into one [2002-2022] ---------------
 dfnorm_2002_2022 <- reduce(dfnorm_2002_2022_list, inner_join, by = c('x', "y", "Year", "Month")) # merge all the table on the common columns (to preserve both spatial-temporal consistency!)
+
 # str(dfnorm_2002_2022)
 
 # save dataframe
 # save(dfnorm_2002_2022, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Dataframe format (normalised)/dfnorm_2002_2022.Rdata')
 # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Dataframe format (normalised)/dfnorm_2002_2022.Rdata')
 
-# multicollinearity test on 2002 to 2022 dataset
-multicollinearity_reduction_via_pearson_correlation_2002_2022 <- spatialRF::auto_cor(
-  x = dfnorm_2002_2022[colnames(dfnorm_2002_2022)[-c(1,2,3,4,12)]],
-  cor.threshold = 0.5
-) 
+# # multicollinearity test on 2002 to 2022 dataset
+# multicollinearity_reduction_via_pearson_correlation_2002_2022 <- spatialRF::auto_cor(
+#   x = dfnorm_2002_2022[colnames(dfnorm_2002_2022)[-c(1,2,3,4,12)]],
+#   cor.threshold = 0.5
+# ) 
 
 # VIF test on 2002 to 2022 dataset
 VIF_2002_2022 <- spatialRF::auto_vif(x = dfnorm_2002_2022[colnames(dfnorm_2002_2022)[-c(1,2,3,4,12)]], 
@@ -461,13 +502,11 @@ VIF_2002_2022 <- spatialRF::auto_vif(x = dfnorm_2002_2022[colnames(dfnorm_2002_2
 
 VIF_2002_2022$vif
 
-
-
 # Preparing data for Random Forest modelling ------------------------------
 
 # Convert training set raster stack [from 2014-2022 dataset] into dataframe
 
-lulc_2014_2022_df <- as.data.frame(LULC_2014_2022_stack, xy = T, na.rm = T) # converting stacked LULC into dataframe
+lulc_2014_2022_df <- as.data.frame(LULC_2014_2022_stack, xy = T) # converting stacked LULC into dataframe
 lulc_2014_2022_df_xy <- lulc_2014_2022_df[,1:2] # extracting xy coordinates from LULC dataframe
 lulc_2014_2022_dfX <- lulc_2014_2022_df[,-c(1:2)] # LULC dataframe with only predictor variables
 lulc_2014_2022_dfX <- apply(lulc_2014_2022_dfX, 2, function(x){as.numeric(as.factor(x))}) |> as.data.frame() # converting the classes into numeric
@@ -479,6 +518,7 @@ lulc_2014_2022_dfXxy_long_train <- lulc_2014_2022_dfXxy %>%
     names_to = "LULC",
     values_to = "LULC_Class"
   ) %>% 
+  na.omit() %>%
   mutate(Date = as.Date(str_extract(LULC, "\\d{8}"), '%Y%m%d'), # extract date from columns name
          Year = year(Date)|>as.integer(), # extract year from date
          Month = month(Date)|>as.integer()) %>% # extract month from date
@@ -490,7 +530,7 @@ lulc_2014_2022_dfXxy_long_train$y <- round(lulc_2014_2022_dfXxy_long_train$y, 5)
 lulc_2014_2022_dfXxy_long_train$LULC_Class <- minmax_norm(lulc_2014_2022_dfXxy_long_train$LULC_Class) # apply min-max normalisation
 # head(lulc_2014_2022_dfXxy_long_train); str(lulc_2014_2022_dfXxy_long_train)
 
-ndvi_2014_2022_df <- as.data.frame(NDVI_2014_2022_stack, xy = T, na.rm = T) # converting stacked NDVI into dataframe
+ndvi_2014_2022_df <- as.data.frame(NDVI_2014_2022_stack, xy = T) # converting stacked NDVI into dataframe
 ndvi_2014_2022_dfXxy_long_train <-  ndvi_2014_2022_df %>%
   # convert dataframe into long format where there is only one NDVI column
   pivot_longer(
@@ -498,6 +538,7 @@ ndvi_2014_2022_dfXxy_long_train <-  ndvi_2014_2022_df %>%
     names_to = "NDVI",
     values_to = "NDVI_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Date = as.Date(str_extract(NDVI, "\\d{8}"), '%Y%m%d'), # extract date from columns name
          Year = year(Date)|>as.integer(), # extract year from date
          Month = month(Date)|>as.integer()) %>% # extract month from date
@@ -509,7 +550,7 @@ ndvi_2014_2022_dfXxy_long_train$y <- round(ndvi_2014_2022_dfXxy_long_train$y, 5)
 ndvi_2014_2022_dfXxy_long_train$NDVI_Value <- minmax_norm(ndvi_2014_2022_dfXxy_long_train$NDVI_Value) # apply min-max normalisation
 # head(ndvi_2014_2022_dfXxy_long_train); str(ndvi_2014_2022_dfXxy_long_train)
 
-ndmi_2014_2022_df <- as.data.frame(NDMI_2014_2022_stack, xy = T, na.rm = T) # converting stacked NDMI into dataframe
+ndmi_2014_2022_df <- as.data.frame(NDMI_2014_2022_stack, xy = T) # converting stacked NDMI into dataframe
 ndmi_2014_2022_dfXxy_long_train <-  ndmi_2014_2022_df %>%
   # convert dataframe into long format where there is only one NDMI column
   pivot_longer(
@@ -517,6 +558,7 @@ ndmi_2014_2022_dfXxy_long_train <-  ndmi_2014_2022_df %>%
     names_to = "NDMI",
     values_to = "NDMI_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Date = as.Date(str_extract(NDMI, "\\d{8}"), '%Y%m%d'), # extract date from columns name
          Year = year(Date)|>as.integer(), # extract year from date
          Month = month(Date)|>as.integer()) %>% # extract month from date
@@ -528,7 +570,7 @@ ndmi_2014_2022_dfXxy_long_train$y <- round(ndmi_2014_2022_dfXxy_long_train$y, 5)
 ndmi_2014_2022_dfXxy_long_train$NDMI_Value <- minmax_norm(ndmi_2014_2022_dfXxy_long_train$NDMI_Value) # apply min-max normalisation
 # head(ndmi_2014_2022_dfXxy_long_train); str(ndmi_2014_2022_dfXxy_long_train)
 
-nbr_2014_2022_df <- as.data.frame(NBR_2014_2022_stack, xy = T, na.rm = T) # converting stacked NBR into dataframe
+nbr_2014_2022_df <- as.data.frame(NBR_2014_2022_stack, xy = T) # converting stacked NBR into dataframe
 nbr_2014_2022_dfXxy_long_train <-  nbr_2014_2022_df %>%
   # convert dataframe into long format where there is only one NBR column
   pivot_longer(
@@ -536,6 +578,7 @@ nbr_2014_2022_dfXxy_long_train <-  nbr_2014_2022_df %>%
     names_to = "NBR",
     values_to = "NBR_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Date = as.Date(str_extract(NBR, "\\d{8}"), '%Y%m%d'), # extract date from columns name
          Year = year(Date)|>as.integer(), # extract year from date
          Month = month(Date)|>as.integer()) %>% # extract month from date
@@ -547,7 +590,7 @@ nbr_2014_2022_dfXxy_long_train$y <- round(nbr_2014_2022_dfXxy_long_train$y, 5) #
 nbr_2014_2022_dfXxy_long_train$NBR_Value <- minmax_norm(nbr_2014_2022_dfXxy_long_train$NBR_Value) # apply min-max normalisation
 # head(nbr_2014_2022_dfXxy_long_train); str(nbr_2014_2022_dfXxy_long_train)
 
-atp_2014_2022_df <- as.data.frame(ATP_2014_2022_stack, xy = T, na.rm = T) # converting stacked ATP into dataframe
+atp_2014_2022_df <- as.data.frame(ATP_2014_2022_stack, xy = T) # converting stacked ATP into dataframe
 atp_2014_2022_dfXxy_long_train <-  atp_2014_2022_df %>%
   # convert dataframe into long format where there is only one ATP column
   pivot_longer(
@@ -555,6 +598,7 @@ atp_2014_2022_dfXxy_long_train <-  atp_2014_2022_df %>%
     names_to = "TP",
     values_to = "TP_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(TP, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(TP, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'TP_Value'))  %>% # select relevant columns only
@@ -565,7 +609,7 @@ atp_2014_2022_dfXxy_long_train$y <- round(atp_2014_2022_dfXxy_long_train$y, 5) #
 atp_2014_2022_dfXxy_long_train$TP_Value <- minmax_norm(atp_2014_2022_dfXxy_long_train$TP_Value) # apply min-max normalisation
 # head(atp_2014_2022_dfXxy_long_train); str(atp_2014_2022_dfXxy_long_train)
 
-amt_2014_2022_df <- as.data.frame(AMT_2014_2022_stack, xy = T, na.rm = T) # converting stacked AMT into dataframe
+amt_2014_2022_df <- as.data.frame(AMT_2014_2022_stack, xy = T) # converting stacked AMT into dataframe
 amt_2014_2022_dfXxy_long_train <-  amt_2014_2022_df %>%
   # convert dataframe into long format where there is only one AMT column
   pivot_longer(
@@ -573,6 +617,7 @@ amt_2014_2022_dfXxy_long_train <-  amt_2014_2022_df %>%
     names_to = "AMT",
     values_to = "AMT_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(AMT, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(AMT, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'AMT_Value')) %>% # select relevant columns only
@@ -583,7 +628,7 @@ amt_2014_2022_dfXxy_long_train$y <- round(amt_2014_2022_dfXxy_long_train$y, 5) #
 amt_2014_2022_dfXxy_long_train$AMT_Value <- minmax_norm(amt_2014_2022_dfXxy_long_train$AMT_Value) # apply min-max normalisation
 # head(amt_2014_2022_dfXxy_long_train); str(amt_2014_2022_dfXxy_long_train)
 
-answs_2014_2022_df <- as.data.frame(ANSWS_2014_2022_stack, xy = T, na.rm = T) # converting stacked ANSWS into dataframe
+answs_2014_2022_df <- as.data.frame(ANSWS_2014_2022_stack, xy = T) # converting stacked ANSWS into dataframe
 answs_2014_2022_dfXxy_long_train <-  answs_2014_2022_df %>%
   # convert dataframe into long format where there is only one ANSWS column
   pivot_longer(
@@ -591,6 +636,7 @@ answs_2014_2022_dfXxy_long_train <-  answs_2014_2022_df %>%
     names_to = "ANSWS",
     values_to = "ANSWS_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(ANSWS, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(ANSWS, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'ANSWS_Value')) %>% # select relevant columns only
@@ -601,7 +647,7 @@ answs_2014_2022_dfXxy_long_train$y <- round(answs_2014_2022_dfXxy_long_train$y, 
 answs_2014_2022_dfXxy_long_train$ANSWS_Value <- minmax_norm(answs_2014_2022_dfXxy_long_train$ANSWS_Value) # apply min-max normalisation
 # head(answs_2014_2022_dfXxy_long_train); str(answs_2014_2022_dfXxy_long_train)
 
-arh_2014_2022_df <- as.data.frame(ARH_2014_2022_stack, xy = T, na.rm = T) # converting stacked ARH into dataframe
+arh_2014_2022_df <- as.data.frame(ARH_2014_2022_stack, xy = T) # converting stacked ARH into dataframe
 arh_2014_2022_dfXxy_long_train <-  arh_2014_2022_df %>%
   # convert dataframe into long format where there is only one ARH column
   pivot_longer(
@@ -609,6 +655,7 @@ arh_2014_2022_dfXxy_long_train <-  arh_2014_2022_df %>%
     names_to = "ARH",
     values_to = "ARH_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(ARH, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(ARH, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'ARH_Value')) %>% # select relevant columns only
@@ -620,7 +667,7 @@ arh_2014_2022_dfXxy_long_train$ARH_Value <- minmax_norm(arh_2014_2022_dfXxy_long
 # head(arh_2014_2022_dfXxy_long_train); str(arh_2014_2022_dfXxy_long_train)
 
 
-elev_2014_2022_df <- as.data.frame(elevation_replicated_for_2014_to_2022_stack, xy = T, na.rm = T) # converting stacked elevation into dataframe
+elev_2014_2022_df <- as.data.frame(elevation_replicated_for_2014_to_2022_stack, xy = T) # converting stacked elevation into dataframe
 elev_2014_2022_dfXxy_long_train <-  elev_2014_2022_df %>%
   # convert dataframe into long format where there is only one elevation column
   pivot_longer(
@@ -628,6 +675,7 @@ elev_2014_2022_dfXxy_long_train <-  elev_2014_2022_df %>%
     names_to = "Elev",
     values_to = "Elev_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(Elev, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Elev, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Elev_Value')) %>% # select relevant columns only
@@ -638,7 +686,7 @@ elev_2014_2022_dfXxy_long_train$y <- round(elev_2014_2022_dfXxy_long_train$y, 5)
 elev_2014_2022_dfXxy_long_train$Elev_Value <- minmax_norm(elev_2014_2022_dfXxy_long_train$Elev_Value) # apply min-max normalisation
 # head(elev_2014_2022_dfXxy_long_train); str(elev_2014_2022_dfXxy_long_train)
 
-slope_2014_2022_df <- as.data.frame(slope_replicated_for_2014_to_2022_stack, xy = T, na.rm = T) # converting stacked slope into dataframe
+slope_2014_2022_df <- as.data.frame(slope_replicated_for_2014_to_2022_stack, xy = T) # converting stacked slope into dataframe
 slope_2014_2022_dfXxy_long_train <-  slope_2014_2022_df %>%
   # convert dataframe into long format where there is only one slope column
   pivot_longer(
@@ -646,6 +694,7 @@ slope_2014_2022_dfXxy_long_train <-  slope_2014_2022_df %>%
     names_to = "Slope",
     values_to = "Slope_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(Slope, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Slope, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Slope_Value')) %>% # select relevant columns only
@@ -657,7 +706,7 @@ slope_2014_2022_dfXxy_long_train$Slope_Value <- minmax_norm(slope_2014_2022_dfXx
 # head(slope_2014_2022_dfXxy_long_train); str(slope_2014_2022_dfXxy_long_train)
 
 
-aspect_2014_2022_df <- as.data.frame(aspect_replicated_for_2014_to_2022_stack, xy = T, na.rm = T) # converting stacked aspect into dataframe
+aspect_2014_2022_df <- as.data.frame(aspect_replicated_for_2014_to_2022_stack, xy = T) # converting stacked aspect into dataframe
 aspect_2014_2022_dfXxy_long_train <-  aspect_2014_2022_df %>%
   # convert dataframe into long format where there is only one aspect column
   pivot_longer(
@@ -665,6 +714,7 @@ aspect_2014_2022_dfXxy_long_train <-  aspect_2014_2022_df %>%
     names_to = "Aspect",
     values_to = "Aspect_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(Aspect, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Aspect, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Aspect_Value')) %>% # select relevant columns only
@@ -675,7 +725,7 @@ aspect_2014_2022_dfXxy_long_train$y <- round(aspect_2014_2022_dfXxy_long_train$y
 aspect_2014_2022_dfXxy_long_train$Aspect_Value <- minmax_norm(aspect_2014_2022_dfXxy_long_train$Aspect_Value) # apply min-max normalisation
 # head(aspect_2014_2022_dfXxy_long_train); str(aspect_2014_2022_dfXxy_long_train)
 
-fire_2014_2022_df <- as.data.frame(FIRE_2014_2022_stack, xy = T, na.rm = T) # converting stacked fire into dataframe
+fire_2014_2022_df <- as.data.frame(FIRE_2014_2022_stack, xy = T) # converting stacked fire into dataframe
 fire_2014_2022_dfXxy_long_train <-  fire_2014_2022_df %>%
   # convert dataframe into long format where there is only one fire column
   pivot_longer(
@@ -683,6 +733,7 @@ fire_2014_2022_dfXxy_long_train <-  fire_2014_2022_df %>%
     names_to = "Fire",
     values_to = "Fire_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(Fire, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Fire, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Fire_Value')) %>% # select relevant columns only
@@ -691,6 +742,23 @@ fire_2014_2022_dfXxy_long_train <-  fire_2014_2022_df %>%
 fire_2014_2022_dfXxy_long_train$x <- round(fire_2014_2022_dfXxy_long_train$x, 5) # round x coordinates to 5 d.p
 fire_2014_2022_dfXxy_long_train$y <- round(fire_2014_2022_dfXxy_long_train$y, 5) # round y coordinates to 5 d.p
 # head(fire_2014_2022_dfXxy_long_train); str(fire_2014_2022_dfXxy_long_train)
+
+resampled_fire_2014_2022_df <- as.data.frame(RESAMPLED_FIRE_2014_2022_training_stack, xy = T)# converting stacked fire into dataframe
+resampled_fire_2014_2022_dfXxy_long_train <-  resampled_fire_2014_2022_df %>%
+  # convert dataframe into long format where there is only one fire column
+  pivot_longer(
+    cols = starts_with("Fire"),
+    names_to = "Fire",
+    values_to = "Fire_Value"
+  ) %>% 
+  na.omit() %>% # very important to omit rows after pivot longer
+  mutate(Year = str_extract(Fire, "\\d{4}") |> as.integer(), # extract year from date
+         Month = str_extract(Fire, "(?<=\\d{4}\\.)\\d{2}") |> as.integer()) %>% # extract month from date
+  dplyr::select(c('x', 'y', 'Year', 'Month', 'Fire_Value')) # select relevant columns only
+
+resampled_fire_2014_2022_dfXxy_long_train$x <- round(resampled_fire_2014_2022_dfXxy_long_train$x, 5) # round x coordinates to 5 d.p
+resampled_fire_2014_2022_dfXxy_long_train$y <- round(resampled_fire_2014_2022_dfXxy_long_train$y, 5) # round y coordinates to 5 d.p
+# head(resampled_fire_2014_2022_dfXxy_long_train); str(resampled_fire_2014_2022_dfXxy_long_train)
 
 # Add all the normalised training set from the 2014 to 2022 dataset in one list 
 dfnorm_2014_2022_training_list <-  list(lulc_2014_2022_dfXxy_long_train, 
@@ -706,17 +774,63 @@ dfnorm_2014_2022_training_list <-  list(lulc_2014_2022_dfXxy_long_train,
                                         aspect_2014_2022_dfXxy_long_train,
                                         fire_2014_2022_dfXxy_long_train)
 
+resampled_dfnorm_2014_2022_training_list <-  list(lulc_2014_2022_dfXxy_long_train, 
+                                                  ndvi_2014_2022_dfXxy_long_train,
+                                                  ndmi_2014_2022_dfXxy_long_train,
+                                                  nbr_2014_2022_dfXxy_long_train,
+                                                  atp_2014_2022_dfXxy_long_train,
+                                                  amt_2014_2022_dfXxy_long_train,
+                                                  answs_2014_2022_dfXxy_long_train,
+                                                  arh_2014_2022_dfXxy_long_train,
+                                                  elev_2014_2022_dfXxy_long_train,
+                                                  slope_2014_2022_dfXxy_long_train,
+                                                  aspect_2014_2022_dfXxy_long_train,
+                                                  resampled_fire_2014_2022_dfXxy_long_train)
 
 # Combine all the normalised training set from the 2014 to 2022 dataset in one dataframe 
 dfnorm_2014_2022_training_set <- reduce(dfnorm_2014_2022_training_list, inner_join, by = c('x', "y", "Year", "Month")) # merge all the table on the common columns (to preserve both spatial-temporal consistency!)
+# remove waterbodies
+dfnorm_2014_2022_training_set <- dfnorm_2014_2022_training_set %>%
+  filter(LULC_Class!=1) # filter out water bodies as they won't contain fire events- water bodies = 1 after normalisation. Before normalisation it was 5.
 # str(dfnorm_2014_2022_training_set)
 
 # save dataframe
-# save(dfnorm_2014_2022_training_set, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/dfnorm_2014_2022_training_set.Rdata')
+save(dfnorm_2014_2022_training_set, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/dfnorm_2014_2022_training_set.Rdata')
 # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/dfnorm_2014_2022_training_set.Rdata')
 
+resampled_dfnorm_2014_2022_training_set <- reduce(resampled_dfnorm_2014_2022_training_list, inner_join, by = c('x', "y", "Year", "Month")) # merge all the table on the common columns (to preserve both spatial-temporal consistency!)
+# str(resampled_dfnorm_2014_2022_training_set)
+
+# save dataframe
+# save(resampled_dfnorm_2014_2022_training_set, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/resampled_dfnorm_2014_2022_training_set.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/resampled_dfnorm_2014_2022_training_set.Rdata')
+
+training_Fire_periods <- resampled_dfnorm_2014_2022_training_set %>%
+  group_by(Year, Month, Fire_Value) %>%
+  tally() %>% # compute the number of pixels with and without fire 
+  filter(Fire_Value==1) %>% # extract the ones with fire only
+  dplyr::select(Year, Month)
+
+fully_resampled_dfnorm_2014_2022_training_set <- resampled_dfnorm_2014_2022_training_set %>%
+  inner_join(training_Fire_periods, by = c('Year', 'Month')) %>% # only retain period with fire events
+  filter(LULC_Class!=1) # filter out water bodies as they won't contain fire events- water bodies = 1 after normalisation. Before normalisation it was 5.
+
+# save dataframe
+# save(fully_resampled_dfnorm_2014_2022_training_set, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/fully_resampled_dfnorm_2014_2022_training_set.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/fully_resampled_dfnorm_2014_2022_training_set.Rdata')
+
+x <- fully_resampled_dfnorm_2014_2022_training_set %>%
+  filter(Year==2019, Month ==12) %>%
+  dplyr::select(x,y,Fire_Value)
+
+xx <- rasterFromXYZ(x, res = c(30,30), crs = crs(roi_trans))
+plot(roi_trans)
+plot(target_waterbodies, add = T)
+plot(xx, col = fire_color_condition_func(xx), cex.main = .9, main = '2017-01', add = T)
+
+
 # Convert validation set raster stack [from 2014-2022 dataset] into dataframe
-lulc_2014_2022_df <- as.data.frame(LULC_2014_2022_stack, xy = T, na.rm = T) # converting stacked LULC into dataframe
+lulc_2014_2022_df <- as.data.frame(LULC_2014_2022_stack, xy = T) # converting stacked LULC into dataframe
 lulc_2014_2022_df_xy <- lulc_2014_2022_df[,1:2] # extracting xy coordinates from LULC dataframe
 lulc_2014_2022_dfX <- lulc_2014_2022_df[,-c(1:2)] # LULC dataframe with only predictor variables
 lulc_2014_2022_dfX <- apply(lulc_2014_2022_dfX, 2, function(x){as.numeric(as.factor(x))}) |> as.data.frame() # converting the classes into numeric
@@ -728,6 +842,7 @@ lulc_2014_2022_dfXxy_long_val <- lulc_2014_2022_dfXxy %>%
     names_to = "LULC",
     values_to = "LULC_Class"
   ) %>% 
+  na.omit() %>%
   mutate(Date = as.Date(str_extract(LULC, "\\d{8}"), '%Y%m%d'), # extract date from columns name
          Year = year(Date)|>as.integer(), # extract year from date
          Month = month(Date)|>as.integer()) %>% # extract month from date
@@ -739,7 +854,7 @@ lulc_2014_2022_dfXxy_long_val$y <- round(lulc_2014_2022_dfXxy_long_val$y, 5) # r
 lulc_2014_2022_dfXxy_long_val$LULC_Class <- minmax_norm(lulc_2014_2022_dfXxy_long_val$LULC_Class) # apply min-max normalisation
 # head(lulc_2014_2022_dfXxy_long_val); str(lulc_2014_2022_dfXxy_long_val)
 
-ndvi_2014_2022_df <- as.data.frame(NDVI_2014_2022_stack, xy = T, na.rm = T) # converting stacked NDVI into dataframe
+ndvi_2014_2022_df <- as.data.frame(NDVI_2014_2022_stack, xy = T) # converting stacked NDVI into dataframe
 ndvi_2014_2022_dfXxy_long_val <-  ndvi_2014_2022_df %>%
   # convert dataframe into long format where there is only one NDVI column
   pivot_longer(
@@ -747,6 +862,7 @@ ndvi_2014_2022_dfXxy_long_val <-  ndvi_2014_2022_df %>%
     names_to = "NDVI",
     values_to = "NDVI_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Date = as.Date(str_extract(NDVI, "\\d{8}"), '%Y%m%d'), # extract date from columns name
          Year = year(Date)|>as.integer(), # extract year from date
          Month = month(Date)|>as.integer()) %>% # extract month from date
@@ -758,7 +874,7 @@ ndvi_2014_2022_dfXxy_long_val$y <- round(ndvi_2014_2022_dfXxy_long_val$y, 5) # r
 ndvi_2014_2022_dfXxy_long_val$NDVI_Value <- minmax_norm(ndvi_2014_2022_dfXxy_long_val$NDVI_Value) # apply min-max normalisation
 # head(ndvi_2014_2022_dfXxy_long_val); str(ndvi_2014_2022_dfXxy_long_val)
 
-ndmi_2014_2022_df <- as.data.frame(NDMI_2014_2022_stack, xy = T, na.rm = T) # converting stacked NDMI into dataframe
+ndmi_2014_2022_df <- as.data.frame(NDMI_2014_2022_stack, xy = T) # converting stacked NDMI into dataframe
 ndmi_2014_2022_dfXxy_long_val <-  ndmi_2014_2022_df %>%
   # convert dataframe into long format where there is only one NDMI column
   pivot_longer(
@@ -766,6 +882,7 @@ ndmi_2014_2022_dfXxy_long_val <-  ndmi_2014_2022_df %>%
     names_to = "NDMI",
     values_to = "NDMI_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Date = as.Date(str_extract(NDMI, "\\d{8}"), '%Y%m%d'), # extract date from columns name
          Year = year(Date)|>as.integer(), # extract year from date
          Month = month(Date)|>as.integer()) %>% # extract month from date
@@ -777,7 +894,7 @@ ndmi_2014_2022_dfXxy_long_val$y <- round(ndmi_2014_2022_dfXxy_long_val$y, 5) # r
 ndmi_2014_2022_dfXxy_long_val$NDMI_Value <- minmax_norm(ndmi_2014_2022_dfXxy_long_val$NDMI_Value) # apply min-max normalisation
 # head(ndmi_2014_2022_dfXxy_long_val); str(ndmi_2014_2022_dfXxy_long_val)
 
-nbr_2014_2022_df <- as.data.frame(NBR_2014_2022_stack, xy = T, na.rm = T) # converting stacked NBR into dataframe
+nbr_2014_2022_df <- as.data.frame(NBR_2014_2022_stack, xy = T) # converting stacked NBR into dataframe
 nbr_2014_2022_dfXxy_long_val <-  nbr_2014_2022_df %>%
   # convert dataframe into long format where there is only one NBR column
   pivot_longer(
@@ -785,6 +902,7 @@ nbr_2014_2022_dfXxy_long_val <-  nbr_2014_2022_df %>%
     names_to = "NBR",
     values_to = "NBR_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Date = as.Date(str_extract(NBR, "\\d{8}"), '%Y%m%d'), # extract date from columns name
          Year = year(Date)|>as.integer(), # extract year from date
          Month = month(Date)|>as.integer()) %>% # extract month from date
@@ -796,7 +914,7 @@ nbr_2014_2022_dfXxy_long_val$y <- round(nbr_2014_2022_dfXxy_long_val$y, 5) # rou
 nbr_2014_2022_dfXxy_long_val$NBR_Value <- minmax_norm(nbr_2014_2022_dfXxy_long_val$NBR_Value) # apply min-max normalisation
 # head(nbr_2014_2022_dfXxy_long_val); str(nbr_2014_2022_dfXxy_long_val)
 
-atp_2014_2022_df <- as.data.frame(ATP_2014_2022_stack, xy = T, na.rm = T) # converting stacked ATP into dataframe
+atp_2014_2022_df <- as.data.frame(ATP_2014_2022_stack, xy = T) # converting stacked ATP into dataframe
 atp_2014_2022_dfXxy_long_val <-  atp_2014_2022_df %>%
   # convert dataframe into long format where there is only one ATP column
   pivot_longer(
@@ -804,6 +922,7 @@ atp_2014_2022_dfXxy_long_val <-  atp_2014_2022_df %>%
     names_to = "TP",
     values_to = "TP_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(TP, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(TP, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'TP_Value'))  %>% # select relevant columns only
@@ -812,9 +931,9 @@ atp_2014_2022_dfXxy_long_val <-  atp_2014_2022_df %>%
 atp_2014_2022_dfXxy_long_val$x <- round(atp_2014_2022_dfXxy_long_val$x, 5) # round x coordinates to 5 d.p
 atp_2014_2022_dfXxy_long_val$y <- round(atp_2014_2022_dfXxy_long_val$y, 5) # round y coordinates to 5 d.p
 atp_2014_2022_dfXxy_long_val$TP_Value <- minmax_norm(atp_2014_2022_dfXxy_long_val$TP_Value) # apply min-max normalisation
-head(atp_2014_2022_dfXxy_long_val); str(atp_2014_2022_dfXxy_long_val)
+# head(atp_2014_2022_dfXxy_long_val); str(atp_2014_2022_dfXxy_long_val)
 
-amt_2014_2022_df <- as.data.frame(AMT_2014_2022_stack, xy = T, na.rm = T) # converting stacked AMT into dataframe
+amt_2014_2022_df <- as.data.frame(AMT_2014_2022_stack, xy = T) # converting stacked AMT into dataframe
 amt_2014_2022_dfXxy_long_val <-  amt_2014_2022_df %>%
   # convert dataframe into long format where there is only one AMT column
   pivot_longer(
@@ -822,6 +941,7 @@ amt_2014_2022_dfXxy_long_val <-  amt_2014_2022_df %>%
     names_to = "AMT",
     values_to = "AMT_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(AMT, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(AMT, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'AMT_Value')) %>% # select relevant columns only
@@ -832,7 +952,7 @@ amt_2014_2022_dfXxy_long_val$y <- round(amt_2014_2022_dfXxy_long_val$y, 5) # rou
 amt_2014_2022_dfXxy_long_val$AMT_Value <- minmax_norm(amt_2014_2022_dfXxy_long_val$AMT_Value) # apply min-max normalisation
 # head(amt_2014_2022_dfXxy_long_val); str(amt_2014_2022_dfXxy_long_val)
 
-answs_2014_2022_df <- as.data.frame(ANSWS_2014_2022_stack, xy = T, na.rm = T) # converting stacked ANSWS into dataframe
+answs_2014_2022_df <- as.data.frame(ANSWS_2014_2022_stack, xy = T) # converting stacked ANSWS into dataframe
 answs_2014_2022_dfXxy_long_val <-  answs_2014_2022_df %>%
   # convert dataframe into long format where there is only one ANSWS column
   pivot_longer(
@@ -840,6 +960,7 @@ answs_2014_2022_dfXxy_long_val <-  answs_2014_2022_df %>%
     names_to = "ANSWS",
     values_to = "ANSWS_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(ANSWS, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(ANSWS, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'ANSWS_Value')) %>% # select relevant columns only
@@ -850,7 +971,7 @@ answs_2014_2022_dfXxy_long_val$y <- round(answs_2014_2022_dfXxy_long_val$y, 5) #
 answs_2014_2022_dfXxy_long_val$ANSWS_Value <- minmax_norm(answs_2014_2022_dfXxy_long_val$ANSWS_Value) # apply min-max normalisation
 # head(answs_2014_2022_dfXxy_long_val); str(answs_2014_2022_dfXxy_long_val)
 
-arh_2014_2022_df <- as.data.frame(ARH_2014_2022_stack, xy = T, na.rm = T) # converting stacked ARH into dataframe
+arh_2014_2022_df <- as.data.frame(ARH_2014_2022_stack, xy = T) # converting stacked ARH into dataframe
 arh_2014_2022_dfXxy_long_val <-  arh_2014_2022_df %>%
   # convert dataframe into long format where there is only one ARH column
   pivot_longer(
@@ -858,6 +979,7 @@ arh_2014_2022_dfXxy_long_val <-  arh_2014_2022_df %>%
     names_to = "ARH",
     values_to = "ARH_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(ARH, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(ARH, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'ARH_Value'))  %>% # select relevant columns only
@@ -869,7 +991,7 @@ arh_2014_2022_dfXxy_long_val$ARH_Value <- minmax_norm(arh_2014_2022_dfXxy_long_v
 # head(arh_2014_2022_dfXxy_long_val); str(arh_2014_2022_dfXxy_long_val)
 
 
-elev_2014_2022_df <- as.data.frame(elevation_replicated_for_2014_to_2022_stack, xy = T, na.rm = T) # converting stacked elevation into dataframe
+elev_2014_2022_df <- as.data.frame(elevation_replicated_for_2014_to_2022_stack, xy = T) # converting stacked elevation into dataframe
 elev_2014_2022_dfXxy_long_val <-  elev_2014_2022_df %>%
   # convert dataframe into long format where there is only one elevation column
   pivot_longer(
@@ -877,6 +999,7 @@ elev_2014_2022_dfXxy_long_val <-  elev_2014_2022_df %>%
     names_to = "Elev",
     values_to = "Elev_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(Elev, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Elev, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Elev_Value'))  %>% # select relevant columns only
@@ -887,7 +1010,7 @@ elev_2014_2022_dfXxy_long_val$y <- round(elev_2014_2022_dfXxy_long_val$y, 5) # r
 elev_2014_2022_dfXxy_long_val$Elev_Value <- minmax_norm(elev_2014_2022_dfXxy_long_val$Elev_Value) # apply min-max normalisation
 # head(elev_2014_2022_dfXxy_long_val); str(elev_2014_2022_dfXxy_long_val)
 
-slope_2014_2022_df <- as.data.frame(slope_replicated_for_2014_to_2022_stack, xy = T, na.rm = T) # converting stacked slope into dataframe
+slope_2014_2022_df <- as.data.frame(slope_replicated_for_2014_to_2022_stack, xy = T) # converting stacked slope into dataframe
 slope_2014_2022_dfXxy_long_val <-  slope_2014_2022_df %>%
   # convert dataframe into long format where there is only one slope column
   pivot_longer(
@@ -895,6 +1018,7 @@ slope_2014_2022_dfXxy_long_val <-  slope_2014_2022_df %>%
     names_to = "Slope",
     values_to = "Slope_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(Slope, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Slope, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Slope_Value'))  %>% # select relevant columns only
@@ -906,7 +1030,7 @@ slope_2014_2022_dfXxy_long_val$Slope_Value <- minmax_norm(slope_2014_2022_dfXxy_
 # head(slope_2014_2022_dfXxy_long_val); str(slope_2014_2022_dfXxy_long_val)
 
 
-aspect_2014_2022_df <- as.data.frame(aspect_replicated_for_2014_to_2022_stack, xy = T, na.rm = T) # converting stacked aspect into dataframe
+aspect_2014_2022_df <- as.data.frame(aspect_replicated_for_2014_to_2022_stack, xy = T) # converting stacked aspect into dataframe
 aspect_2014_2022_dfXxy_long_val <-  aspect_2014_2022_df %>%
   # convert dataframe into long format where there is only one aspect column
   pivot_longer(
@@ -914,6 +1038,7 @@ aspect_2014_2022_dfXxy_long_val <-  aspect_2014_2022_df %>%
     names_to = "Aspect",
     values_to = "Aspect_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(Aspect, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Aspect, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Aspect_Value')) %>% # select relevant columns only
@@ -924,7 +1049,7 @@ aspect_2014_2022_dfXxy_long_val$y <- round(aspect_2014_2022_dfXxy_long_val$y, 5)
 aspect_2014_2022_dfXxy_long_val$Aspect_Value <- minmax_norm(aspect_2014_2022_dfXxy_long_val$Aspect_Value) # apply min-max normalisation
 # head(aspect_2014_2022_dfXxy_long_val); str(aspect_2014_2022_dfXxy_long_val)
 
-fire_2014_2022_df <- as.data.frame(FIRE_2014_2022_stack, xy = T, na.rm = T) # converting stacked fire into dataframe
+fire_2014_2022_df <- as.data.frame(FIRE_2014_2022_stack, xy = T) # converting stacked fire into dataframe
 fire_2014_2022_dfXxy_long_val <-  fire_2014_2022_df %>%
   # convert dataframe into long format where there is only one fire column
   pivot_longer(
@@ -932,6 +1057,7 @@ fire_2014_2022_dfXxy_long_val <-  fire_2014_2022_df %>%
     names_to = "Fire",
     values_to = "Fire_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(Fire, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Fire, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Fire_Value')) %>% # select relevant columns only
@@ -958,6 +1084,9 @@ dfnorm_2014_2022_validation_list <-  list(lulc_2014_2022_dfXxy_long_val,
 
 # Combine all the normalised validation set from the 2014 to 2022 dataset in one dataframe 
 dfnorm_2014_2022_validation_set <- reduce(dfnorm_2014_2022_validation_list, inner_join, by = c('x', "y", "Year", "Month")) # merge all the table on the common columns (to preserve both spatial-temporal consistency!)
+# Remove waterbodies from dataset
+dfnorm_2014_2022_validation_set <- dfnorm_2014_2022_validation_set %>%
+  filter(LULC_Class!= 1) # filter out water bodies as they won't contain fire events- water bodies = 1 after normalisation. Before normalisation it was 5.
 # str(dfnorm_2014_2022_validation_set)
 
 # save dataframe
@@ -965,7 +1094,7 @@ dfnorm_2014_2022_validation_set <- reduce(dfnorm_2014_2022_validation_list, inne
 # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/dfnorm_2014_2022_validation_set.Rdata')
 
 # Convert test set raster stack [from 2014-2022 dataset] into dataframe
-lulc_2014_2022_df <- as.data.frame(LULC_2014_2022_stack, xy = T, na.rm = T) # converting stacked LULC into dataframe
+lulc_2014_2022_df <- as.data.frame(LULC_2014_2022_stack, xy = T) # converting stacked LULC into dataframe
 lulc_2014_2022_df_xy <- lulc_2014_2022_df[,1:2] # extracting xy coordinates from LULC dataframe
 lulc_2014_2022_dfX <- lulc_2014_2022_df[,-c(1:2)] # LULC dataframe with only predictor variables
 lulc_2014_2022_dfX <- apply(lulc_2014_2022_dfX, 2, function(x){as.numeric(as.factor(x))}) |> as.data.frame() # converting the classes into numeric
@@ -977,6 +1106,7 @@ lulc_2014_2022_dfXxy_long_test <- lulc_2014_2022_dfXxy %>%
     names_to = "LULC",
     values_to = "LULC_Class"
   ) %>% 
+  na.omit() %>%
   mutate(Date = as.Date(str_extract(LULC, "\\d{8}"), '%Y%m%d'), # extract date from columns name
          Year = year(Date)|>as.integer(), # extract year from date
          Month = month(Date)|>as.integer()) %>% # extract month from date
@@ -989,7 +1119,7 @@ lulc_2014_2022_dfXxy_long_test$LULC_Class <- minmax_norm(lulc_2014_2022_dfXxy_lo
 # head(lulc_2014_2022_dfXxy_long_test); str(lulc_2014_2022_dfXxy_long_test)
 
 
-ndvi_2014_2022_df <- as.data.frame(NDVI_2014_2022_stack, xy = T, na.rm = T) # converting stacked NDVI into dataframe
+ndvi_2014_2022_df <- as.data.frame(NDVI_2014_2022_stack, xy = T) # converting stacked NDVI into dataframe
 ndvi_2014_2022_dfXxy_long_test <-  ndvi_2014_2022_df %>%
   # convert dataframe into long format where there is only one NDVI column
   pivot_longer(
@@ -997,6 +1127,7 @@ ndvi_2014_2022_dfXxy_long_test <-  ndvi_2014_2022_df %>%
     names_to = "NDVI",
     values_to = "NDVI_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Date = as.Date(str_extract(NDVI, "\\d{8}"), '%Y%m%d'), # extract date from columns name
          Year = year(Date)|>as.integer(), # extract year from date
          Month = month(Date)|>as.integer()) %>% # extract month from date
@@ -1008,7 +1139,7 @@ ndvi_2014_2022_dfXxy_long_test$y <- round(ndvi_2014_2022_dfXxy_long_test$y, 5) #
 ndvi_2014_2022_dfXxy_long_test$NDVI_Value <- minmax_norm(ndvi_2014_2022_dfXxy_long_test$NDVI_Value) # apply min-max normalisation
 # head(ndvi_2014_2022_dfXxy_long_test); str(ndvi_2014_2022_dfXxy_long_test)
 
-ndmi_2014_2022_df <- as.data.frame(NDMI_2014_2022_stack, xy = T, na.rm = T) # converting stacked NDMI into dataframe
+ndmi_2014_2022_df <- as.data.frame(NDMI_2014_2022_stack, xy = T) # converting stacked NDMI into dataframe
 ndmi_2014_2022_dfXxy_long_test <-  ndmi_2014_2022_df %>%
   # convert dataframe into long format where there is only one NDMI column
   pivot_longer(
@@ -1016,6 +1147,7 @@ ndmi_2014_2022_dfXxy_long_test <-  ndmi_2014_2022_df %>%
     names_to = "NDMI",
     values_to = "NDMI_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Date = as.Date(str_extract(NDMI, "\\d{8}"), '%Y%m%d'), # extract date from columns name
          Year = year(Date)|>as.integer(), # extract year from date
          Month = month(Date)|>as.integer()) %>% # extract month from date
@@ -1027,7 +1159,7 @@ ndmi_2014_2022_dfXxy_long_test$y <- round(ndmi_2014_2022_dfXxy_long_test$y, 5) #
 ndmi_2014_2022_dfXxy_long_test$NDMI_Value <- minmax_norm(ndmi_2014_2022_dfXxy_long_test$NDMI_Value) # apply min-max normalisation
 # head(ndmi_2014_2022_dfXxy_long_test); str(ndmi_2014_2022_dfXxy_long_test)
 
-nbr_2014_2022_df <- as.data.frame(NBR_2014_2022_stack, xy = T, na.rm = T) # converting stacked NBR into dataframe
+nbr_2014_2022_df <- as.data.frame(NBR_2014_2022_stack, xy = T) # converting stacked NBR into dataframe
 nbr_2014_2022_dfXxy_long_test <-  nbr_2014_2022_df %>%
   # convert dataframe into long format where there is only one NBR column
   pivot_longer(
@@ -1035,6 +1167,7 @@ nbr_2014_2022_dfXxy_long_test <-  nbr_2014_2022_df %>%
     names_to = "NBR",
     values_to = "NBR_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Date = as.Date(str_extract(NBR, "\\d{8}"), '%Y%m%d'), # extract date from columns name
          Year = year(Date)|>as.integer(), # extract year from date
          Month = month(Date)|>as.integer()) %>% # extract month from date
@@ -1046,7 +1179,7 @@ nbr_2014_2022_dfXxy_long_test$y <- round(nbr_2014_2022_dfXxy_long_test$y, 5) # r
 nbr_2014_2022_dfXxy_long_test$NBR_Value <- minmax_norm(nbr_2014_2022_dfXxy_long_test$NBR_Value) # apply min-max normalisation
 # head(nbr_2014_2022_dfXxy_long_test); str(nbr_2014_2022_dfXxy_long_test)
 
-atp_2014_2022_df <- as.data.frame(ATP_2014_2022_stack, xy = T, na.rm = T) # converting stacked ATP into dataframe
+atp_2014_2022_df <- as.data.frame(ATP_2014_2022_stack, xy = T) # converting stacked ATP into dataframe
 atp_2014_2022_dfXxy_long_test <-  atp_2014_2022_df %>%
   # convert dataframe into long format where there is only one ATP column
   pivot_longer(
@@ -1054,6 +1187,7 @@ atp_2014_2022_dfXxy_long_test <-  atp_2014_2022_df %>%
     names_to = "TP",
     values_to = "TP_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(TP, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(TP, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'TP_Value'))  %>% # select relevant columns only
@@ -1064,7 +1198,7 @@ atp_2014_2022_dfXxy_long_test$y <- round(atp_2014_2022_dfXxy_long_test$y, 5) # r
 atp_2014_2022_dfXxy_long_test$TP_Value <- minmax_norm(atp_2014_2022_dfXxy_long_test$TP_Value) # apply min-max normalisation
 # head(atp_2014_2022_dfXxy_long_test); str(atp_2014_2022_dfXxy_long_test)
 
-amt_2014_2022_df <- as.data.frame(AMT_2014_2022_stack, xy = T, na.rm = T) # converting stacked AMT into dataframe
+amt_2014_2022_df <- as.data.frame(AMT_2014_2022_stack, xy = T) # converting stacked AMT into dataframe
 amt_2014_2022_dfXxy_long_test <-  amt_2014_2022_df %>%
   # convert dataframe into long format where there is only one AMT column
   pivot_longer(
@@ -1072,6 +1206,7 @@ amt_2014_2022_dfXxy_long_test <-  amt_2014_2022_df %>%
     names_to = "AMT",
     values_to = "AMT_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(AMT, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(AMT, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'AMT_Value')) %>% # select relevant columns only
@@ -1082,7 +1217,7 @@ amt_2014_2022_dfXxy_long_test$y <- round(amt_2014_2022_dfXxy_long_test$y, 5) # r
 amt_2014_2022_dfXxy_long_test$AMT_Value <- minmax_norm(amt_2014_2022_dfXxy_long_test$AMT_Value) # apply min-max normalisation
 # head(amt_2014_2022_dfXxy_long_test); str(amt_2014_2022_dfXxy_long_test)
 
-answs_2014_2022_df <- as.data.frame(ANSWS_2014_2022_stack, xy = T, na.rm = T) # converting stacked ANSWS into dataframe
+answs_2014_2022_df <- as.data.frame(ANSWS_2014_2022_stack, xy = T) # converting stacked ANSWS into dataframe
 answs_2014_2022_dfXxy_long_test <-  answs_2014_2022_df %>%
   # convert dataframe into long format where there is only one ANSWS column
   pivot_longer(
@@ -1090,6 +1225,7 @@ answs_2014_2022_dfXxy_long_test <-  answs_2014_2022_df %>%
     names_to = "ANSWS",
     values_to = "ANSWS_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(ANSWS, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(ANSWS, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'ANSWS_Value')) %>% # select relevant columns only
@@ -1100,7 +1236,7 @@ answs_2014_2022_dfXxy_long_test$y <- round(answs_2014_2022_dfXxy_long_test$y, 5)
 answs_2014_2022_dfXxy_long_test$ANSWS_Value <- minmax_norm(answs_2014_2022_dfXxy_long_test$ANSWS_Value) # apply min-max normalisation
 # head(answs_2014_2022_dfXxy_long_test); str(answs_2014_2022_dfXxy_long_test)
 
-arh_2014_2022_df <- as.data.frame(ARH_2014_2022_stack, xy = T, na.rm = T) # converting stacked ARH into dataframe
+arh_2014_2022_df <- as.data.frame(ARH_2014_2022_stack, xy = T) # converting stacked ARH into dataframe
 arh_2014_2022_dfXxy_long_test <-  arh_2014_2022_df %>%
   # convert dataframe into long format where there is only one ARH column
   pivot_longer(
@@ -1108,6 +1244,7 @@ arh_2014_2022_dfXxy_long_test <-  arh_2014_2022_df %>%
     names_to = "ARH",
     values_to = "ARH_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(ARH, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(ARH, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'ARH_Value')) %>% # select relevant columns only
@@ -1119,7 +1256,7 @@ arh_2014_2022_dfXxy_long_test$ARH_Value <- minmax_norm(arh_2014_2022_dfXxy_long_
 # head(arh_2014_2022_dfXxy_long_test); str(arh_2014_2022_dfXxy_long_test)
 
 
-elev_2014_2022_df <- as.data.frame(elevation_replicated_for_2014_to_2022_stack, xy = T, na.rm = T) # converting stacked elevation into dataframe
+elev_2014_2022_df <- as.data.frame(elevation_replicated_for_2014_to_2022_stack, xy = T) # converting stacked elevation into dataframe
 elev_2014_2022_dfXxy_long_test <-  elev_2014_2022_df %>%
   # convert dataframe into long format where there is only one elevation column
   pivot_longer(
@@ -1127,6 +1264,7 @@ elev_2014_2022_dfXxy_long_test <-  elev_2014_2022_df %>%
     names_to = "Elev",
     values_to = "Elev_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(Elev, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Elev, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Elev_Value')) %>% # select relevant columns only
@@ -1137,7 +1275,7 @@ elev_2014_2022_dfXxy_long_test$y <- round(elev_2014_2022_dfXxy_long_test$y, 5) #
 elev_2014_2022_dfXxy_long_test$Elev_Value <- minmax_norm(elev_2014_2022_dfXxy_long_test$Elev_Value) # apply min-max normalisation
 # head(elev_2014_2022_dfXxy_long_test); str(elev_2014_2022_dfXxy_long_test)
 
-slope_2014_2022_df <- as.data.frame(slope_replicated_for_2014_to_2022_stack, xy = T, na.rm = T) # converting stacked slope into dataframe
+slope_2014_2022_df <- as.data.frame(slope_replicated_for_2014_to_2022_stack, xy = T) # converting stacked slope into dataframe
 slope_2014_2022_dfXxy_long_test <-  slope_2014_2022_df %>%
   # convert dataframe into long format where there is only one slope column
   pivot_longer(
@@ -1145,6 +1283,7 @@ slope_2014_2022_dfXxy_long_test <-  slope_2014_2022_df %>%
     names_to = "Slope",
     values_to = "Slope_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(Slope, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Slope, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Slope_Value')) %>% # select relevant columns only
@@ -1156,7 +1295,7 @@ slope_2014_2022_dfXxy_long_test$Slope_Value <- minmax_norm(slope_2014_2022_dfXxy
 # head(slope_2014_2022_dfXxy_long_test); str(slope_2014_2022_dfXxy_long_test)
 
 
-aspect_2014_2022_df <- as.data.frame(aspect_replicated_for_2014_to_2022_stack, xy = T, na.rm = T) # converting stacked aspect into dataframe
+aspect_2014_2022_df <- as.data.frame(aspect_replicated_for_2014_to_2022_stack, xy = T) # converting stacked aspect into dataframe
 aspect_2014_2022_dfXxy_long_test <-  aspect_2014_2022_df %>%
   # convert dataframe into long format where there is only one aspect column
   pivot_longer(
@@ -1164,6 +1303,7 @@ aspect_2014_2022_dfXxy_long_test <-  aspect_2014_2022_df %>%
     names_to = "Aspect",
     values_to = "Aspect_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(Aspect, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Aspect, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Aspect_Value')) %>% # select relevant columns only
@@ -1174,7 +1314,7 @@ aspect_2014_2022_dfXxy_long_test$y <- round(aspect_2014_2022_dfXxy_long_test$y, 
 aspect_2014_2022_dfXxy_long_test$Aspect_Value <- minmax_norm(aspect_2014_2022_dfXxy_long_test$Aspect_Value) # apply min-max normalisation
 # head(aspect_2014_2022_dfXxy_long_test); str(aspect_2014_2022_dfXxy_long_test)
 
-fire_2014_2022_df <- as.data.frame(FIRE_2014_2022_stack, xy = T, na.rm = T) # converting stacked fire into dataframe
+fire_2014_2022_df <- as.data.frame(FIRE_2014_2022_stack, xy = T) # converting stacked fire into dataframe
 fire_2014_2022_dfXxy_long_test <-  fire_2014_2022_df %>%
   # convert dataframe into long format where there is only one fire column
   pivot_longer(
@@ -1182,6 +1322,7 @@ fire_2014_2022_dfXxy_long_test <-  fire_2014_2022_df %>%
     names_to = "Fire",
     values_to = "Fire_Value"
   ) %>% 
+  na.omit() %>%
   mutate(Year = str_extract(Fire, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Fire, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Fire_Value')) %>% # select relevant columns only
@@ -1209,6 +1350,10 @@ dfnorm_2014_2022_test_list <-  list(lulc_2014_2022_dfXxy_long_test,
 dfnorm_2014_2022_test_set <- reduce(dfnorm_2014_2022_test_list, inner_join, by = c('x', "y", "Year", "Month")) # merge all the table on the common columns (to preserve both spatial-temporal consistency!)
 # str(dfnorm_2014_2022_test_set)
 
+# Remove waterbodies from dataset
+dfnorm_2014_2022_test_set <- dfnorm_2014_2022_test_set %>%
+  filter(LULC_Class!= 1) # filter out water bodies as they won't contain fire events- water bodies = 1 after normalisation. Before normalisation it was 5.
+#
 # save dataframe
 # save(dfnorm_2014_2022_test_set, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/dfnorm_2014_2022_test_set.Rdata')
 # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/dfnorm_2014_2022_test_set.Rdata')
