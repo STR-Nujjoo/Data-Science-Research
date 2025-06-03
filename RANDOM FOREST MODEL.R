@@ -79,17 +79,20 @@ rf_gridsearch <-  expand.grid(mtry = 2:(ncol(train_set) - 1),
 
 
 # Initialize results storage
-results <- data.frame()
-probabilities_list <- list()
 model_list <- list()
+probabilities_list <- list()
+threshold_list <- list()
+F1_score_list <- list()
+metrics_list <- list()
+results <- data.frame()
 
 # Detect cores on system and create clusters
 cl <- makeCluster(detectCores() - 1)
 
 #  Manual tuning loop
 for (i in 1:nrow(rf_gridsearch)) {
-  # print(i)
-  i <- 1
+  cat('Iteration',i, 'out of', nrow(rf_gridsearch))
+  i <- i
   params <- rf_gridsearch[i, ]
   
   # Train the model
@@ -108,12 +111,18 @@ for (i in 1:nrow(rf_gridsearch)) {
     verbose = T,
     seed = 1
   )
+  
   options(scipen = 999)  # Prevents scientific notation
+  
   # Predict probabilities on validation set
   probs <- predict(rf, data = val_set[,colnames(val_set) != 'Fire_Value'])$predictions
   actual_class <- val_set$Fire_Value # extract known response variable from validation set
-  probs[which(actual_class==1),'1'] |> summary()
-  summary(probs[,'1'])
+  
+  # probs[which(actual_class==1),]
+  # probs[which(actual_class==1),'1'] |> hist()
+  # density(probs[,'1'])
+  # summary(probs[,'1'])
+  
   threshold <- seq(min(probs[,'1']), max(probs[,'1']), by = 0.002) # generate a sequence of threshold to classify response variable based on probability class
 
     # To allow parallel processing in pbsapply export items used in the function to the cluster
@@ -130,79 +139,91 @@ for (i in 1:nrow(rf_gridsearch)) {
   # F1_SCORES <- pbsapply(seq_along(threshold), function (x){
   # pred_class <- ifelse(probs[, '1'] >= threshold[1] & probs[, '1'] <= threshold[x], 1, 0) |> as.factor()
   # return(confusionMatrix(pred_class, actual_class, positive = '1', mode = 'everything')$byClass['F1'][[1]])}, cl = cl)# apply threshold on positive class; 1 in this case
-  # 
+
  
-   F1_SCORES[is.nan(F1_SCORES)] <- 0 # replace NaN with 0
+  # F1_SCORES[is.nan(F1_SCORES)] <- 0 # replace NaN with 0
   optimal_threshold <- threshold[which.max(F1_SCORES)] # which threshold has led to the maximum F1 score
   optimal_f1_score <- max(F1_SCORES[!is.nan(F1_SCORES)]) # extract the maximum F1 score (omitting NaN if there's any)
   final_pred_class <- ifelse(probs[, '1'] >= optimal_threshold, 1, 0) |> as.factor() # recalculate the final predicted class again using the optimal threshold
   # final_pred_class <- ifelse(probs[, '1'] >= threshold[1] & probs[, '1'] <= optimal_threshold, 1, 0) |> as.factor() # recalculate the final predicted class again using the optimal threshold
-  plot(threshold, F1_SCORES,
-       type = 'l',
-       # pch = 19,
-       cex.main = .9,
-       cex.lab = .9,
-       cex.axis = .9,
-       # cex = .3,
-       col = 'red',
-       xlab = 'Threshold',
-       ylab = 'F1 Score',
-       # xlim = c(min(threshold), 0.01)
-       )
-  points(threshold, F1_SCORES, pch = 19, cex = .2, col = 'red')
+  # plot(threshold, F1_SCORES,
+  #      type = 'l',
+  #      # pch = 19,
+  #      cex.main = .9,
+  #      cex.lab = .9,
+  #      cex.axis = .9,
+  #      # cex = .3,
+  #      col = 'red',
+  #      xlab = 'Threshold',
+  #      ylab = 'F1 Score',
+  #      # xlim = c(min(threshold), 0.01)
+  #      )
+  # points(threshold, F1_SCORES, pch = 19, cex = .2, col = 'red')
   MCC <- mcc(preds = final_pred_class, actuals = actual_class) # computing Matthew's correlation coefficient
   Metrics <- confusionMatrix(final_pred_class, actual_class, positive = '1', mode = 'everything') # generate other metrics from confusion matrix
   
   prediction <- prediction(as.numeric(final_pred_class)-1, actual_class)
-  AUC_ROC <- performance(prediction, measure = 'auc')@y.values[[1]] # AUC
+  AUC_ROC <- performance(prediction, measure = 'auc')@y.values[[1]] # AUC_ROC
+  AUC_PR <- performance(prediction, measure = 'aucpr')@y.values[[1]] # AUC_PR
   
-  # Visualising AUC ROC curve
+  # # Visualising AUC ROC curve
   # plot(performance(prediction, 'tpr', 'fpr'), colorize = T, xlab = '1-Specificity', ylab = 'Recall')
   # lines(c(0,1), c(0,1), lty = 'dotted', col = 'darkgray')
-
-  probabilities_list[[i]] <- probs
+  # 
+  # # Visualising AUC PR curve
+  # plot(performance(prediction, 'prec', 'rec'), colorize = T)
+  # lines(c(0,1), c(0,1), lty = 'dotted', col = 'darkgray')
+  
   model_list[[i]] <- rf # appending each model to a list
+  probabilities_list[[i]] <- probs # appending each model's probability to a list
+  threshold_list[[i]] <- threshold # appending the threshold generated from the probabilities to a list
+  F1_score_list[[i]] <- F1_SCORES # appending each F1 score generated from the respective threshold to a list
+  metrics_list[[i]] <- Metrics # appending each metric from each model to a list
   results <- rbind(results, cbind(params, 
                                   optimal_threshold = optimal_threshold,
                                   precision = Metrics$byClass['Precision'][[1]],
                                   recall = Metrics$byClass['Recall'][[1]],
                                   F1_score = optimal_f1_score, 
                                   AUC_ROC = AUC_ROC,
+                                  AUC_PR = AUC_PR,
                                   MCC = MCC))
   
 }
-stopCluster(cl)
-results
 
+stopCluster(cl)
+# save all content from model
+# save(model_list, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/rf_models_2014_2022_resampled_dataset.Rdata')
+# save(probabilities_list, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/rf_models_probabilities_2014_2022_resampled_dataset.Rdata')
+# save(threshold_list, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/rf_models_thresholds_2014_2022_resampled_dataset.Rdata')
+# save(F1_score_list, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/rf_models_F1_scores_2014_2022_resampled_dataset.Rdata')
+# save(metrics_list, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/rf_models_metrics_2014_2022_resampled_dataset.Rdata')
+# save(results, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/rf_models_results_2014_2022_resampled_dataset.Rdata')
+
+
+metrics_list[[which.max(results$AUC_ROC)]]
+results
 optimal_model <- model_list[[which.max(results$AUC_ROC)]] # extracting optimal model from list using AUC_ROC as metrics of choice
 opt_probs <- probabilities_list[[which.max(results$AUC_ROC)]]
-# threshold <- seq(min(opt_probs[,'1']), max(opt_probs[,'1']), by = 0.0001) # generate a sequence of threshold to classify response variable based on probability class
-# actual_class <- val_set$Fire_Value # extract known response variable from validation set
-# # Detect cores on system and create clusters
-# cl <- makeCluster(detectCores() - 1)
-# # To allow parallel processing in pbsapply export items used in the function to the cluster
-# clusterExport(cl, varlist = c("opt_probs",'threshold','actual_class')) 
-# # Loading relevant package on cluster
-# clusterEvalQ(cl, library(caret))
-# # This returns the F1 scores for each threshold
-# F1_SCORES_from_opt_model <- pbsapply(seq_along(threshold), function (x){
-#   opt_pred_class <- ifelse(opt_probs[, '1'] >= threshold[1] & opt_probs[, '1'] <= threshold[x], 1, 0) |> as.factor()
-#   return(confusionMatrix(opt_pred_class, actual_class, positive = '1', mode = 'everything')$byClass['F1'][[1]])}, cl = cl)# apply threshold on positive class; 1 in this case
-# stopCluster(cl)
-# F1_SCORES_from_opt_model[is.nan(F1_SCORES_from_opt_model)] <- 0 # replace NaN with 0
-# plot(threshold, F1_SCORES_from_opt_model,
-#      type = 'l',
-#      # pch = 19,
-#      main = 'Chosen Threshold from Optimal RF Model',
-#      cex.main = .9,
-#      cex.lab = .9,
-#      cex.axis = .9,
-#      # cex = .3,
-#      col = 'red',
-#      xlab = 'Threshold',
-#      ylab = 'F1 Score',
-#      xlim = c(min(threshold), 0.01))
-# points(threshold, F1_SCORES_from_opt_model, pch = 19, cex = .2, col = 'red')
+threshold_from_optimal_model <- threshold_list[[which.max(results$AUC_ROC)]] # generate a sequence of threshold to classify response variable based on probability class
+F1_scores_from_optimal_model <- F1_score_list[[which.max(results$AUC_ROC)]]
+
+plot(threshold_from_optimal_model, F1_scores_from_optimal_model,
+     type = 'l',
+     # pch = 19,
+     main = 'Chosen Threshold from Optimal RF Model',
+     cex.main = .9,
+     cex.lab = .9,
+     cex.axis = .9,
+     # cex = .3,
+     col = 'red',
+     xlab = 'Threshold',
+     ylab = 'F1 Score',
+     # xlim = c(min(threshold), 0.01)
+     )
+points(results$optimal_threshold[[which.max(results$AUC_ROC)]], 
+       results$F1_score[[which.max(results$AUC_ROC)]], 
+       pch = 19, cex = .4, col = 'red')
+
 # prediction probabilities for each class on test set
 test_probs <- predict(optimal_model, data = test_set[,colnames(test_set) != 'Fire_Value'])$predictions
 test_optimal_threshold <- results[which.max(results$AUC_ROC),]$optimal_threshold # extracting the optimal threshold used in the optimal model
@@ -212,19 +233,18 @@ test_f1_score <- test_metrics$byClass['F1'][[1]]
 test_precision <- test_metrics$byClass['Precision'][[1]]
 test_recall <- test_metrics$byClass['Recall'][[1]]
 test_prediction <- prediction(as.numeric(test_pred_class)-1, test_set$Fire_Value)
-test_AUC_ROC <- performance(test_prediction, measure = 'auc')@y.values[[1]] # AUC
+test_AUC_ROC <- performance(test_prediction, measure = 'auc')@y.values[[1]] # AUC_ROC
+test_AUC_PR <- performance(test_prediction, measure = 'aucpr')@y.values[[1]] # AUC_PR
 test_MCC <- mcc(preds = test_pred_class, actuals = test_set$Fire_Value) # computing Matthew's correlation coefficient
 cbind(optimal_threshold = test_optimal_threshold,
       precision = test_precision|>round(3),
       recall = test_recall|>round(3),
       F1_score = test_f1_score|>round(3), 
       AUC_ROC = test_AUC_ROC|>round(3),
+      AUC_PR = test_AUC_PR|>round(3),
       MCC = test_MCC|>round(3))
+
 test_pred_class
-
-
-
-
 
 # creating a function for visualisation
 WS_visualisation_from_RF <- function(df, year, month, test_probs, test_pred_class, classes_breaks_method = c('natural_breaks', 'quantile')){
@@ -349,10 +369,10 @@ WS_visualisation_from_RF <- function(df, year, month, test_probs, test_pred_clas
 }
 
 
-WS_visualisation_from_RF(df = test_set, year = 2022, month = 12, 
+WS_visualisation_from_RF(df = test_set, year = 2022, month = 1, 
                          test_probs = test_probs, test_pred_class = test_pred_class, 
                          classes_breaks_method = 'natural_breaks')
-WS_visualisation_from_RF(df = test_set, year = 2022, month = 12, 
+WS_visualisation_from_RF(df = test_set, year = 2022, month = 1, 
                          test_probs = test_probs, test_pred_class = test_pred_class, 
                          classes_breaks_method = 'quantile')
 
