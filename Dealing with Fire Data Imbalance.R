@@ -48,6 +48,7 @@ roi_trans <- spTransform(roi, CRS('+proj=utm +zone=34 +south +datum=WGS84 +units
 # import waterbodies shapefile
 waterbodies <- readOGR('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/SANParks shapefiles/Storm_water_Waterbodies/Storm_water_Waterbodies.shp')
 waterbodies_trans <- spTransform(waterbodies, CRS('+proj=utm +zone=34 +south +datum=WGS84 +units=m +no_defs')) # convert coordinate system to EPSG:32734 (WGS 84 / UTM zone 34S)
+
 target_waterbodies <- st_as_sf(waterbodies_trans) %>%
   filter(OBJECTID %in% c(1973, 1974, 1975, 1976, 1980)) %>% # select only the relevant waterbodies 
   st_as_sfc() # convert into sfc format
@@ -358,28 +359,187 @@ Save_SANparks_fire_raster <- function(data, index, path){
 pblapply(seq_along(RESAMPLED_FIRE_2014_2022_training_list), function(x){
   Save_SANparks_fire_raster(data = RESAMPLED_FIRE_2014_2022_training_list,
               index = x,
-              path = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/Resampled SANParks fire data/Individual rasters/')
+              path = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/Resampled SANParks fire data/Individual rasters (buffered)/')
   
   })
 
 
 # # Save object
 # save(RESAMPLED_FIRE_2014_2022_training_list,
-#      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/Resampled SANParks fire data/Individual rasters/RESAMPLED_FIRE_2014_2022_list.Rdata')
+#      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/Resampled SANParks fire data/Individual rasters (buffered)/RESAMPLED_FIRE_2014_2022_list.Rdata')
+# load object
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/Resampled SANParks fire data/Individual rasters (buffered)/RESAMPLED_FIRE_2014_2022_list.Rdata')
 
+# Reimporting  and visualising the resampled fire data for the training set only
+x <- list.files('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/Resampled SANParks fire data/Individual rasters (buffered)/', pattern = '.tif')
+RESAMPLED_FIRE_2014_2022_training_list <- pblapply(seq_along(x), function(i){
+  xx <- raster(paste0('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/Resampled SANParks fire data/Individual rasters (buffered)/', x[i]))
+  # plot(xx,
+  #      col = fire_color_condition_func(xx),
+  #      main= names(xx))
+  # plot(roi_trans, add = T)
+  # plot(target_waterbodies, add = T)
+  return(xx)
+})
 
-# Visualising the resampled fire data for the training set only
-x <- list.files('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/Resampled SANParks fire data/Individual rasters/', pattern = '.tif')
-
-
-pblapply(seq_along(x), function(i){
-  xx <- raster(paste0('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/Resampled SANParks fire data/Individual rasters/', x[i]))
-  plot(xx,
-       col = fire_color_condition_func(xx),
-       main= names(xx))
-  plot(roi_trans, add = T)
-  plot(target_waterbodies, add = T)
+# Reimporting  and visualising the resampled fire data for the training set only (modified timeframe)
+x <- list.files('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/Resampled SANParks fire data/Individual rasters (buffered)/', pattern = '.tif')
+x <- x[1:60] # readjust training set from 2014 to 2018
+RESAMPLED_FIRE_2014_2022_buffered_training_list <- pblapply(seq_along(x), function(i){
+  xx <- raster(paste0('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/Resampled SANParks fire data/Individual rasters (buffered)/', x[i]))
+  # plot(xx,
+  #      col = fire_color_condition_func(xx),
+  #      main= names(xx))
+  # plot(roi_trans, add = T)
+  # plot(target_waterbodies, add = T)
+  return(xx)
 })
 
 
-RESAMPLED_FIRE_2014_2022_list[[1]]
+# Resampling without buffering
+RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_list <- pblapply(1:60, # training set index only
+                                                   function(x){
+                                                     r <- FIRE_2014_2022_stack@layers[[x]]
+                                                     fire_pixels <- r == 1 # select fire pixels only
+                                                     # plot(r)
+                                                     if(maxValue(fire_pixels)==1){ # this indicates that a fire actually took place
+                                                       
+                                                       # Group connected pixels into clumps (i.e., contiguous clusters)
+                                                       clumped <- clump(fire_pixels, directions = 8)  # 8 for diagonal connectivity too
+                                                       fire_polygons <- rasterToPolygons(clumped, dissolve=T) # Convert Fire Pixels to Polygons
+                                                       fire_polygons <- st_as_sfc(fire_polygons) # convert the polygon into spatial dataframe
+                                                       fire_polygons_area <- st_area(fire_polygons)|> as.numeric() / 10000 # area in hectares (ha)
+                                                       # fire_polygons$geometry # check geometry
+                                                       
+                                                       # plot(roi_trans, col = 'transparent', border = 'black')
+                                                       # plot(chosen_polygon, col = 'red', border = 'red', add = T)
+                                                       
+                                                      chosen_polygon <- fire_polygons[which.max(fire_polygons_area)] # polygon to be used as the cookie cutter
+                                                       
+                                                       # To avoid repetitive rows when converting data to a dataframe at a later stage. Union intersected polygons if polygons overlap
+                                                       overlap_check <- st_intersects(fire_polygons, sparse = F)
+                                                       if(any(overlap_check[row(overlap_check) != col(overlap_check)])){ # if any of the polygon intersects with each other unionise them
+                                                         fire_polygons_union <- st_union(fire_polygons)
+                                                       } else{
+                                                         fire_polygons_union <- fire_polygons
+                                                       }
+                                                       
+                                                       # This was considered because the ones which fall exactly on the edge of the study area was considered to be not within the study area.
+                                                       # Therefore, a quick fix is to buffer the study area by only a meter to force the correct interpretation.
+                                                       roi_trans_buffered <- st_buffer(st_as_sfc(roi_trans), dist = 1)
+                                                       # all(st_within(buffered_clipped, roi_trans_buffered, sparse = F)) # check
+                                                       
+                                                       # plot(roi_trans, col = 'transparent', border = 'black')
+                                                       # plot(buffered_clipped_union, add = T, border = 'red', col = alpha('red', .3))
+                                                       # plot(target_waterbodies, add = T)
+                                                       
+                                                       # Initialize list of polygons
+                                                       original_poly <- chosen_polygon
+                                                       existing_union <- c(fire_polygons_union, target_waterbodies)  # start with the original and acknowledge that a fire won't take place within a waterbody
+                                                       n_cookie_cutter <- 4
+                                                       # Try to generate 4 non-overlapping copies
+                                                       for (i in 1:n_cookie_cutter) {
+                                                         new_copy <- generate_valid_copy(target_poly=original_poly, 
+                                                                                         existing = existing_union, 
+                                                                                         actual_study_area = roi_trans,
+                                                                                         buffered_study_area = roi_trans_buffered,
+                                                                                         max_attempts = 200)
+                                                         if (!is.null(new_copy)) {
+                                                           existing_union <- c(existing_union, new_copy)
+                                                           
+                                                         } else {
+                                                           break
+                                                         }
+                                                       }
+                                                       
+                                                       masked_polygon <- existing_union[-1:-length(c(fire_polygons_union, target_waterbodies))] # from all the polygon generated separate the ones which will be used as masked polygon only
+                                                       
+                                                       # plot(roi_trans, col = 'transparent', border = 'green')
+                                                       # plot(fire_polygons_union, add = T, col = 'red', border = 'black')
+                                                       # plot(masked_polygon, add = T, col = 'yellow', border = 'black')
+                                                       # plot(target_waterbodies, add = T)
+                                                       
+                                                       fire_polygons_union <- st_as_sf(fire_polygons_union) # convert polygons to spatial dataframe
+                                                       fire_polygons_union$value <- 1 # create a variable name value and assign the value to be 1 representing positives
+                                                       negative_polygon <- st_as_sf(masked_polygon) # convert negative polygon to spatial dataframe
+                                                       negative_polygon$value <- 0 # create a variable name value and assign the value to be 0 representing negatives
+                                                       all_poly <- rbind(fire_polygons_union, negative_polygon) # merge the polygons
+                                                       
+                                                       # Convert sf back to Spatial for rasterize
+                                                       all_poly_sp <- as(all_poly,'Spatial')
+                                                       
+                                                       # Create an empty raster to match the original
+                                                       new_raster <- raster(r)
+                                                       
+                                                       # convert the polygons into a raster
+                                                       resampled_non_buffered_fire_raster <- rasterize(all_poly_sp, new_raster, field='value', background=NA)
+                                                       names(resampled_non_buffered_fire_raster) <- names(r)
+                                                       
+                                                       print(
+                                                         {
+                                                           plot(resampled_non_buffered_fire_raster, 
+                                                                col = fire_color_condition_func(resampled_non_buffered_fire_raster),
+                                                                main = names(resampled_non_buffered_fire_raster))
+                                                           plot(roi_trans, add = T)
+                                                           plot(target_waterbodies, add = T)
+                                                         }
+                                                         
+                                                         
+                                                       )
+                                                       
+                                                       
+                                                       return(resampled_non_buffered_fire_raster)
+                                                       
+                                                     } else{
+                                                       print(
+                                                         plot(r, col= fire_color_condition_func(r), main = names(r))
+                                                       )
+                                                       return(r)
+                                                     }
+                                                     
+})
+
+# saving individual rasters
+pblapply(seq_along(RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_list), function(x){
+  Save_SANparks_fire_raster(data = RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_list,
+                            index = x,
+                            path = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/Resampled SANParks fire data/Individual rasters (non-buffered)/')
+  
+})
+
+# # Save object
+# save(RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_list,
+#      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/Resampled SANParks fire data/Individual rasters (non-buffered)/RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_list.Rdata')
+# # load object
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/Resampled SANParks fire data/Individual rasters (non-buffered)/RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_list.Rdata')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

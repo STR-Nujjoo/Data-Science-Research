@@ -517,13 +517,13 @@ lulc_2014_2022_dfXxy_long_train <- lulc_2014_2022_dfXxy %>%
     cols = starts_with("LULC"),
     names_to = "LULC",
     values_to = "LULC_Class"
-  ) %>% 
+  ) %>%
   na.omit() %>%
   mutate(Date = as.Date(str_extract(LULC, "\\d{8}"), '%Y%m%d'), # extract date from columns name
          Year = year(Date)|>as.integer(), # extract year from date
          Month = month(Date)|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'LULC_Class')) %>% # select relevant columns only
-  filter(Year %in% 2014:2019) # filter years to be used as training set
+  filter(Year %in% 2014:2018) # filter years to be used as training set
 
 lulc_2014_2022_dfXxy_long_train$x <- round(lulc_2014_2022_dfXxy_long_train$x, 5) # round x coordinates to 5 d.p
 lulc_2014_2022_dfXxy_long_train$y <- round(lulc_2014_2022_dfXxy_long_train$y, 5) # round y coordinates to 5 d.p
@@ -537,13 +537,13 @@ ndvi_2014_2022_dfXxy_long_train <-  ndvi_2014_2022_df %>%
     cols = starts_with("NDVI"),
     names_to = "NDVI",
     values_to = "NDVI_Value"
-  ) %>% 
+  ) %>%
   na.omit() %>%
   mutate(Date = as.Date(str_extract(NDVI, "\\d{8}"), '%Y%m%d'), # extract date from columns name
          Year = year(Date)|>as.integer(), # extract year from date
          Month = month(Date)|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'NDVI_Value')) %>% # select relevant columns only
-  filter(Year %in% 2014:2019) # filter years to be used as training set
+  filter(Year %in% 2014:2018) # filter years to be used as training set
 
 ndvi_2014_2022_dfXxy_long_train$x <- round(ndvi_2014_2022_dfXxy_long_train$x, 5) # round x coordinates to 5 d.p
 ndvi_2014_2022_dfXxy_long_train$y <- round(ndvi_2014_2022_dfXxy_long_train$y, 5) # round y coordinates to 5 d.p
@@ -557,13 +557,13 @@ ndmi_2014_2022_dfXxy_long_train <-  ndmi_2014_2022_df %>%
     cols = starts_with("NDMI"),
     names_to = "NDMI",
     values_to = "NDMI_Value"
-  ) %>% 
+  ) %>%
   na.omit() %>%
   mutate(Date = as.Date(str_extract(NDMI, "\\d{8}"), '%Y%m%d'), # extract date from columns name
          Year = year(Date)|>as.integer(), # extract year from date
          Month = month(Date)|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'NDMI_Value'))  %>% # select relevant columns only
-  filter(Year %in% 2014:2019) # filter years to be used as training set
+  filter(Year %in% 2014:2018) # filter years to be used as training set
 
 ndmi_2014_2022_dfXxy_long_train$x <- round(ndmi_2014_2022_dfXxy_long_train$x, 5) # round x coordinates to 5 d.p
 ndmi_2014_2022_dfXxy_long_train$y <- round(ndmi_2014_2022_dfXxy_long_train$y, 5) # round y coordinates to 5 d.p
@@ -577,13 +577,13 @@ nbr_2014_2022_dfXxy_long_train <-  nbr_2014_2022_df %>%
     cols = starts_with("NBR"),
     names_to = "NBR",
     values_to = "NBR_Value"
-  ) %>% 
+  ) %>%
   na.omit() %>%
   mutate(Date = as.Date(str_extract(NBR, "\\d{8}"), '%Y%m%d'), # extract date from columns name
          Year = year(Date)|>as.integer(), # extract year from date
          Month = month(Date)|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'NBR_Value'))  %>% # select relevant columns only
-  filter(Year %in% 2014:2019) # filter years to be used as training set
+  filter(Year %in% 2014:2018) # filter years to be used as training set
 
 nbr_2014_2022_dfXxy_long_train$x <- round(nbr_2014_2022_dfXxy_long_train$x, 5) # round x coordinates to 5 d.p
 nbr_2014_2022_dfXxy_long_train$y <- round(nbr_2014_2022_dfXxy_long_train$y, 5) # round y coordinates to 5 d.p
@@ -597,12 +597,12 @@ atp_2014_2022_dfXxy_long_train <-  atp_2014_2022_df %>%
     cols = starts_with("TP"),
     names_to = "TP",
     values_to = "TP_Value"
-  ) %>% 
+  ) %>%
   na.omit() %>%
   mutate(Year = str_extract(TP, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(TP, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'TP_Value'))  %>% # select relevant columns only
-  filter(Year %in% 2014:2019) # filter years to be used as training set
+  filter(Year %in% 2014:2018) # filter years to be used as training set
 
 atp_2014_2022_dfXxy_long_train$x <- round(atp_2014_2022_dfXxy_long_train$x, 5) # round x coordinates to 5 d.p
 atp_2014_2022_dfXxy_long_train$y <- round(atp_2014_2022_dfXxy_long_train$y, 5) # round y coordinates to 5 d.p
@@ -616,12 +616,12 @@ amt_2014_2022_dfXxy_long_train <-  amt_2014_2022_df %>%
     cols = starts_with("AMT"),
     names_to = "AMT",
     values_to = "AMT_Value"
-  ) %>% 
+  ) %>%
   na.omit() %>%
   mutate(Year = str_extract(AMT, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(AMT, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'AMT_Value')) %>% # select relevant columns only
-  filter(Year %in% 2014:2019) # filter years to be used as training set
+  filter(Year %in% 2014:2018) # filter years to be used as training set
 
 amt_2014_2022_dfXxy_long_train$x <- round(amt_2014_2022_dfXxy_long_train$x, 5) # round x coordinates to 5 d.p
 amt_2014_2022_dfXxy_long_train$y <- round(amt_2014_2022_dfXxy_long_train$y, 5) # round y coordinates to 5 d.p
@@ -635,12 +635,12 @@ answs_2014_2022_dfXxy_long_train <-  answs_2014_2022_df %>%
     cols = starts_with("ANSWS"),
     names_to = "ANSWS",
     values_to = "ANSWS_Value"
-  ) %>% 
+  ) %>%
   na.omit() %>%
   mutate(Year = str_extract(ANSWS, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(ANSWS, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'ANSWS_Value')) %>% # select relevant columns only
-  filter(Year %in% 2014:2019) # filter years to be used as training set
+  filter(Year %in% 2014:2018) # filter years to be used as training set
 
 answs_2014_2022_dfXxy_long_train$x <- round(answs_2014_2022_dfXxy_long_train$x, 5) # round x coordinates to 5 d.p
 answs_2014_2022_dfXxy_long_train$y <- round(answs_2014_2022_dfXxy_long_train$y, 5) # round y coordinates to 5 d.p
@@ -654,12 +654,12 @@ arh_2014_2022_dfXxy_long_train <-  arh_2014_2022_df %>%
     cols = starts_with("ARH"),
     names_to = "ARH",
     values_to = "ARH_Value"
-  ) %>% 
+  ) %>%
   na.omit() %>%
   mutate(Year = str_extract(ARH, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(ARH, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'ARH_Value')) %>% # select relevant columns only
-  filter(Year %in% 2014:2019) # filter years to be used as training set
+  filter(Year %in% 2014:2018) # filter years to be used as training set
 
 arh_2014_2022_dfXxy_long_train$x <- round(arh_2014_2022_dfXxy_long_train$x, 5) # round x coordinates to 5 d.p
 arh_2014_2022_dfXxy_long_train$y <- round(arh_2014_2022_dfXxy_long_train$y, 5) # round y coordinates to 5 d.p
@@ -674,12 +674,12 @@ elev_2014_2022_dfXxy_long_train <-  elev_2014_2022_df %>%
     cols = starts_with("Elev"),
     names_to = "Elev",
     values_to = "Elev_Value"
-  ) %>% 
+  ) %>%
   na.omit() %>%
   mutate(Year = str_extract(Elev, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Elev, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Elev_Value')) %>% # select relevant columns only
-  filter(Year %in% 2014:2019) # filter years to be used as training set
+  filter(Year %in% 2014:2018) # filter years to be used as training set
 
 elev_2014_2022_dfXxy_long_train$x <- round(elev_2014_2022_dfXxy_long_train$x, 5) # round x coordinates to 5 d.p
 elev_2014_2022_dfXxy_long_train$y <- round(elev_2014_2022_dfXxy_long_train$y, 5) # round y coordinates to 5 d.p
@@ -693,12 +693,12 @@ slope_2014_2022_dfXxy_long_train <-  slope_2014_2022_df %>%
     cols = starts_with("Slope"),
     names_to = "Slope",
     values_to = "Slope_Value"
-  ) %>% 
+  ) %>%
   na.omit() %>%
   mutate(Year = str_extract(Slope, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Slope, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Slope_Value')) %>% # select relevant columns only
-  filter(Year %in% 2014:2019) # filter years to be used as training set
+  filter(Year %in% 2014:2018) # filter years to be used as training set
 
 slope_2014_2022_dfXxy_long_train$x <- round(slope_2014_2022_dfXxy_long_train$x, 5) # round x coordinates to 5 d.p
 slope_2014_2022_dfXxy_long_train$y <- round(slope_2014_2022_dfXxy_long_train$y, 5) # round y coordinates to 5 d.p
@@ -713,12 +713,12 @@ aspect_2014_2022_dfXxy_long_train <-  aspect_2014_2022_df %>%
     cols = starts_with("Aspect"),
     names_to = "Aspect",
     values_to = "Aspect_Value"
-  ) %>% 
+  ) %>%
   na.omit() %>%
   mutate(Year = str_extract(Aspect, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Aspect, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Aspect_Value')) %>% # select relevant columns only
-  filter(Year %in% 2014:2019) # filter years to be used as training set
+  filter(Year %in% 2014:2018) # filter years to be used as training set
 
 aspect_2014_2022_dfXxy_long_train$x <- round(aspect_2014_2022_dfXxy_long_train$x, 5) # round x coordinates to 5 d.p
 aspect_2014_2022_dfXxy_long_train$y <- round(aspect_2014_2022_dfXxy_long_train$y, 5) # round y coordinates to 5 d.p
@@ -732,102 +732,205 @@ fire_2014_2022_dfXxy_long_train <-  fire_2014_2022_df %>%
     cols = starts_with("Fire"),
     names_to = "Fire",
     values_to = "Fire_Value"
-  ) %>% 
+  ) %>%
   na.omit() %>%
   mutate(Year = str_extract(Fire, "\\d{4}")|>as.integer(), # extract year from date
          Month = str_extract(Fire, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Fire_Value')) %>% # select relevant columns only
-  filter(Year %in% 2014:2019) # filter years to be used as training set
+  filter(Year %in% 2014:2018) # filter years to be used as training set
 
 fire_2014_2022_dfXxy_long_train$x <- round(fire_2014_2022_dfXxy_long_train$x, 5) # round x coordinates to 5 d.p
 fire_2014_2022_dfXxy_long_train$y <- round(fire_2014_2022_dfXxy_long_train$y, 5) # round y coordinates to 5 d.p
 # head(fire_2014_2022_dfXxy_long_train); str(fire_2014_2022_dfXxy_long_train)
 
-resampled_fire_2014_2022_df <- as.data.frame(RESAMPLED_FIRE_2014_2022_training_stack, xy = T)# converting stacked fire into dataframe
-resampled_fire_2014_2022_dfXxy_long_train <-  resampled_fire_2014_2022_df %>%
+# resampled_fire_2014_2022_df <- as.data.frame(RESAMPLED_FIRE_2014_2022_training_stack, xy = T)# converting stacked fire into dataframe
+# resampled_fire_2014_2022_dfXxy_long_train <-  resampled_fire_2014_2022_df %>%
+#   # convert dataframe into long format where there is only one fire column
+#   pivot_longer(
+#     cols = starts_with("Fire"),
+#     names_to = "Fire",
+#     values_to = "Fire_Value"
+#   ) %>%
+#   na.omit() %>% # very important to omit rows after pivot longer
+#   mutate(Year = str_extract(Fire, "\\d{4}") |> as.integer(), # extract year from date
+#          Month = str_extract(Fire, "(?<=\\d{4}\\.)\\d{2}") |> as.integer()) %>% # extract month from date
+#   dplyr::select(c('x', 'y', 'Year', 'Month', 'Fire_Value')) # select relevant columns only
+#
+# resampled_fire_2014_2022_dfXxy_long_train$x <- round(resampled_fire_2014_2022_dfXxy_long_train$x, 5) # round x coordinates to 5 d.p
+# resampled_fire_2014_2022_dfXxy_long_train$y <- round(resampled_fire_2014_2022_dfXxy_long_train$y, 5) # round y coordinates to 5 d.p
+# # head(resampled_fire_2014_2022_dfXxy_long_train); str(resampled_fire_2014_2022_dfXxy_long_train)
+
+# resampled_buffered_fire_2014_2022_df <- as.data.frame(RESAMPLED_FIRE_2014_2022_buffered_training_stack, xy = T)# converting stacked fire into dataframe
+# resampled_buffered_fire_2014_2022_dfXxy_long_train <-  resampled_buffered_fire_2014_2022_df %>%
+#   # convert dataframe into long format where there is only one fire column
+#   pivot_longer(
+#     cols = starts_with("Fire"),
+#     names_to = "Fire",
+#     values_to = "Fire_Value"
+#   ) %>%
+#   na.omit() %>% # very important to omit rows after pivot longer
+#   mutate(Year = str_extract(Fire, "\\d{4}") |> as.integer(), # extract year from date
+#          Month = str_extract(Fire, "(?<=\\d{4}\\.)\\d{2}") |> as.integer()) %>% # extract month from date
+#   dplyr::select(c('x', 'y', 'Year', 'Month', 'Fire_Value')) # select relevant columns only
+#
+# resampled_buffered_fire_2014_2022_dfXxy_long_train$x <- round(resampled_buffered_fire_2014_2022_dfXxy_long_train$x, 5) # round x coordinates to 5 d.p
+# resampled_buffered_fire_2014_2022_dfXxy_long_train$y <- round(resampled_buffered_fire_2014_2022_dfXxy_long_train$y, 5) # round y coordinates to 5 d.p
+# # head(resampled_buffered_fire_2014_2022_dfXxy_long_train); str(resampled_buffered_fire_2014_2022_dfXxy_long_train)
+
+
+resampled_non_buffered_fire_2014_2022_df <- as.data.frame(RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_stack, xy = T)# converting stacked fire into dataframe
+resampled_non_buffered_fire_2014_2022_dfXxy_long_train <-  resampled_non_buffered_fire_2014_2022_df %>%
   # convert dataframe into long format where there is only one fire column
   pivot_longer(
     cols = starts_with("Fire"),
     names_to = "Fire",
     values_to = "Fire_Value"
-  ) %>% 
+  ) %>%
   na.omit() %>% # very important to omit rows after pivot longer
   mutate(Year = str_extract(Fire, "\\d{4}") |> as.integer(), # extract year from date
          Month = str_extract(Fire, "(?<=\\d{4}\\.)\\d{2}") |> as.integer()) %>% # extract month from date
   dplyr::select(c('x', 'y', 'Year', 'Month', 'Fire_Value')) # select relevant columns only
 
-resampled_fire_2014_2022_dfXxy_long_train$x <- round(resampled_fire_2014_2022_dfXxy_long_train$x, 5) # round x coordinates to 5 d.p
-resampled_fire_2014_2022_dfXxy_long_train$y <- round(resampled_fire_2014_2022_dfXxy_long_train$y, 5) # round y coordinates to 5 d.p
-# head(resampled_fire_2014_2022_dfXxy_long_train); str(resampled_fire_2014_2022_dfXxy_long_train)
+resampled_non_buffered_fire_2014_2022_dfXxy_long_train$x <- round(resampled_non_buffered_fire_2014_2022_dfXxy_long_train$x, 5) # round x coordinates to 5 d.p
+resampled_non_buffered_fire_2014_2022_dfXxy_long_train$y <- round(resampled_non_buffered_fire_2014_2022_dfXxy_long_train$y, 5) # round y coordinates to 5 d.p
+# head(resampled_non_buffered_fire_2014_2022_dfXxy_long_train); str(resampled_non_buffered_fire_2014_2022_dfXxy_long_train)
 
-# Add all the normalised training set from the 2014 to 2022 dataset in one list 
-dfnorm_2014_2022_training_list <-  list(lulc_2014_2022_dfXxy_long_train, 
-                                        ndvi_2014_2022_dfXxy_long_train,
-                                        ndmi_2014_2022_dfXxy_long_train,
-                                        nbr_2014_2022_dfXxy_long_train,
-                                        atp_2014_2022_dfXxy_long_train,
-                                        amt_2014_2022_dfXxy_long_train,
-                                        answs_2014_2022_dfXxy_long_train,
-                                        arh_2014_2022_dfXxy_long_train,
-                                        elev_2014_2022_dfXxy_long_train,
-                                        slope_2014_2022_dfXxy_long_train,
-                                        aspect_2014_2022_dfXxy_long_train,
-                                        fire_2014_2022_dfXxy_long_train)
 
-resampled_dfnorm_2014_2022_training_list <-  list(lulc_2014_2022_dfXxy_long_train, 
-                                                  ndvi_2014_2022_dfXxy_long_train,
-                                                  ndmi_2014_2022_dfXxy_long_train,
-                                                  nbr_2014_2022_dfXxy_long_train,
-                                                  atp_2014_2022_dfXxy_long_train,
-                                                  amt_2014_2022_dfXxy_long_train,
-                                                  answs_2014_2022_dfXxy_long_train,
-                                                  arh_2014_2022_dfXxy_long_train,
-                                                  elev_2014_2022_dfXxy_long_train,
-                                                  slope_2014_2022_dfXxy_long_train,
-                                                  aspect_2014_2022_dfXxy_long_train,
-                                                  resampled_fire_2014_2022_dfXxy_long_train)
+# Add all the normalised training set from the 2014 to 2022 dataset in one list
+# dfnorm_2014_2022_training_list <-  list(lulc_2014_2022_dfXxy_long_train,
+#                                         ndvi_2014_2022_dfXxy_long_train,
+#                                         ndmi_2014_2022_dfXxy_long_train,
+#                                         nbr_2014_2022_dfXxy_long_train,
+#                                         atp_2014_2022_dfXxy_long_train,
+#                                         amt_2014_2022_dfXxy_long_train,
+#                                         answs_2014_2022_dfXxy_long_train,
+#                                         arh_2014_2022_dfXxy_long_train,
+#                                         elev_2014_2022_dfXxy_long_train,
+#                                         slope_2014_2022_dfXxy_long_train,
+#                                         aspect_2014_2022_dfXxy_long_train,
+#                                         fire_2014_2022_dfXxy_long_train)
 
-# Combine all the normalised training set from the 2014 to 2022 dataset in one dataframe 
-dfnorm_2014_2022_training_set <- reduce(dfnorm_2014_2022_training_list, inner_join, by = c('x', "y", "Year", "Month")) # merge all the table on the common columns (to preserve both spatial-temporal consistency!)
-# remove waterbodies
-dfnorm_2014_2022_training_set <- dfnorm_2014_2022_training_set %>%
-  filter(LULC_Class!=1) # filter out water bodies as they won't contain fire events- water bodies = 1 after normalisation. Before normalisation it was 5.
-# str(dfnorm_2014_2022_training_set)
+# resampled_dfnorm_2014_2022_training_list <-  list(lulc_2014_2022_dfXxy_long_train,
+#                                                   ndvi_2014_2022_dfXxy_long_train,
+#                                                   ndmi_2014_2022_dfXxy_long_train,
+#                                                   nbr_2014_2022_dfXxy_long_train,
+#                                                   atp_2014_2022_dfXxy_long_train,
+#                                                   amt_2014_2022_dfXxy_long_train,
+#                                                   answs_2014_2022_dfXxy_long_train,
+#                                                   arh_2014_2022_dfXxy_long_train,
+#                                                   elev_2014_2022_dfXxy_long_train,
+#                                                   slope_2014_2022_dfXxy_long_train,
+#                                                   aspect_2014_2022_dfXxy_long_train,
+#                                                   resampled_fire_2014_2022_dfXxy_long_train)
+
+# resampled_buffered_dfnorm_2014_2022_training_list <-  list(lulc_2014_2022_dfXxy_long_train,
+#                                                   ndvi_2014_2022_dfXxy_long_train,
+#                                                   ndmi_2014_2022_dfXxy_long_train,
+#                                                   nbr_2014_2022_dfXxy_long_train,
+#                                                   atp_2014_2022_dfXxy_long_train,
+#                                                   amt_2014_2022_dfXxy_long_train,
+#                                                   answs_2014_2022_dfXxy_long_train,
+#                                                   arh_2014_2022_dfXxy_long_train,
+#                                                   elev_2014_2022_dfXxy_long_train,
+#                                                   slope_2014_2022_dfXxy_long_train,
+#                                                   aspect_2014_2022_dfXxy_long_train,
+#                                                   resampled_buffered_fire_2014_2022_dfXxy_long_train)
+
+resampled_non_buffered_dfnorm_2014_2022_training_list <-  list(lulc_2014_2022_dfXxy_long_train,
+                                                           ndvi_2014_2022_dfXxy_long_train,
+                                                           ndmi_2014_2022_dfXxy_long_train,
+                                                           nbr_2014_2022_dfXxy_long_train,
+                                                           atp_2014_2022_dfXxy_long_train,
+                                                           amt_2014_2022_dfXxy_long_train,
+                                                           answs_2014_2022_dfXxy_long_train,
+                                                           arh_2014_2022_dfXxy_long_train,
+                                                           elev_2014_2022_dfXxy_long_train,
+                                                           slope_2014_2022_dfXxy_long_train,
+                                                           aspect_2014_2022_dfXxy_long_train,
+                                                           resampled_non_buffered_fire_2014_2022_dfXxy_long_train)
+
+# # Combine all the normalised training set from the 2014 to 2022 dataset in one dataframe 
+# dfnorm_2014_2022_training_set <- reduce(dfnorm_2014_2022_training_list, inner_join, by = c('x', "y", "Year", "Month")) # merge all the table on the common columns (to preserve both spatial-temporal consistency!)
+# # remove waterbodies
+# dfnorm_2014_2022_training_set <- dfnorm_2014_2022_training_set %>%
+#   filter(LULC_Class!=1) # filter out water bodies as they won't contain fire events- water bodies = 1 after normalisation. Before normalisation it was 5.
+# # str(dfnorm_2014_2022_training_set)
+# 
+# # save dataframe
+# save(dfnorm_2014_2022_training_set, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/dfnorm_2014_2022_training_set.Rdata')
+# # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/dfnorm_2014_2022_training_set.Rdata')
+# 
+# resampled_dfnorm_2014_2022_training_set <- reduce(resampled_dfnorm_2014_2022_training_list, inner_join, by = c('x', "y", "Year", "Month")) # merge all the table on the common columns (to preserve both spatial-temporal consistency!)
+# # str(resampled_dfnorm_2014_2022_training_set)
+# 
+# # save dataframe
+# # save(resampled_dfnorm_2014_2022_training_set, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/resampled_dfnorm_2014_2022_training_set.Rdata')
+# # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/resampled_dfnorm_2014_2022_training_set.Rdata')
+# 
+# training_Fire_periods <- resampled_dfnorm_2014_2022_training_set %>%
+#   group_by(Year, Month, Fire_Value) %>%
+#   tally() %>% # compute the number of pixels with and without fire 
+#   filter(Fire_Value==1) %>% # extract the ones with fire only
+#   dplyr::select(Year, Month)
+# 
+# fully_resampled_dfnorm_2014_2022_training_set <- resampled_dfnorm_2014_2022_training_set %>%
+#   inner_join(training_Fire_periods, by = c('Year', 'Month')) %>% # only retain period with fire events
+#   filter(LULC_Class!=1) # filter out water bodies as they won't contain fire events- water bodies = 1 after normalisation. Before normalisation it was 5.
+# 
+# # save dataframe
+# # save(fully_resampled_dfnorm_2014_2022_training_set, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/fully_resampled_dfnorm_2014_2022_training_set.Rdata')
+# # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/fully_resampled_dfnorm_2014_2022_training_set.Rdata')
+
+# resampled_buffered_dfnorm_2014_2022_training_set <- reduce(resampled_buffered_dfnorm_2014_2022_training_list, inner_join, by = c('x', "y", "Year", "Month")) # merge all the table on the common columns (to preserve both spatial-temporal consistency!)
+# # str(resampled_buffered_dfnorm_2014_2022_training_set)
+# 
+# # save dataframe
+# # save(resampled_buffered_dfnorm_2014_2022_training_set, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/resampled_buffered_dfnorm_2014_2022_training_set.Rdata')
+# # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/resampled_buffered_dfnorm_2014_2022_training_set.Rdata')
+# 
+# training_Fire_periods <- resampled_buffered_dfnorm_2014_2022_training_set %>%
+#   group_by(Year, Month, Fire_Value) %>%
+#   tally() %>% # compute the number of pixels with and without fire
+#   filter(Fire_Value==1) %>% # extract the ones with fire only
+#   dplyr::select(Year, Month)
+# 
+# fully_resampled_buffered_dfnorm_2014_2022_training_set <- resampled_buffered_dfnorm_2014_2022_training_set %>%
+#   inner_join(training_Fire_periods, by = c('Year', 'Month')) %>% # only retain period with fire events
+#   filter(LULC_Class!=1) # filter out water bodies as they won't contain fire events- water bodies = 1 after normalisation. Before normalisation it was 5.
+# 
+# # save dataframe
+# # save(fully_resampled_buffered_dfnorm_2014_2022_training_set, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/fully_resampled_buffered_dfnorm_2014_2022_training_set.Rdata')
+# # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/fully_resampled_buffered_dfnorm_2014_2022_training_set.Rdata')
+
+resampled_non_buffered_dfnorm_2014_2022_training_set <- reduce(resampled_non_buffered_dfnorm_2014_2022_training_list, inner_join, by = c('x', "y", "Year", "Month")) # merge all the table on the common columns (to preserve both spatial-temporal consistency!)
+# str(resampled_non_buffered_dfnorm_2014_2022_training_set)
 
 # save dataframe
-save(dfnorm_2014_2022_training_set, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/dfnorm_2014_2022_training_set.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/dfnorm_2014_2022_training_set.Rdata')
+# save(resampled_non_buffered_dfnorm_2014_2022_training_set, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/resampled_non_buffered_dfnorm_2014_2022_training_set.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/resampled_non_buffered_dfnorm_2014_2022_training_set.Rdata')
 
-resampled_dfnorm_2014_2022_training_set <- reduce(resampled_dfnorm_2014_2022_training_list, inner_join, by = c('x', "y", "Year", "Month")) # merge all the table on the common columns (to preserve both spatial-temporal consistency!)
-# str(resampled_dfnorm_2014_2022_training_set)
-
-# save dataframe
-# save(resampled_dfnorm_2014_2022_training_set, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/resampled_dfnorm_2014_2022_training_set.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/resampled_dfnorm_2014_2022_training_set.Rdata')
-
-training_Fire_periods <- resampled_dfnorm_2014_2022_training_set %>%
+training_Fire_periods <- resampled_non_buffered_dfnorm_2014_2022_training_set %>%
   group_by(Year, Month, Fire_Value) %>%
-  tally() %>% # compute the number of pixels with and without fire 
+  tally() %>% # compute the number of pixels with and without fire
   filter(Fire_Value==1) %>% # extract the ones with fire only
   dplyr::select(Year, Month)
 
-fully_resampled_dfnorm_2014_2022_training_set <- resampled_dfnorm_2014_2022_training_set %>%
+fully_resampled_non_buffered_dfnorm_2014_2022_training_set <- resampled_non_buffered_dfnorm_2014_2022_training_set %>%
   inner_join(training_Fire_periods, by = c('Year', 'Month')) %>% # only retain period with fire events
   filter(LULC_Class!=1) # filter out water bodies as they won't contain fire events- water bodies = 1 after normalisation. Before normalisation it was 5.
 
 # save dataframe
-# save(fully_resampled_dfnorm_2014_2022_training_set, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/fully_resampled_dfnorm_2014_2022_training_set.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/fully_resampled_dfnorm_2014_2022_training_set.Rdata')
+# save(fully_resampled_non_buffered_dfnorm_2014_2022_training_set, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/fully_resampled_non_buffered_dfnorm_2014_2022_training_set.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Dataframe format (normalised)/fully_resampled_non_buffered_dfnorm_2014_2022_training_set.Rdata')
 
-x <- fully_resampled_dfnorm_2014_2022_training_set %>%
-  filter(Year==2019, Month ==12) %>%
+x <- fully_resampled_non_buffered_dfnorm_2014_2022_training_set %>%
+  filter(Year==2018, Month ==11) %>%
   dplyr::select(x,y,Fire_Value)
 
 xx <- rasterFromXYZ(x, res = c(30,30), crs = crs(roi_trans))
 plot(roi_trans)
 plot(target_waterbodies, add = T)
-plot(xx, col = fire_color_condition_func(xx), cex.main = .9, main = '2017-01', add = T)
-
+plot(xx, col = fire_color_condition_func(xx), cex.main = .9, main = '2018-11', add = T)
 
 # Convert validation set raster stack [from 2014-2022 dataset] into dataframe
 lulc_2014_2022_df <- as.data.frame(LULC_2014_2022_stack, xy = T) # converting stacked LULC into dataframe
