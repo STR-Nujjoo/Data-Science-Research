@@ -11,7 +11,7 @@
   library(parallel)
   library(rgeoda)
   library(tmap)
-  
+  library(cowplot)
 }
 
 # Import TMNR shapefile 
@@ -204,8 +204,11 @@ RF_2014to2022_Test$Fire_Value <- as.factor(RF_2014to2022_Test$Fire_Value) # conv
 
 # # full dataset from 2014 to 2022 timeframe
 train_set <- RF_2014to2022_Train # 2014-2019
+prop.table(table(train_set$Fire_Value))*100 # calculate proportion of imbalance after resampling
 val_set   <- RF_2014to2022_Val # 2020-2021
+prop.table(table(val_set$Fire_Value))*100 # calculate proportion of imbalance
 test_set  <- RF_2014to2022_Test # 2022
+prop.table(table(test_set$Fire_Value))*100 # calculate proportion of imbalance
 
 # save(RF_2014to2022_Train,
 #      RF_2014to2022_Val,
@@ -352,9 +355,28 @@ metrics_list[[which.max(results$AUC_PR)]]
 
 optimal_model <- model_list[[which.max(results$AUC_PR)]] # extracting optimal model from list using AUC_PR as metrics of choice
 { # Variable importance plot
-  par(mar = c(4.1, 7, 1, 0.2)) 
-  importance(optimal_model)|> sort(decreasing = T) |> barplot(horiz = T, las = 1)
+  # par(mar = c(4.1, 7, 1, 0.2)) 
+  # importance(optimal_model)|> sort(decreasing = F) |> barplot(horiz = T, las = 1) # base R plot
+  optimal_model_IMP <- importance(optimal_model) |> as.data.frame() # convert importance into a data frame
+  rownames(optimal_model_IMP) <- c('Longitude', 'Latitude', 'Year', 'Month',
+                                   'LULC', 'NDVI', 'NDMI', 'NBR', 'TP',
+                                   'AMT', 'ANSWS', 'ARH', 'Elevation',
+                                   'Slope', 'Aspect') # rename variables
+  colnames(optimal_model_IMP) <- 'Importance' # change column names
+  optimal_model_IMP$Importance <- optimal_model_IMP$Importance*100 # convert importance to percentage
+  optimal_model_IMP_plot <- ggplot(optimal_model_IMP, aes(x = reorder(rownames(optimal_model_IMP), Importance), y = Importance, 
+                                                          fill = -Importance)) +
+    geom_bar(stat='identity') +
+    ggtitle('Variable Importance\n from RFM 1')+
+    xlab('')+
+    ylab('Overall \nImportance (%)') +
+    theme_classic() +
+    coord_flip()+
+    theme(legend.position = '', axis.title = element_text(size = 8), plot.title = element_text(size = 9),
+          axis.text = element_text(size = 8)) 
+  optimal_model_IMP_plot
 }
+
 opt_probs <- probabilities_list[[which.max(results$AUC_PR)]]
 threshold_from_optimal_model <- threshold_list[[which.max(results$AUC_PR)]] # generate a sequence of threshold to classify response variable based on probability class
 F1_scores_from_optimal_model <- F1_score_list[[which.max(results$AUC_PR)]]
@@ -461,8 +483,11 @@ RF_2014to2022_Test1$Fire_Value <- as.factor(RF_2014to2022_Test1$Fire_Value) # co
 
 # # full dataset from 2014 to 2022 timeframe
 train_set1 <- RF_2014to2022_Train1 # 2014-2018
+prop.table(table(train_set1$Fire_Value))*100 # calculate proportion of imbalance after resampling
 val_set1   <- RF_2014to2022_Val1 # 2019-2020
+prop.table(table(val_set1$Fire_Value))*100 # calculate proportion of imbalance 
 test_set1  <- RF_2014to2022_Test1 # 2021-2022
+prop.table(table(test_set1$Fire_Value))*100 # calculate proportion of imbalance 
 
 # save(RF_2014to2022_Train1,
 #      RF_2014to2022_Val1,
@@ -607,8 +632,26 @@ metrics_list1[[which.max(results1$AUC_PR)]]
 
 optimal_model1 <- model_list1[[which.max(results1$AUC_PR)]] # extracting optimal model from list using AUC_PR as metrics of choice
 { # Variable importance plot
-  par(mar = c(4.1, 7, 1, 0.2)) 
-  importance(optimal_model1)|> sort(decreasing = T) |> barplot(horiz = T, las = 1)
+  # par(mar = c(4.1, 7, 1, 0.2)) 
+  # importance(optimal_model1)|> sort(decreasing = F) |> barplot(horiz = T, las = 1)
+  optimal_model1_IMP <- importance(optimal_model1) |> as.data.frame() # convert importance into a data frame
+  rownames(optimal_model1_IMP) <- c('Longitude', 'Latitude', 'Year', 'Month',
+                                   'LULC', 'NDVI', 'NDMI', 'NBR', 'TP',
+                                   'AMT', 'ANSWS', 'ARH', 'Elevation',
+                                   'Slope', 'Aspect') # rename variables
+  colnames(optimal_model1_IMP) <- 'Importance' # change column names
+  optimal_model1_IMP$Importance <- optimal_model1_IMP$Importance*100 # convert importance to percentage
+  optimal_model1_IMP_plot <- ggplot(optimal_model1_IMP, aes(x = reorder(rownames(optimal_model1_IMP), Importance), y = Importance, 
+                                                          fill = -Importance)) +
+    geom_bar(stat='identity') +
+    ggtitle('Variable Importance\n from RFM 2')+
+    xlab('')+
+    ylab('Overall \nImportance (%)') +
+    theme_classic() +
+    coord_flip()+
+    theme(legend.position = '', axis.title = element_text(size = 8), plot.title = element_text(size = 9),
+          axis.text = element_text(size = 8))  
+  optimal_model1_IMP_plot
 }
 opt_probs1 <- probabilities_list1[[which.max(results1$AUC_PR)]]
 threshold_from_optimal_model1 <- threshold_list1[[which.max(results1$AUC_PR)]] # generate a sequence of threshold to classify response variable based on probability class
@@ -722,8 +765,11 @@ RF_2014to2022_Test2$Fire_Value <- as.factor(RF_2014to2022_Test2$Fire_Value) # co
 
 # # full dataset from 2014 to 2022 timeframe
 train_set2 <- RF_2014to2022_Train2 # 2014-2018
+prop.table(table(train_set2$Fire_Value))*100 # calculate proportion of imbalance after resampling
 val_set2   <- RF_2014to2022_Val2 # 2019-2020
+prop.table(table(val_set2$Fire_Value))*100 # calculate proportion of imbalance after resampling
 test_set2  <- RF_2014to2022_Test2 # 2021-2022
+prop.table(table(test_set2$Fire_Value))*100 # calculate proportion of imbalance after resampling
 
 # save(RF_2014to2022_Train2,
 #      RF_2014to2022_Val2,
@@ -868,8 +914,26 @@ metrics_list2[[which.max(results2$AUC_PR)]]
 
 optimal_model2 <- model_list2[[which.max(results2$AUC_PR)]] # extracting optimal model from list using AUC_PR as metrics of choice
 { # Variable importance plot
-  par(mar = c(4.1, 7, 1, 0.2)) 
-  importance(optimal_model2)|> sort(decreasing = T) |> barplot(horiz = T, las = 1)
+  # par(mar = c(4.1, 7, 1, 0.2)) 
+  # importance(optimal_model2)|> sort(decreasing = F) |> barplot(horiz = T, las = 1)
+  optimal_model2_IMP <- importance(optimal_model2) |> as.data.frame() # convert importance into a data frame
+  rownames(optimal_model2_IMP) <- c('Longitude', 'Latitude', 'Year', 'Month',
+                                    'LULC', 'NDVI', 'NDMI', 'NBR', 'TP',
+                                    'AMT', 'ANSWS', 'ARH', 'Elevation',
+                                    'Slope', 'Aspect') # rename variables
+  colnames(optimal_model2_IMP) <- 'Importance' # change column names
+  optimal_model2_IMP$Importance <- optimal_model2_IMP$Importance*100 # convert importance to percentage
+  optimal_model2_IMP_plot <- ggplot(optimal_model2_IMP, aes(x = reorder(rownames(optimal_model2_IMP), Importance), y = Importance, 
+                                                            fill = -Importance)) +
+    geom_bar(stat='identity') +
+    ggtitle('Variable Importance\n from RFM 3')+
+    xlab('')+
+    ylab('Overall \nImportance (%)') +
+    theme_classic() +
+    coord_flip()+
+    theme(legend.position = '', axis.title = element_text(size = 8), plot.title = element_text(size = 9),
+          axis.text = element_text(size = 8))
+  optimal_model2_IMP_plot
 }
 opt_probs2 <- probabilities_list2[[which.max(results2$AUC_PR)]]
 threshold_from_optimal_model2 <- threshold_list2[[which.max(results2$AUC_PR)]] # generate a sequence of threshold to classify response variable based on probability class
@@ -953,11 +1017,6 @@ pblapply(1:12, function(x){
 })
 
 
-
-
-
-
-
 # Final model results from resampled buffered training set [2014-2019], validation set [2020-2021], test set [2022]
 results[which.max(results$AUC_PR),] # training accuracy for Model 0
 test_accuracy # test accuracy from Model 0
@@ -986,13 +1045,9 @@ cbind(Model = c('RFM0 (Training set: buffered+undersampled+normalised-2014 to 20
       test_accuracy1,
       test_accuracy2))
 
-
-
-
-
-
-
-
+VARIMPPLOT <- cowplot::plot_grid(optimal_model_IMP_plot, optimal_model1_IMP_plot, optimal_model2_IMP_plot,
+                   labels = '', ncol = 3, nrow = 1)
+ggsave('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/results plot/variable_importance_plots.pdf', plot = VARIMPPLOT,  width = 6.56, height = 3)
 
 
 

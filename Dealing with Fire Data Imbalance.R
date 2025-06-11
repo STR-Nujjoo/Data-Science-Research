@@ -513,9 +513,10 @@ pblapply(seq_along(RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_list), functio
 # # load object
 # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/Resampled SANParks fire data/Individual rasters (non-buffered)/RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_list.Rdata')
 
-
-
-
+x <- RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_list[[1]]
+plot(x, col = fire_color_condition_func(x))
+plot(roi_trans, add = T)
+plot(target_waterbodies, add = T)
 
 
 
