@@ -42,99 +42,6 @@ fire_color_condition_func <- function(data){
   return(fire_color_condition)
 }
 
-# creating a function for visualisation
-WS_visualisation <- function(true_raster, raster_with_probabilities, raster_factor, classes_breaks_method = c('natural_breaks', 'quantile')){
-  
-  # Subdivision types
-  quantile_subdivisions <- quantile(0:1, probs = seq(0,1,1/5))
-  natural_breaks_subdivisions <- natural_breaks(k = 5, df=as.data.frame(raster_with_probabilities, na.rm = T))
-  
-  # Susceptibility quantile classes- makes more sense
-  wildfire_susceptibility_quantile_classes <- matrix(c(
-    -0.1, quantile_subdivisions[2], 1, # very low
-    quantile_subdivisions[2], quantile_subdivisions[3], 2, # low
-    quantile_subdivisions[3], quantile_subdivisions[4], 3, # moderate
-    quantile_subdivisions[4], quantile_subdivisions[5], 4, # high
-    quantile_subdivisions[5], 1, 5 # very high
-  ), ncol = 3, byrow = TRUE)
-  
-  # Susceptibility natural breaks classes
-  wildfire_susceptibility_natural_breaks_classes <- matrix(c(
-    -0.1, natural_breaks_subdivisions[1], 1, # very low
-    natural_breaks_subdivisions[1], natural_breaks_subdivisions[2], 2, # low
-    natural_breaks_subdivisions[2], natural_breaks_subdivisions[3], 3, # moderate
-    natural_breaks_subdivisions[3], natural_breaks_subdivisions[4], 4, # high
-    natural_breaks_subdivisions[4], 1, 5 # very high
-  ), ncol = 3, byrow = TRUE)
-  
-  if(classes_breaks_method=='natural_breaks'){
-    # Reclassify raster accordingly
-    classified_raster <- classify(raster_with_probabilities|>rast(), wildfire_susceptibility_natural_breaks_classes)
-    levels(classified_raster) <- data.frame(
-      ID = 1:5,
-      Susceptibility = c("Very Low WS", "Low WS", "Moderate WS", "High WS", "Very High WS")
-    )
-    
-    # Update levels
-    classified_raster <- droplevels(classified_raster)
-    
-  } else if(classes_breaks_method == 'quantile'){
-    
-    # Reclassify raster accordingly
-    classified_raster <- classify(raster_with_probabilities|>rast(), wildfire_susceptibility_quantile_classes)
-    levels(classified_raster) <- data.frame(
-      ID = 1:5,
-      Susceptibility = c("Very Low WS", "Low WS", "Moderate WS", "High WS", "Very High WS")
-    )
-    
-    # Update levels
-    classified_raster <- droplevels(classified_raster)
-  }
-  
-  
-  # define a color palette for the wildfire susceptibility class
-  WS_palette <- c('#007206', '#7DB810', '#F2FE1E', '#FFAC12','#FC3B09')
-  
-  # print(
-  # Visualising the fire data used as testY
-  p1 <- tm_shape(true_raster)+
-    tm_raster(style = "cat", title = "", palette = fire_color_condition_func(true_raster))+
-    tm_layout(main.title= 'True Fire map',
-              main.title.size =.9,
-              main.title.position = c("center", "top"),
-              legend.outside = F,
-              legend.text.size = .5,
-              # legend.outside.position = 'bottom'
-    )+
-    tm_graticules(lines = F)
-  # )
-  p2 <- tm_shape(raster_factor)+
-    tm_raster(style = "cat", title = "", palette = fire_color_condition_func(raster_factor))+
-    tm_layout(main.title= 'Predicted Fire Map',
-              main.title.size =.9,
-              main.title.position = c("center", "top"),
-              legend.outside = F,
-              legend.text.size = .5,
-              # legend.outside.position = 'bottom'
-    )+
-    tm_graticules(lines = F)
-  
-  # print(
-  # Visualise the classified raster
-  p3 <- tm_shape(classified_raster)+
-    tm_raster(style = "cat", title = "", palette = WS_palette[c(levels(classified_raster)[[1]]$ID)])+
-    tm_layout(main.title= 'Wildfire Susceptibility Map',
-              main.title.size =.9,
-              main.title.position = c("center", "top"),
-              legend.outside = F,
-              legend.text.size = .5,
-              # legend.outside.position = 'bottom'
-    )+
-    tm_graticules(lines = F)
-  # )
-  return(tmap_arrange(p1,p2,p3, nrow = 2, ncol = 2)) 
-}
-
 
 
 # subset predictor variables data to test convLSTM
@@ -326,16 +233,13 @@ true_test_raster_list <- pblapply(1:dim(testY)[2], function(x){
 },
 cl = cl)
 
-
-
-
 # create empty list to save threshold list and relevant metrics for each predicted rasters
 ConvLSTM_threshold_list <- list()
 ConvLSTM_specificity_list <- list()
 ConvLSTM_f1_score_list <- list()
 
 length(predicted_raster_list)
-for (i in 1:2){
+for (i in 1:4){
   cat('Iteration ', i, ' out of ', length(predicted_raster_list), '\n')
   i <- i
   index <- i
@@ -376,107 +280,281 @@ for (i in 1:2){
 
 stopCluster(cl)
 
-
+y_pred_raster_list <- list()
 ConvLSTM_metrics_list <- list()
-ConvLSTM_test_results <- data.frame()
+ConvLSTM_test_results <- NULL
 
-index <- 1 # index for each raster prediction
-if(is.na(ConvLSTM_f1_score_list[[index]])){ # if f1 score is irrelevant/NA
-  optimal_threshold <- ConvLSTM_threshold_list[[index]][which.max(ConvLSTM_specificity_list[[index]])] # optimal threshold will be based on maximised specificity
-  optimal_specificity <- ConvLSTM_specificity_list[[index]][which.max(ConvLSTM_specificity_list[[index]])]
-  optimal_F1_score <- NA
+
+for(i in 1:length(ConvLSTM_f1_score_list)){
+  
+  cat('Iteration ', i, ' out of ', length(ConvLSTM_f1_score_list), '\n')
+  
+  index <- i # index for each raster prediction
+  if(all(is.na(ConvLSTM_f1_score_list[[index]]))){ # if f1 score is irrelevant/NA
+    optimal_threshold <- ConvLSTM_threshold_list[[index]][which.max(ConvLSTM_specificity_list[[index]])] # optimal threshold will be based on maximised specificity
+    optimal_specificity <- ConvLSTM_specificity_list[[index]][which.max(ConvLSTM_specificity_list[[index]])]
+    optimal_F1_score <- NA
   }else{ # if specificity is irrelevant/NA
-  optimal_threshold <- ConvLSTM_threshold_list[[index]][which.max(ConvLSTM_f1_score_list[[index]])] # optimal threshold will be based on maximised f1 score
-  optimal_F1_score <- ConvLSTM_f1_score_list[[index]][which.max(ConvLSTM_f1_score_list[[index]])] 
-  optimal_specificity <- NA
+    optimal_threshold <- ConvLSTM_threshold_list[[index]][which.max(ConvLSTM_f1_score_list[[index]])] # optimal threshold will be based on maximised f1 score
+    optimal_F1_score <- ConvLSTM_f1_score_list[[index]][which.max(ConvLSTM_f1_score_list[[index]])] 
+    optimal_specificity <- NA
   }
-
-ConvLSTM_threshold_list[[index]]
-ConvLSTM_specificity_list[[index]][which.max(ConvLSTM_specificity_list[[index]])]
-
-which.max(ConvLSTM_f1_score_list[[index]])
-ConvLSTM_f1_score_list[[index]]
-
-optimal_threshold <- threshold[which.max(F1_SCORES_SPECIFICITY_with_THRESHOLDS)]
-optimal_F1_score <- F1_SCORES_SPECIFICITY_with_THRESHOLDS[which.max(F1_SCORES_SPECIFICITY_with_THRESHOLDS)]
-{
-  par(mar = c(4.1, 4, .2, .8)) # customised margin
-  plot(threshold, F1_SCORES_with_THRESHOLDS,
-       type = 'l',
-       # pch = 19,
-       # main = 'Chosen Threshold from Optimal RF Model',
-       # cex.main = .9,
-       cex.lab = .8,
-       cex.axis = .8,
-       # cex = .3,
-       col = 'seagreen',
-       xlab = paste0('Threshold'),
-       ylab = 'F1 Score',
-       # xlim = c(min(threshold), 0.01)
-  )
-  points(optimal_threshold, 
-         optimal_F1_score, 
-         pch = 19, cex = .1, col = 'seagreen')
-  points(optimal_threshold, 
-         optimal_F1_score, 
-         pch = 19, cex = .5, col = 'greenyellow')
-  abline(v=optimal_threshold,
-         h=optimal_F1_score,
-         lty = "dashed",
-         col= 'greenyellow')
-  text(optimal_threshold+.0004, 
-       optimal_F1_score-.09, 
-       labels=paste("Threshold = ", optimal_threshold|>round(3)),
-       cex=.6,
-       col="seagreen",
-       srt=270)
-  text(optimal_threshold-.002, 
-       optimal_F1_score-.01, 
-       labels=paste("F1 Score = ", optimal_F1_score|>round(3)),
-       cex=.6,
-       col="seagreen")
+  
+  # predicted classes after optimal threshold is applied
+  y_pred <- ifelse(as.array(predicted_raster_list[[index]]) > optimal_threshold, 1, 0)
+  
+  # Rasterise predicted classes after optimal threshold has been applied
+  y_pred_raster <- raster(y_pred[,,1], 
+                          crs = crs(roi_trans), 
+                          xmn = extent(LULC_2014_2022[[1]])[1], #xmin 
+                          xmx = extent(LULC_2014_2022[[1]])[2], #xmax
+                          ymn = extent(LULC_2014_2022[[1]])[3], #ymin
+                          ymx = extent(LULC_2014_2022[[1]])[4] #ymax
+  )|>mask(roi_trans)
+  res(y_pred_raster) <- 30 # update spatial resolution to 30m
+  names(y_pred_raster) <- paste0(timesteps_labels[index]," (predicted)")
+  
+  CM <- confusionMatrix(factor(as.vector(y_pred_raster), levels = c('0','1')),
+                        factor(as.vector(true_test_raster_list[[index]]), levels = c('0','1')), 
+                        positive = '1', mode = 'everything')
+  
+  if(sum(CM$table[,2])==0){
+    test_AUC_ROC <- NA
+    test_AUC_PR <- NA
+    test_MCC <- NA
+  }else{
+    ROCR_test_prediction <- prediction(as.vector(y_pred_raster)|>na.omit()|>as.vector(), as.vector(true_test_raster_list[[index]])|>na.omit()|>as.vector())
+    test_AUC_ROC <- performance(ROCR_test_prediction, measure = 'auc')@y.values[[1]] # AUC_ROC
+    test_AUC_PR <- performance(ROCR_test_prediction, measure = 'aucpr')@y.values[[1]] # AUC_PR
+    # An MCC value of +1 indicates perfect agreement between the model's predictions and the actual labels, 
+    # while -1 indicates total disagreement.
+    # A value of 0 suggests the model performs no better than random guessing
+    test_MCC <- mcc(as.factor(as.vector(y_pred_raster)),as.factor(as.vector(true_test_raster_list[[index]]))) # test accuracy using matthew's correlation coefficient
+    
+  }
+  y_pred_raster_list[[i]] <- y_pred_raster
+  ConvLSTM_metrics_list[[i]] <- CM
+  ConvLSTM_test_results <- rbind(ConvLSTM_test_results, 
+                                 tibble(optimal_threshold = optimal_threshold,
+                                       overall_accuracy = CM$overall['Accuracy'][[1]]|>round(3),
+                                       precision = CM$byClass['Precision'][[1]]|>round(3),
+                                       recall = CM$byClass['Recall'][[1]]|>round(3),
+                                       specificity = CM$byClass['Specificity'][[1]]|>round(3),
+                                       F1_score = optimal_F1_score|>round(3), 
+                                       AUC_ROC = test_AUC_ROC|>round(3),
+                                       AUC_PR = test_AUC_PR|>round(3),
+                                       MCC = test_MCC|>round(3),
+                                       fire_period = timesteps_labels[i],
+                                       true_fire_status = ifelse(maxValue(true_test_raster_list[[index]])==1, 
+                                                                 'positive',
+                                                                 'negative')))
+  
 }
 
-# predicted classes after optimal threshold is applied
-y_pred <- ifelse(as.array(predicted_raster_list[[4]]) > optimal_threshold, 1, 0)
 
-# Rasterise predicted classes after optimal threshold has been applied
-y_pred_raster <- raster(y_pred[,,1], 
-                           crs = crs(roi_trans), 
-                           xmn = extent(LULC_2014_2022[[1]])[1], #xmin 
-                           xmx = extent(LULC_2014_2022[[1]])[2], #xmax
-                           ymn = extent(LULC_2014_2022[[1]])[3], #ymin
-                           ymx = extent(LULC_2014_2022[[1]])[4] #ymax
-)|>mask(roi_trans)
-res(y_pred_raster) <- 30 # update spatial resolution to 20m
-names(y_pred_raster) <- paste0(timesteps_labels[index]," (predicted)")
+# Creating a function to plot the optimal threshold chosen while maximising either f1 score or specificity where appropriate
+optmised_threshold_plot <- function(fire_period){
+  index <- which(timesteps_labels==as.character(fire_period))
+  if(ConvLSTM_test_results$true_fire_status[index]=='positive'){ # if there's indeed a fire outbreak, then the threshold was optimised based on the f1 score...
+    {
+      par(mar = c(4.1, 4, .2, .8)) # customised margin
+      plot(ConvLSTM_threshold_list[[index]], ConvLSTM_f1_score_list[[index]],
+           type = 'l',
+           # pch = 19,
+           # main = 'Chosen Threshold from Optimal RF Model',
+           # cex.main = .9,
+           cex.lab = .8,
+           cex.axis = .8,
+           # cex = .3,
+           col = 'seagreen',
+           xlab = 'Threshold',
+           ylab = 'F1 Score',
+           # xlim = c(min(threshold), 0.01)
+      )
+      points(ConvLSTM_test_results$optimal_threshold[index],
+             ConvLSTM_test_results$F1_score[index],
+             pch = 19, cex = .1, col = 'seagreen')
+      points(ConvLSTM_test_results$optimal_threshold[index],
+             ConvLSTM_test_results$F1_score[index],
+             pch = 19, cex = .5, col = 'greenyellow')
+      abline(v=ConvLSTM_test_results$optimal_threshold[index],
+             h=ConvLSTM_test_results$F1_score[index],
+             lty = "dashed",
+             col= 'greenyellow')
+      text(ConvLSTM_test_results$optimal_threshold[index]+.0004,
+           ConvLSTM_test_results$F1_score[index]-.09,
+           labels=paste("Threshold = ", ConvLSTM_test_results$optimal_threshold[index]|>round(3)),
+           cex=.6,
+           col="seagreen",
+           srt=270)
+      text(ConvLSTM_test_results$optimal_threshold[index]-.002,
+           ConvLSTM_test_results$F1_score[index]-.01,
+           labels=paste("F1 Score = ", ConvLSTM_test_results$F1_score[index]|>round(3)),
+           cex=.6,
+           col="seagreen")
+    }
+    
+  }else{ #...otherwise threshold was optimised on specificity
+    {
+      par(mar = c(4.1, 4, .2, .8)) # customised margin
+      plot(ConvLSTM_threshold_list[[index]], ConvLSTM_specificity_list[[index]],
+           type = 'l',
+           # pch = 19,
+           # main = 'Chosen Threshold from Optimal RF Model',
+           # cex.main = .9,
+           cex.lab = .8,
+           cex.axis = .8,
+           # cex = .3,
+           col = 'seagreen',
+           xlab = 'Threshold',
+           ylab = 'Specificity',
+           # xlim = c(min(threshold), 0.01)
+      )
+      points(ConvLSTM_test_results$optimal_threshold[index],
+             ConvLSTM_test_results$specificity[index],
+             pch = 19, cex = .1, col = 'seagreen')
+      points(ConvLSTM_test_results$optimal_threshold[index],
+             ConvLSTM_test_results$specificity[index],
+             pch = 19, cex = .5, col = 'greenyellow')
+      abline(v=ConvLSTM_test_results$optimal_threshold[index],
+             h=ConvLSTM_test_results$specificity[index],
+             lty = "dashed",
+             col= 'greenyellow')
+      text(ConvLSTM_test_results$optimal_threshold[index]+.0004,
+           ConvLSTM_test_results$specificity[index]-.09,
+           labels=paste("Threshold = ", ConvLSTM_test_results$optimal_threshold[index]|>round(3)),
+           cex=.6,
+           col="seagreen",
+           srt=270)
+      text(ConvLSTM_test_results$optimal_threshold[index]-.002,
+           ConvLSTM_test_results$specificity[index]-.01,
+           labels=paste("Specificity = ", ConvLSTM_test_results$specificity[index]|>round(3)),
+           cex=.6,
+           col="seagreen")
+    }
+  }
+}
 
 
-CM <- confusionMatrix(as.factor(as.vector(y_pred)),as.factor(as.vector(true_test_raster_list[[4]])), positive = '1', mode = 'everything')
-ROCR_test_prediction <- prediction(as.vector(y_pred)|>na.omit()|>as.vector(), as.vector(true_test_raster_list[[4]])|>na.omit()|>as.vector())
-test_AUC_ROC <- performance(ROCR_test_prediction, measure = 'auc')@y.values[[1]] # AUC_ROC
-test_AUC_PR <- performance(ROCR_test_prediction, measure = 'aucpr')@y.values[[1]] # AUC_PR
-# An MCC value of +1 indicates perfect agreement between the model's predictions and the actual labels, 
-# while -1 indicates total disagreement.
-# A value of 0 suggests the model performs no better than random guessing
-test_MCC <- mcc(as.factor(as.vector(y_pred)),as.factor(as.vector(true_test_raster_list[[4]]))) # test accuracy using matthew's correlation coefficient
+# creating a function for visualisation
+WS_visualisation <- function(true_raster, raster_with_probabilities, raster_factor, classes_breaks_method = c('natural_breaks', 'quantile')){
+  
+  # Subdivision types
+  quantile_subdivisions <- quantile(0:1, probs = seq(0,1,1/5))
+  natural_breaks_subdivisions <- natural_breaks(k = 5, df=as.data.frame(raster_with_probabilities, na.rm = T))
+  
+  # Susceptibility quantile classes- makes more sense
+  wildfire_susceptibility_quantile_classes <- matrix(c(
+    -0.1, quantile_subdivisions[2], 1, # very low
+    quantile_subdivisions[2], quantile_subdivisions[3], 2, # low
+    quantile_subdivisions[3], quantile_subdivisions[4], 3, # moderate
+    quantile_subdivisions[4], quantile_subdivisions[5], 4, # high
+    quantile_subdivisions[5], 1, 5 # very high
+  ), ncol = 3, byrow = TRUE)
+  
+  # Susceptibility natural breaks classes
+  wildfire_susceptibility_natural_breaks_classes <- matrix(c(
+    -0.1, natural_breaks_subdivisions[1], 1, # very low
+    natural_breaks_subdivisions[1], natural_breaks_subdivisions[2], 2, # low
+    natural_breaks_subdivisions[2], natural_breaks_subdivisions[3], 3, # moderate
+    natural_breaks_subdivisions[3], natural_breaks_subdivisions[4], 4, # high
+    natural_breaks_subdivisions[4], 1, 5 # very high
+  ), ncol = 3, byrow = TRUE)
+  
+  if(classes_breaks_method=='natural_breaks'){
+    # Reclassify raster accordingly
+    classified_raster <- classify(raster_with_probabilities|>rast(), wildfire_susceptibility_natural_breaks_classes)
+    levels(classified_raster) <- data.frame(
+      ID = 1:5,
+      Susceptibility = c("Very Low WS", "Low WS", "Moderate WS", "High WS", "Very High WS")
+    )
+    
+    # Update levels
+    classified_raster <- droplevels(classified_raster)
+    
+  } else if(classes_breaks_method == 'quantile'){
+    
+    # Reclassify raster accordingly
+    classified_raster <- classify(raster_with_probabilities|>rast(), wildfire_susceptibility_quantile_classes)
+    levels(classified_raster) <- data.frame(
+      ID = 1:5,
+      Susceptibility = c("Very Low WS", "Low WS", "Moderate WS", "High WS", "Very High WS")
+    )
+    
+    # Update levels
+    classified_raster <- droplevels(classified_raster)
+  }
+  
+  # Update levels of rasters
+  levels(true_raster) <- data.frame(
+    ID = 0:1,
+    fire_status = c('No Fire', 'Fire')
+  )
+  true_raster <- droplevels(true_raster|>rast())
+  
+  levels(raster_factor) <- data.frame(
+    ID = 0:1,
+    fire_status = c('No Fire', 'Fire')
+  )
+  raster_factor <- droplevels(raster_factor|>rast())
+  
+  
+  # define a color palette for the wildfire susceptibility class
+  WS_palette <- c('#007206', '#7DB810', '#F2FE1E', '#FFAC12','#FC3B09')
+  
+  # print(
+  # Visualising the fire data used as testY
+  p1 <- tm_shape(true_raster)+
+    tm_raster(style = "cat", title = "", palette = fire_color_condition_func(true_raster))+
+    tm_layout(main.title= 'True Fire map',
+              main.title.size =.9,
+              main.title.position = c("center", "top"),
+              legend.outside = F,
+              legend.text.size = .5,
+              # legend.outside.position = 'bottom'
+    )+
+    tm_graticules(lines = F)
+  # )
+  p2 <- tm_shape(raster_factor)+
+    tm_raster(style = "cat", title = "", palette = fire_color_condition_func(raster_factor))+
+    tm_layout(main.title= 'Predicted Fire Map',
+              main.title.size =.9,
+              main.title.position = c("center", "top"),
+              legend.outside = F,
+              legend.text.size = .5,
+              # legend.outside.position = 'bottom'
+    )+
+    tm_graticules(lines = F)
+  
+  # print(
+  # Visualise the classified raster
+  p3 <- tm_shape(classified_raster)+
+    tm_raster(style = "cat", title = "", palette = WS_palette[c(levels(classified_raster)[[1]]$ID)])+
+    tm_layout(main.title= 'Wildfire Susceptibility Map',
+              main.title.size =.9,
+              main.title.position = c("center", "top"),
+              legend.outside = F,
+              legend.text.size = .5,
+              # legend.outside.position = 'bottom'
+    )+
+    tm_graticules(lines = F)
+  # )
+  return(tmap_arrange(p1,p2,p3, nrow = 2, ncol = 2)) 
+}
 
-test_accuracy <- cbind(optimal_threshold = optimal_threshold,
-                       precision = CM$byClass['Precision'][[1]]|>round(3),
-                       recall = CM$byClass['Recall'][[1]]|>round(3),
-                       F1_score = optimal_F1_score|>round(3), 
-                       AUC_ROC = test_AUC_ROC|>round(3),
-                       AUC_PR = test_AUC_PR|>round(3),
-                       MCC = test_MCC|>round(3)) |> as_tibble()
 
-WS_visualisation(true_raster = true_test_raster_list[[4]], 
-                 raster_with_probabilities = predicted_raster_list[[4]], 
-                 raster_factor = y_pred_raster, 
+call_fire_period <- 'Fire 2021-01'
+
+optmised_threshold_plot(fire_period = call_fire_period)
+
+WS_visualisation(true_raster = true_test_raster_list[[which(timesteps_labels==call_fire_period)]], 
+                 raster_with_probabilities = predicted_raster_list[[which(timesteps_labels==call_fire_period)]], 
+                 raster_factor = y_pred_raster_list[[which(timesteps_labels==call_fire_period)]], 
                  classes_breaks_method = 'natural_breaks')
 
-WS_visualisation(true_raster = true_test_raster_list[[4]], 
-                 raster_with_probabilities = predicted_raster_list[[4]], 
-                 raster_factor = y_pred_raster, 
+WS_visualisation(true_raster = true_test_raster_list[[which(timesteps_labels==call_fire_period)]], 
+                 raster_with_probabilities = predicted_raster_list[[which(timesteps_labels==call_fire_period)]], 
+                 raster_factor = y_pred_raster_list[[which(timesteps_labels==call_fire_period)]], 
                  classes_breaks_method = 'quantile')
 
 
