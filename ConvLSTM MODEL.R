@@ -26,17 +26,69 @@
   library(parallel)
 }
 
+
+# READING & LOADING RELEVANT OBJECTS --------------------------------------
+
 # Import TMNR shapefile 
 roi <- readOGR('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/SANParks shapefiles/TMNR shapefile/tmnr_boundary.shp')
 roi_trans <- spTransform(roi, CRS('+proj=utm +zone=34 +south +datum=WGS84 +units=m +no_defs')) # convert coordinate system to EPSG:32734 (WGS 84 / UTM zone 34S)
 
+# Add more here.....................................
 
-# Set fire color based on the condition
+
+# FUNCTIONS ---------------------------------------------------------------
+
+# Specificity metric created for the Keras interface
+specificity_metric <- function(y_true, y_pred) {
+  y_pred_binary <- k_cast(k_greater(y_pred, 0.5), k_floatx())
+  y_true_binary <- k_cast(y_true, k_floatx())
+  
+  # True Negatives: predicted 0 and actual 0
+  tn <- k_sum(k_cast(k_equal(y_pred_binary + y_true_binary, 0), k_floatx()))
+  
+  # False Positives: predicted 1 but actual 0
+  fp <- k_sum(k_cast(k_equal(y_pred_binary - y_true_binary, 1), k_floatx()))
+  
+  specificity <- tn / (tn + fp + k_epsilon())  # Avoid division by zero
+  return(specificity)
+}
+
+# F1 score metric created for the Keras interface
+f1_score_metric <- function(y_true, y_pred) {
+  y_pred_binary <- k_cast(k_greater(y_pred, 0.5), k_floatx())
+  
+  tp <- k_sum(y_true * y_pred_binary)
+  fp <- k_sum((1 - y_true) * y_pred_binary)
+  fn <- k_sum(y_true * (1 - y_pred_binary))
+  
+  precision <- tp / (tp + fp + k_epsilon())
+  recall <- tp / (tp + fn + k_epsilon())
+  
+  f1 <- 2 * (precision * recall) / (precision + recall + k_epsilon())
+  return(f1)
+} # checked! It is doing the right calculation
+
+# MCC metric created for the Keras interface
+mcc_metric <- function(y_true, y_pred) {
+  y_pred_binary <- k_cast(k_greater(y_pred, 0.5), k_floatx())
+  
+  tp <- k_sum(y_true * y_pred_binary)
+  tn <- k_sum((1 - y_true) * (1 - y_pred_binary))
+  fp <- k_sum((1 - y_true) * y_pred_binary)
+  fn <- k_sum(y_true * (1 - y_pred_binary))
+  
+  numerator <- (tp * tn) - (fp * fn)
+  denominator <- k_sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
+  
+  return(numerator / (denominator + k_epsilon()))
+}
+
+# Define color code for fire rasters
 fire_color_condition_func <- function(data){
   xx <- data
-  fire_color_condition <- if (all(values(xx) %>% na.omit() == 0)) {
+  fire_color_condition <- if (all(values(xx) %>% na.omit() == 0)) { # if raster contains only negatives
     "lightgray"
-  } else {
+  } else { # if raster is binary
     c("lightgray", "red")
   }
   return(fire_color_condition)
@@ -63,7 +115,9 @@ predictor_variables_2021_2022_test_subset <- predictor_variables_2021_2022_test[
 dim(predictor_variables_2021_2022_test_subset)
 
 
-# reading data for modelling
+# CONVOLUTION LSTM FULL FRAMEWORK -----------------------------------------
+
+# reading data for modelling process
 trainX <- predictor_variables_2014_2018_train_subset
 dim(trainX) # (samples, time_steps, height, width, variables)- channels_last format
 trainY <- response_variable_2014_2018_train_subset
@@ -86,7 +140,7 @@ dim(testY) # (samples, time_steps, height, width, variables)- channels_last form
 # NOTE: Avoid max pooling and layer flattening for our purpose
 # Building a convolution lstm for wildfire susceptibility
 tensorflow::set_random_seed(1)
-model <- keras_model_sequential() %>%
+ConvLSTM_model <- keras_model_sequential() %>%
   # 1st ConvLSTM layer
   layer_conv_lstm_2d(
     input_shape = list(NULL, 372, 382, 5), # samples = 1, time_steps=NULL to allow for varying timesteps months, channels = 2 predictor variables, rows = 32, cols = 32
@@ -96,7 +150,6 @@ model <- keras_model_sequential() %>%
     kernel_regularizer = regularizer_l2(0.001), # applies L2 regularisation to the kernel weights
     recurrent_regularizer = regularizer_l2(0.001), # applies it to recurrent weights (inside the LSTM)
     bias_regularizer = regularizer_l2(0.001), # applies it to biases
-    # recurrent_activation='hard_sigmoid',
     activation = "relu",
     padding = "same", 
     return_sequences = T, # It is important for this to be TRUE so that the time steps are also returned
@@ -108,7 +161,7 @@ model <- keras_model_sequential() %>%
   # dropout
   layer_dropout(rate = 0.2) %>%
   
-  # 1st ConvLSTM layer
+  # 2nd ConvLSTM layer
   layer_conv_lstm_2d(
     filters = 64, 
     kernel_size = c(3, 3), 
@@ -116,7 +169,6 @@ model <- keras_model_sequential() %>%
     # kernel_regularizer = regularizer_l2(0.001), # applies L2 regularisation to the kernel weights
     # recurrent_regularizer = regularizer_l2(0.001), # applies it to recurrent weights (inside the LSTM)
     # bias_regularizer = regularizer_l2(0.001), # applies it to biases
-    # recurrent_activation='hard_sigmoid',
     activation = "relu",
     padding = "same", 
     return_sequences = T, # It is important for this to be TRUE so that the time steps are also returned
@@ -142,18 +194,31 @@ model <- keras_model_sequential() %>%
   # # Output layer
   time_distributed(layer_dense(units = 1, activation = "sigmoid"))
 
-# Compile the model
+# Compile the ConvLSTM_model
 tensorflow::set_random_seed(1)
-model %>% compile(
+ConvLSTM_model %>% compile(
   optimizer = optimizer_adam(learning_rate = 0.0001, weight_decay = 0.03),
   loss = "binary_crossentropy",
-  metrics = c("accuracy")
+  metrics = list('accuracy',
+                 metric_recall(name = 'recall'),
+                 metric_precision(name = 'precision'),
+                 custom_metric("specificity", metric_fn = specificity_metric),
+                 custom_metric(name = 'f1_score', metric_fn = f1_score_metric),
+                 metric_auc(name = "auc_roc", curve = "ROC"),
+                 metric_auc(name = "auc_pr", curve = "PR"),
+                 custom_metric(name = 'MCC', metric_fn = mcc_metric),
+                 metric_false_negatives(name = 'fn'),
+                 metric_false_positives(name = 'fp'),
+                 metric_true_negatives(name = 'tn'),
+                 metric_true_positives(name = 'tp'))
 )
 
-model%>%summary()
+# ?compile.keras.engine.training.Model
+
+ConvLSTM_model%>%summary()
 
 tensorflow::set_random_seed(1)
-history <- model %>% fit(
+history <- ConvLSTM_model %>% fit(
   trainX, trainY,
   validation_data = list(valX, valY),
   use_multiprocessing = T,
@@ -166,13 +231,13 @@ history <- model %>% fit(
 
 # ?fit.keras.engine.training.Model
 plot(history)
-evaluation <- model %>% evaluate(testX, testY)
+evaluation <- ConvLSTM_model %>% evaluate(testX, testY)
 cat("Test Loss:", evaluation[['loss']], "\nTest Accuracy:", evaluation[['accuracy']], "\n")
 # cat("Test Loss:", evaluation[['loss']], "\nTest Accuracy:", evaluation[['python_function']], "\n")
 
 
 # fire predicted for 2021 and 2022 - This is where all the probabilities are stored
-predicted <- model %>% predict(testX)
+predicted <- ConvLSTM_model %>% predict(testX)
 dim(predicted)
 summary(predicted)
 
@@ -237,9 +302,7 @@ cl = cl)
 ConvLSTM_threshold_list <- list()
 ConvLSTM_specificity_list <- list()
 ConvLSTM_f1_score_list <- list()
-
-length(predicted_raster_list)
-for (i in 1:4){
+for (i in 1:length(predicted_raster_list)){
   cat('Iteration ', i, ' out of ', length(predicted_raster_list), '\n')
   i <- i
   index <- i
@@ -280,11 +343,10 @@ for (i in 1:4){
 
 stopCluster(cl)
 
+# creating empty list to save relevant output
 y_pred_raster_list <- list()
 ConvLSTM_metrics_list <- list()
 ConvLSTM_test_results <- NULL
-
-
 for(i in 1:length(ConvLSTM_f1_score_list)){
   
   cat('Iteration ', i, ' out of ', length(ConvLSTM_f1_score_list), '\n')
@@ -314,15 +376,17 @@ for(i in 1:length(ConvLSTM_f1_score_list)){
   res(y_pred_raster) <- 30 # update spatial resolution to 30m
   names(y_pred_raster) <- paste0(timesteps_labels[index]," (predicted)")
   
+  # generate confusion matrix with all metrics
   CM <- confusionMatrix(factor(as.vector(y_pred_raster), levels = c('0','1')),
                         factor(as.vector(true_test_raster_list[[index]]), levels = c('0','1')), 
                         positive = '1', mode = 'everything')
   
-  if(sum(CM$table[,2])==0){
+  if(sum(CM$table[,2])==0){ # if no fire events exist at all (i.e, raster has only negatives/0) 
+    #...the below metrics are then irrelevant
     test_AUC_ROC <- NA
     test_AUC_PR <- NA
     test_MCC <- NA
-  }else{
+  }else{ # both positives and negatives exist
     ROCR_test_prediction <- prediction(as.vector(y_pred_raster)|>na.omit()|>as.vector(), as.vector(true_test_raster_list[[index]])|>na.omit()|>as.vector())
     test_AUC_ROC <- performance(ROCR_test_prediction, measure = 'auc')@y.values[[1]] # AUC_ROC
     test_AUC_PR <- performance(ROCR_test_prediction, measure = 'aucpr')@y.values[[1]] # AUC_PR
@@ -336,14 +400,14 @@ for(i in 1:length(ConvLSTM_f1_score_list)){
   ConvLSTM_metrics_list[[i]] <- CM
   ConvLSTM_test_results <- rbind(ConvLSTM_test_results, 
                                  tibble(optimal_threshold = optimal_threshold,
-                                       overall_accuracy = CM$overall['Accuracy'][[1]]|>round(3),
-                                       precision = CM$byClass['Precision'][[1]]|>round(3),
-                                       recall = CM$byClass['Recall'][[1]]|>round(3),
-                                       specificity = CM$byClass['Specificity'][[1]]|>round(3),
-                                       F1_score = optimal_F1_score|>round(3), 
-                                       AUC_ROC = test_AUC_ROC|>round(3),
-                                       AUC_PR = test_AUC_PR|>round(3),
-                                       MCC = test_MCC|>round(3),
+                                       overall_accuracy = CM$overall['Accuracy'][[1]],
+                                       precision = CM$byClass['Precision'][[1]],
+                                       recall = CM$byClass['Recall'][[1]],
+                                       specificity = CM$byClass['Specificity'][[1]],
+                                       F1_score = optimal_F1_score, 
+                                       AUC_ROC = test_AUC_ROC,
+                                       AUC_PR = test_AUC_PR,
+                                       MCC = test_MCC,
                                        fire_period = timesteps_labels[i],
                                        true_fire_status = ifelse(maxValue(true_test_raster_list[[index]])==1, 
                                                                  'positive',
@@ -351,6 +415,7 @@ for(i in 1:length(ConvLSTM_f1_score_list)){
   
 }
 
+View(ConvLSTM_test_results)
 
 # Creating a function to plot the optimal threshold chosen while maximising either f1 score or specificity where appropriate
 optmised_threshold_plot <- function(fire_period){
@@ -361,7 +426,7 @@ optmised_threshold_plot <- function(fire_period){
       plot(ConvLSTM_threshold_list[[index]], ConvLSTM_f1_score_list[[index]],
            type = 'l',
            # pch = 19,
-           # main = 'Chosen Threshold from Optimal RF Model',
+           # main = 'Chosen Threshold from Optimal Model',
            # cex.main = .9,
            cex.lab = .8,
            cex.axis = .8,
@@ -400,7 +465,7 @@ optmised_threshold_plot <- function(fire_period){
       plot(ConvLSTM_threshold_list[[index]], ConvLSTM_specificity_list[[index]],
            type = 'l',
            # pch = 19,
-           # main = 'Chosen Threshold from Optimal RF Model',
+           # main = 'Chosen Threshold from Optimal Model',
            # cex.main = .9,
            cex.lab = .8,
            cex.axis = .8,
@@ -434,7 +499,6 @@ optmised_threshold_plot <- function(fire_period){
     }
   }
 }
-
 
 # creating a function for visualisation
 WS_visualisation <- function(true_raster, raster_with_probabilities, raster_factor, classes_breaks_method = c('natural_breaks', 'quantile')){
@@ -485,7 +549,7 @@ WS_visualisation <- function(true_raster, raster_with_probabilities, raster_fact
     classified_raster <- droplevels(classified_raster)
   }
   
-  # Update levels of rasters
+  # Update levels of other rasters
   levels(true_raster) <- data.frame(
     ID = 0:1,
     fire_status = c('No Fire', 'Fire')
@@ -543,7 +607,7 @@ WS_visualisation <- function(true_raster, raster_with_probabilities, raster_fact
 }
 
 
-call_fire_period <- 'Fire 2021-01'
+call_fire_period <- 'Fire 2022-03'
 
 optmised_threshold_plot(fire_period = call_fire_period)
 

@@ -101,7 +101,7 @@ temperature_list <- pblapply(dates, function(date) {
 set.seed(123)
 fire_list <- pblapply(dates, function(date) {
   # Generate values
-  vals <- sample(c(0, 1), ncell(template_raster), replace = TRUE, prob = c(0.95, 0.05))
+  vals <- sample(c(0, 1), ncell(template_raster), replace = TRUE, prob = c(0.998711038, 0.001288962))
   
   # Apply NA mask
   vals[na_cells] <- NA
@@ -317,26 +317,26 @@ dim(testY)
 #     return(k_sum(masked_loss) / (k_sum(mask) + k_epsilon()))  # normalize by unmasked count
 #   }
 # }
-masked_binary_crossentropy_with_class_weights <- function(mask_value, class_weights = c('0' = NULL, '1' = NULL)) {
-  function(y_true, y_pred) {
-    # Create mask to exclude 9999
-    mask <- k_cast(k_not_equal(y_true, mask_value), k_floatx())
-    
-    # Apply class weights: if y_true == 1 → weight = class_weights["1"], else → weight = class_weights["0"]
-    weight_1 <- class_weights[["1"]]
-    weight_0 <- class_weights[["0"]]
-    weights <- k_cast(k_equal(y_true, 1), k_floatx()) * weight_1 + k_cast(k_equal(y_true, 0), k_floatx()) * weight_0
-    
-    # Compute binary crossentropy
-    loss <- k_binary_crossentropy(y_true, y_pred)
-    
-    # Apply both mask and weights
-    weighted_loss <- loss * weights * mask
-    
-    # Return mean loss over valid pixels
-    return(k_sum(weighted_loss) / (k_sum(weights * mask) + k_epsilon()))
-  }
-}
+# masked_binary_crossentropy_with_class_weights <- function(mask_value, class_weights = c('0' = NULL, '1' = NULL)) {
+#   function(y_true, y_pred) {
+#     # Create mask to exclude 9999
+#     mask <- k_cast(k_not_equal(y_true, mask_value), k_floatx())
+#     
+#     # Apply class weights: if y_true == 1 → weight = class_weights["1"], else → weight = class_weights["0"]
+#     weight_1 <- class_weights[["1"]]
+#     weight_0 <- class_weights[["0"]]
+#     weights <- k_cast(k_equal(y_true, 1), k_floatx()) * weight_1 + k_cast(k_equal(y_true, 0), k_floatx()) * weight_0
+#     
+#     # Compute binary crossentropy
+#     loss <- k_binary_crossentropy(y_true, y_pred)
+#     
+#     # Apply both mask and weights
+#     weighted_loss <- loss * weights * mask
+#     
+#     # Return mean loss over valid pixels
+#     return(k_sum(weighted_loss) / (k_sum(weights * mask) + k_epsilon()))
+#   }
+# }
 
 
 # masked_accuracy <- function(mask_value) {
@@ -348,31 +348,73 @@ masked_binary_crossentropy_with_class_weights <- function(mask_value, class_weig
 #     return(k_sum(masked_acc) / (k_sum(mask) + k_epsilon()))
 #   }
 # }
+# 
+# masked_weighted_accuracy <- function(mask_value, class_weights = c('0' = NULL, '1' = NULL)) {
+#   function(y_true, y_pred) {
+#     # Create mask for valid (non-masked) entries
+#     mask <- k_cast(k_not_equal(y_true, mask_value), k_floatx())
+#     
+#     # Binarize predictions at 0.5 threshold
+#     y_pred_binary <- k_cast(k_greater(y_pred, 0.5), k_floatx())
+#     
+#     # Compute whether predictions are correct
+#     correct_preds <- k_cast(k_equal(y_true, y_pred_binary), k_floatx())
+#     
+#     # Assign class weights to each prediction based on y_true
+#     weights <- (k_cast(k_equal(y_true, 0), k_floatx()) * class_weights["0"] +
+#                   k_cast(k_equal(y_true, 1), k_floatx()) * class_weights["1"])
+#     
+#     # Apply mask to correct predictions and weights
+#     weighted_correct <- correct_preds * weights * mask
+#     masked_weights <- weights * mask
+#     
+#     # Compute weighted accuracy: sum(weighted correct preds) / sum(weights)
+#     return(k_sum(weighted_correct) / (k_sum(masked_weights) + k_epsilon()))
+#   }
+# }
+# 
 
-masked_weighted_accuracy <- function(mask_value, class_weights = c('0' = NULL, '1' = NULL)) {
-  function(y_true, y_pred) {
-    # Create mask for valid (non-masked) entries
-    mask <- k_cast(k_not_equal(y_true, mask_value), k_floatx())
-    
-    # Binarize predictions at 0.5 threshold
-    y_pred_binary <- k_cast(k_greater(y_pred, 0.5), k_floatx())
-    
-    # Compute whether predictions are correct
-    correct_preds <- k_cast(k_equal(y_true, y_pred_binary), k_floatx())
-    
-    # Assign class weights to each prediction based on y_true
-    weights <- (k_cast(k_equal(y_true, 0), k_floatx()) * class_weights["0"] +
-                  k_cast(k_equal(y_true, 1), k_floatx()) * class_weights["1"])
-    
-    # Apply mask to correct predictions and weights
-    weighted_correct <- correct_preds * weights * mask
-    masked_weights <- weights * mask
-    
-    # Compute weighted accuracy: sum(weighted correct preds) / sum(weights)
-    return(k_sum(weighted_correct) / (k_sum(masked_weights) + k_epsilon()))
-  }
+specificity_metric <- function(y_true, y_pred) {
+  y_pred_binary <- k_cast(k_greater(y_pred, 0.5), k_floatx())
+  y_true_binary <- k_cast(y_true, k_floatx())
+  
+  # True Negatives: predicted 0 and actual 0
+  tn <- k_sum(k_cast(k_equal(y_pred_binary + y_true_binary, 0), k_floatx()))
+  
+  # False Positives: predicted 1 but actual 0
+  fp <- k_sum(k_cast(k_equal(y_pred_binary - y_true_binary, 1), k_floatx()))
+  
+  specificity <- tn / (tn + fp + k_epsilon())  # Avoid division by zero
+  return(specificity)
 }
 
+f1_score_metric <- function(y_true, y_pred) {
+  y_pred_binary <- k_cast(k_greater(y_pred, 0.5), k_floatx())
+  
+  tp <- k_sum(y_true * y_pred_binary)
+  fp <- k_sum((1 - y_true) * y_pred_binary)
+  fn <- k_sum(y_true * (1 - y_pred_binary))
+  
+  precision <- tp / (tp + fp + k_epsilon())
+  recall <- tp / (tp + fn + k_epsilon())
+  
+  f1 <- 2 * (precision * recall) / (precision + recall + k_epsilon())
+  return(f1)
+} # checked! It is doing the right calculation
+
+mcc_metric <- function(y_true, y_pred) {
+  y_pred_binary <- k_cast(k_greater(y_pred, 0.5), k_floatx())
+  
+  tp <- k_sum(y_true * y_pred_binary)
+  tn <- k_sum((1 - y_true) * (1 - y_pred_binary))
+  fp <- k_sum((1 - y_true) * y_pred_binary)
+  fn <- k_sum(y_true * (1 - y_pred_binary))
+  
+  numerator <- (tp * tn) - (fp * fn)
+  denominator <- k_sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
+  
+  return(numerator / (denominator + k_epsilon()))
+}
 
 
 
@@ -404,7 +446,6 @@ model <- keras_model_sequential() %>%
   
   # 1st ConvLSTM layer
   layer_conv_lstm_2d(
-    input_shape = list(NULL, 32, 32, 2), # samples = 1, time_steps=NULL to allow for varying timesteps months, channels = 2 predictor variables, rows = 32, cols = 32
     filters = 64, 
     kernel_size = c(3, 3), 
     data_format = 'channels_last',
@@ -443,28 +484,45 @@ model %>% compile(
   optimizer = optimizer_adam(learning_rate = 0.0001, weight_decay = 0.03),
   loss = "binary_crossentropy",
   # loss = masked_binary_crossentropy_with_class_weights(mask_value = 9999, class_weights = c('0' = 1, '1' = 3.9)),
-  metrics = c("accuracy")
+  # metrics = c('accuracy')
+  metrics = list('accuracy',
+                 metric_recall(name = 'recall'),
+                 metric_precision(name = 'precision'),
+                 custom_metric("specificity", metric_fn = specificity_metric),
+                 custom_metric(name = 'f1_score', metric_fn = f1_score_metric),
+                 metric_auc(name = "auc_roc", curve = "ROC"),
+                 metric_auc(name = "auc_pr", curve = "PR"),
+                 custom_metric(name = 'MCC', metric_fn = mcc_metric),
+                 metric_false_negatives(name = 'fn'),
+                 metric_false_positives(name = 'fp'),
+                 metric_true_negatives(name = 'tn'),
+                 metric_true_positives(name = 'tp')
+                 )
   # metrics = masked_weighted_accuracy(mask_value = 9999, class_weights = c("0" = 1, "1" = 3.9))
 )
-
+# ?compile.keras.engine.training.Model
 model%>%summary()
+
 tensorflow::set_random_seed(1)
 history <- model %>% fit(
   trainX, trainY,
   validation_data = list(valX, valY),
   use_multiprocessing = T,
-  callbacks = callback_tensorboard(),
-  epochs = 200,
+  # callbacks = callback_tensorboard(),
+  epochs = 1,
   batch_size = 1,
-  class_weight = list('0' = 1, '1' = 20.8), # this takes care of class imbalance
+  class_weight = list('0' = 1, '1' = 681.6667), # this takes care of class imbalance (globally though!)
   shuffle = F # very important to ensure temporal continuity/consistency
 )
 
 # ?fit.keras.engine.training.Model
-plot(history)
-evaluation <- model %>% evaluate(testX, testY)
-cat("Test Loss:", evaluation[['loss']], "\nTest Accuracy:", evaluation[['accuracy']], "\n")
+# plot(history)
+options(scipen = 999)
+evaluation <- model %>% evaluate(testX, testY);evaluation
+# cat("Test Loss:", evaluation[['loss']], "\nTest Accuracy:", evaluation[['accuracy']], "\n")
 # cat("Test Loss:", evaluation[['loss']], "\nTest Accuracy:", evaluation[['python_function']], "\n")
+
+evaluation['tn'][[1]]/(evaluation['tn'][[1]]+evaluation['fp'][[1]])
 
 
 # fire predicted for month 6
@@ -477,7 +535,7 @@ predicted_normal_Raster_format <- predicted[1, 1, , , 1]
 
 predicted_raster <- rast(predicted_normal_Raster_format, crs = "EPSG:4326", ext = ext(extent))
 dim(predicted_normal_Raster_format)
-hist(predicted_normal_Raster_format|>as.numeric()|>na.omit())
+# hist(predicted_normal_Raster_format|>as.numeric()|>na.omit())
 
 # An MCC value of +1 indicates perfect agreement between the model's predictions and the actual labels, 
 # while -1 indicates total disagreement.
@@ -540,14 +598,16 @@ test_AUC_PR <- performance(ROCR_test_prediction, measure = 'aucpr')@y.values[[1]
 test_MCC <- mcc(as.factor(as.vector(y_pred)),as.factor(as.vector(y_true))) # test accuracy using matthew's correlation coefficient
 
 test_accuracy <- cbind(optimal_threshold = optimal_threshold,
+                       overall_accuracy = CM$overall['Accuracy'][[1]],
                        precision = CM$byClass['Precision'][[1]]|>round(3),
                        recall = CM$byClass['Recall'][[1]]|>round(3),
+                       specificity = CM$byClass['Specificity'][[1]]|>round(3),
                        F1_score = optimal_F1_score|>round(3), 
                        AUC_ROC = test_AUC_ROC|>round(3),
                        AUC_PR = test_AUC_PR|>round(3),
                        MCC = test_MCC|>round(3)) |> as_tibble()
 
-
+test_accuracy
 
 # creating a function for visualisation
 WS_visualisation <- function(raster_with_probabilities, raster_factor, classes_breaks_method = c('natural_breaks', 'quantile')){
