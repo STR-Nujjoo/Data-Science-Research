@@ -23,7 +23,19 @@
   library(rgeoda)
   library(mltools)
   library(ROCR)
+  library(tfaddons)
 }
+
+# reticulate::py_install("tensorflow-addons", pip = TRUE)
+tfa <- reticulate::import("tensorflow_addons", delay_load = TRUE)
+focal_loss <- tfa$losses$SigmoidFocalCrossEntropy
+focal_loss_fn <- function(alpha = 0.25, gamma = 2.0) {
+  loss_fn <- tfa$losses$SigmoidFocalCrossEntropy(alpha = alpha, gamma = gamma)
+  function(y_true, y_pred) {
+    loss_fn(y_true, y_pred)
+  }
+}
+
 
 # Set fire color based on the condition
 fire_color_condition_func <- function(data){
@@ -60,12 +72,10 @@ resolution <- 1
 template_raster <- rast(extent = extent, resolution = resolution, crs = "EPSG:4326")
 
 # Define dates
-dates <- seq(as.Date("2023-01-01"), as.Date("2023-06-01"), by = "month")
+dates <- seq(as.Date("2023-01-01"), as.Date("2023-12-01"), by = "month")
 
 # Define cells to mask (e.g., cell indices 50 and 100 will be NA)
 na_cells <- c(1:32, seq(1,32*32, by = 32), seq(32,32*32, by = 32), 50:55, 95:100)  # choose any valid cell numbers here
-
-
 
 # Generate precipitation rasters with NA in the same locations
 set.seed(123)
@@ -110,7 +120,7 @@ fire_list <- pblapply(dates, function(date) {
   rast(template_raster, vals = vals, names = paste0("Fire_", date)) |> raster()
 })
 
-# plot(fire_list[[1]], main = 'Fire data example', col = fire_color_condition_func(fire_list[[1]]))
+# plot(fire_list[[12]], main = 'Fire data example', col = fire_color_condition_func(fire_list[[1]]))
 
 # Min-Max noralisation function to be applied on the raster values; return: rasterLayer object 
 raster_stack_minmax_norm <- function(stack_raster, index) {
@@ -134,14 +144,14 @@ temperature_stack <- stack(temperature_list)
 fire_stack <- stack(fire_list)
 
 # normalising training set
-precipitation_stack_train <- pblapply(1:4, function(x){precipitation_stack@layers[[x]]})|> stack()
-precipitation_stack_train_norm <- pblapply(1:4, function(x){raster_stack_minmax_norm(precipitation_stack_train,x)})|>stack()
+precipitation_stack_train <- pblapply(1:8, function(x){precipitation_stack@layers[[x]]})|> stack()
+precipitation_stack_train_norm <- pblapply(1:8, function(x){raster_stack_minmax_norm(precipitation_stack_train,x)})|>stack()
 
-temperature_stack_train <-  pblapply(1:4, function(x){temperature_stack@layers[[x]]})|> stack()
-temperature_stack_train_norm <- pblapply(1:4, function(x){raster_stack_minmax_norm(temperature_stack_train,x)})|>stack()
+temperature_stack_train <-  pblapply(1:8, function(x){temperature_stack@layers[[x]]})|> stack()
+temperature_stack_train_norm <- pblapply(1:8, function(x){raster_stack_minmax_norm(temperature_stack_train,x)})|>stack()
 
-fire_stack_train <- pblapply(1:4, function(x){fire_stack@layers[[x]]})|> stack()
-fire_stack_train_norm <- pblapply(1:4, function(x){raster_stack_minmax_norm(fire_stack_train,x)})|> stack() # normalisation is unnecessary because values ranges from 0 to 1 already!
+fire_stack_train <- pblapply(1:8, function(x){fire_stack@layers[[x]]})|> stack()
+fire_stack_train_norm <- pblapply(1:8, function(x){raster_stack_minmax_norm(fire_stack_train,x)})|> stack() # normalisation is unnecessary because values ranges from 0 to 1 already!
 
 # Convert fire stack into a dataframe to find out the ratio of class imbalance for fire to non-fire events
 fire_df <- as.data.frame(fire_stack_train_norm, xy = T) %>% 
@@ -150,30 +160,37 @@ fire_df <- as.data.frame(fire_stack_train_norm, xy = T) %>%
     cols = starts_with("Fire"),
     names_to = "Fire",
     values_to = "Fire_Value"
-  ) 
+  ) %>%
+  na.omit() %>%
+  mutate(Month = str_extract(Fire, "\\.\\d{2}\\.") |> 
+           str_replace_all("\\.", "") |>
+           as.integer()) %>%
+  dplyr::select(x,y,Month, Fire_Value)
+
 prop.table(table(fire_df$Fire_Value))
-max(table(fire_df$Fire_Value))/table(fire_df$Fire_Value) # weight class
+cw <- max(table(fire_df$Fire_Value))/table(fire_df$Fire_Value) # weight class
+
+
 
 # normalising validation set
-precipitation_stack_val <- precipitation_stack@layers[[5]]
-precipitation_stack_val_norm <- raster_stack_minmax_norm(precipitation_stack_val, 1)
+precipitation_stack_val <- pblapply(9:11, function(x){precipitation_stack@layers[[x]]})|> stack()
+precipitation_stack_val_norm <-  pblapply(seq_along(precipitation_stack_val@layers), function(x){raster_stack_minmax_norm(precipitation_stack_val, x)})|> stack()
 
-temperature_stack_val <- temperature_stack@layers[[5]]
-temperature_stack_val_norm <- raster_stack_minmax_norm(temperature_stack_val, 1)
+temperature_stack_val <- pblapply(9:11, function(x){temperature_stack@layers[[x]]})|> stack()
+temperature_stack_val_norm <- pblapply(seq_along(temperature_stack_val@layers), function(x){raster_stack_minmax_norm(temperature_stack_val, x)})|> stack()
 
-fire_stack_val <- fire_stack@layers[[5]]
-fire_stack_val_norm <-  raster_stack_minmax_norm(fire_stack_val,1) # normalisation is unnecessary because values ranges from 0 to 1 already!
+fire_stack_val <- pblapply(9:11, function(x){fire_stack@layers[[x]]})|> stack()
+fire_stack_val_norm <-  pblapply(seq_along(fire_stack_val@layers), function(x){raster_stack_minmax_norm(fire_stack_val, x)})|> stack()
 
 # normalising test set
-precipitation_stack_test <- precipitation_stack@layers[[6]]
+precipitation_stack_test <- precipitation_stack@layers[[12]]
 precipitation_stack_test_norm <- raster_stack_minmax_norm(precipitation_stack_test, 1)
 
-temperature_stack_test <- temperature_stack@layers[[6]]
+temperature_stack_test <- temperature_stack@layers[[12]]
 temperature_stack_test_norm <- raster_stack_minmax_norm(temperature_stack_test, 1)
 
-fire_stack_test <- fire_stack@layers[[6]]
+fire_stack_test <- fire_stack@layers[[12]]
 fire_stack_test_norm <-  raster_stack_minmax_norm(fire_stack_test, 1) # normalisation is unnecessary because values ranges from 0 to 1 already!
-
 
 # Training, validation and test set
 # 1st 4 months training and then 5th month validation and then 6th month testing
@@ -226,153 +243,155 @@ testY <- array(testY, dim = c(1, dim(testY))) # Adjust dimension to include samp
 dim(testY)
 # testY <- to_categorical(testY)
 
-
-# # Reshape for ConvLSTM format 
-# combined_array <- abind(precipitation_stack|> as.array(),
-#                         temperature_stack|> as.array(),
-#                         along = 4) # Shape: ([1] height/row, [2] width/column, [3] time_steps, [4] variables/channels)
-# 
-# dim(combined_array)
-# # CHECK
-# # when combining the array the 1st array is the precipitation at the 1st time step
-# all(combined_array[,,1,1]|>raster()|>values() == precipitation_list[[1]]|>values()) 
-# # when combining the array the 2nd array is the precipitation at the 2nd time step
-# all(combined_array[,,2,1]|>raster()|>values() == precipitation_list[[2]]|>values()) 
-# #....etc....
-# # when combining the array the 6th array is the precipitation at the 6th time step
-# all(combined_array[,,6,1]|>raster()|>values() == precipitation_list[[6]]|>values()) 
-# 
-# 
-# # when combining the array the 1st array is the temperature at the 1st time step
-# all(combined_array[,,1,2]|>raster()|>values() == temperature_list[[1]]|>values()) 
-# # when combining the array the 2nd array is the temperature at the 2nd time step
-# all(combined_array[,,2,2]|>raster()|>values() == temperature_list[[2]]|>values()) 
-# #....etc....
-# # when combining the array the 6th array is the temperature at the 6th time step
-# all(combined_array[,,6,2]|>raster()|>values() == temperature_list[[6]]|>values()) 
-# #######
-
-# # Function that apply min/max normalisation
-# minmax_normalisation_function <- function(predictor_variables) {
-#   # variable shape: [height, width, time_steps, channels]
-#   for (ch in 1:dim(predictor_variables)[4]) {
-#     channel_data <- predictor_variables[,,,ch]
-#     min_val <- min(channel_data)
-#     max_val <- max(channel_data)
-#     predictor_variables[,,,ch] <- (channel_data - min_val) / (max_val - min_val)
-#   }
-#   return(predictor_variables)
-# }
-
-# # Normalised dataset
-# combined_array_norm <- minmax_normalisation_function(predictor_variables = combined_array)
-# combined_array_norm[,,,, drop = F] |> dim()
-
-# fire_array <- abind(as.array(fire_stack), along = 4) # Shape: ([1] height/row, [2] width/column, [3] time_steps, [4] variables/channels)
-
-# Training, validation and test set
-# 1st 4 months training and then 5th month validation and then 6th month testing
-
-# trainX <- combined_array_norm[,,1:4,, drop = F] |> aperm(c(3,1,2,4))  # Reorder shape: (time_steps, height, width, variables)- channels_last format
-# dim(trainX)
-# trainX <- array(trainX, dim = c(1, dim(trainX))) # Adjust dimension to include sample dimension to be 1
-# dim(trainX)
-# 
-# trainY <- abind(as.array(fire_stack[[1:4]]), along = 4) |> aperm(c(3,1,2,4))  # Reorder shape: (time_steps, height, width, variables)- channels_last format
-# # trainY <- to_categorical(abind(as.array(fire_stack[[1:4]]), along = 4) |> aperm(c(3,4,1,2)), num_classes = 2)
-# 
-# dim(trainY)
-# trainY <- array(trainY, dim = c(1, dim(trainY))) # Adjust dimension to include sample dimension to be 1
-# dim(trainY)
-# 
-# valX <- combined_array_norm[,,5,, drop = F] |> aperm(c(3,1,2,4))  # Reorder shape: (time_steps, height, width, variables)- channels_last format
-# dim(valX)
-# valX <- array(valX, dim = c(1, dim(valX))) # Adjust dimension to include sample dimension to be 1
-# dim(valX)
-# 
-# valY <- abind(as.array(fire_stack[[5]]), along = 4) |> aperm(c(3,1,2,4))  # Reorder shape: (time_steps, height, width, variables)- channels_last format
-# # valY <- to_categorical(abind(as.array(fire_stack[[5]]), along = 4) |> aperm(c(3,1,2,4)), num_classes = 2)
-# dim(valY)
-# valY <- array(valY, dim = c(1, dim(valY))) # Adjust dimension to include sample dimension to be 1
-# dim(valY)
-# 
-# testX <- combined_array_norm[,,6,, drop = F] |> aperm(c(3,1,2,4))  # Reorder shape: (time_steps, height, width, variables)- channels_last format
-# dim(testX)
-# testX <- array(testX, dim = c(1, dim(testX))) # Adjust dimension to include sample dimension to be 1
-# dim(testX)
-# 
-# testY <- abind(as.array(fire_stack[[6]]), along = 4) |> aperm(c(3,1,2,4))  # Reorder shape: (time_steps, height, width, variables)- channels_last format
-# # testY <- to_categorical(abind(as.array(fire_stack[[6]]), along = 4) |> aperm(c(3,1,2,4)), num_classes = 2)
-# dim(testY)
-# testY <- array(testY, dim = c(1, dim(testY))) # Adjust dimension to include sample dimension to be 1
-# dim(testY)
-
-# Defining a custom loss function that ignores -999
-# This custom loss should mask out the pixels with the value -999 in y_true during training.
-# masked_binary_crossentropy <- function(mask_value) {
-#   function(y_true, y_pred) {
-#     mask <- k_cast(k_not_equal(y_true, mask_value), k_floatx())  # mask is 0 where value == -999
-#     loss <- k_binary_crossentropy(y_true, y_pred)  # compute standard BCE
-#     masked_loss <- loss * mask  # zero out masked values
-#     return(k_sum(masked_loss) / (k_sum(mask) + k_epsilon()))  # normalize by unmasked count
-#   }
-# }
-# masked_binary_crossentropy_with_class_weights <- function(mask_value, class_weights = c('0' = NULL, '1' = NULL)) {
-#   function(y_true, y_pred) {
-#     # Create mask to exclude 9999
-#     mask <- k_cast(k_not_equal(y_true, mask_value), k_floatx())
-#     
-#     # Apply class weights: if y_true == 1 → weight = class_weights["1"], else → weight = class_weights["0"]
-#     weight_1 <- class_weights[["1"]]
-#     weight_0 <- class_weights[["0"]]
-#     weights <- k_cast(k_equal(y_true, 1), k_floatx()) * weight_1 + k_cast(k_equal(y_true, 0), k_floatx()) * weight_0
-#     
-#     # Compute binary crossentropy
-#     loss <- k_binary_crossentropy(y_true, y_pred)
-#     
-#     # Apply both mask and weights
-#     weighted_loss <- loss * weights * mask
-#     
-#     # Return mean loss over valid pixels
-#     return(k_sum(weighted_loss) / (k_sum(weights * mask) + k_epsilon()))
-#   }
-# }
-
-
-# masked_accuracy <- function(mask_value) {
-#   function(y_true, y_pred) {
-#     mask <- k_cast(k_not_equal(y_true, mask_value), k_floatx())
-#     y_pred_binary <- k_cast(k_greater(y_pred, 0.5), k_floatx())  # binarize predictions
-#     correct_preds <- k_cast(k_equal(y_true, y_pred_binary), k_floatx())
-#     masked_acc <- correct_preds * mask
-#     return(k_sum(masked_acc) / (k_sum(mask) + k_epsilon()))
-#   }
-# }
-# 
-# masked_weighted_accuracy <- function(mask_value, class_weights = c('0' = NULL, '1' = NULL)) {
-#   function(y_true, y_pred) {
-#     # Create mask for valid (non-masked) entries
-#     mask <- k_cast(k_not_equal(y_true, mask_value), k_floatx())
-#     
-#     # Binarize predictions at 0.5 threshold
-#     y_pred_binary <- k_cast(k_greater(y_pred, 0.5), k_floatx())
-#     
-#     # Compute whether predictions are correct
-#     correct_preds <- k_cast(k_equal(y_true, y_pred_binary), k_floatx())
-#     
-#     # Assign class weights to each prediction based on y_true
-#     weights <- (k_cast(k_equal(y_true, 0), k_floatx()) * class_weights["0"] +
-#                   k_cast(k_equal(y_true, 1), k_floatx()) * class_weights["1"])
-#     
-#     # Apply mask to correct predictions and weights
-#     weighted_correct <- correct_preds * weights * mask
-#     masked_weights <- weights * mask
-#     
-#     # Compute weighted accuracy: sum(weighted correct preds) / sum(weights)
-#     return(k_sum(weighted_correct) / (k_sum(masked_weights) + k_epsilon()))
-#   }
-# }
-# 
+{
+  # # Reshape for ConvLSTM format 
+  # combined_array <- abind(precipitation_stack|> as.array(),
+  #                         temperature_stack|> as.array(),
+  #                         along = 4) # Shape: ([1] height/row, [2] width/column, [3] time_steps, [4] variables/channels)
+  # 
+  # dim(combined_array)
+  # # CHECK
+  # # when combining the array the 1st array is the precipitation at the 1st time step
+  # all(combined_array[,,1,1]|>raster()|>values() == precipitation_list[[1]]|>values()) 
+  # # when combining the array the 2nd array is the precipitation at the 2nd time step
+  # all(combined_array[,,2,1]|>raster()|>values() == precipitation_list[[2]]|>values()) 
+  # #....etc....
+  # # when combining the array the 6th array is the precipitation at the 6th time step
+  # all(combined_array[,,6,1]|>raster()|>values() == precipitation_list[[6]]|>values()) 
+  # 
+  # 
+  # # when combining the array the 1st array is the temperature at the 1st time step
+  # all(combined_array[,,1,2]|>raster()|>values() == temperature_list[[1]]|>values()) 
+  # # when combining the array the 2nd array is the temperature at the 2nd time step
+  # all(combined_array[,,2,2]|>raster()|>values() == temperature_list[[2]]|>values()) 
+  # #....etc....
+  # # when combining the array the 6th array is the temperature at the 6th time step
+  # all(combined_array[,,6,2]|>raster()|>values() == temperature_list[[6]]|>values()) 
+  # #######
+  
+  # # Function that apply min/max normalisation
+  # minmax_normalisation_function <- function(predictor_variables) {
+  #   # variable shape: [height, width, time_steps, channels]
+  #   for (ch in 1:dim(predictor_variables)[4]) {
+  #     channel_data <- predictor_variables[,,,ch]
+  #     min_val <- min(channel_data)
+  #     max_val <- max(channel_data)
+  #     predictor_variables[,,,ch] <- (channel_data - min_val) / (max_val - min_val)
+  #   }
+  #   return(predictor_variables)
+  # }
+  
+  # # Normalised dataset
+  # combined_array_norm <- minmax_normalisation_function(predictor_variables = combined_array)
+  # combined_array_norm[,,,, drop = F] |> dim()
+  
+  # fire_array <- abind(as.array(fire_stack), along = 4) # Shape: ([1] height/row, [2] width/column, [3] time_steps, [4] variables/channels)
+  
+  # Training, validation and test set
+  # 1st 4 months training and then 5th month validation and then 6th month testing
+  
+  # trainX <- combined_array_norm[,,1:4,, drop = F] |> aperm(c(3,1,2,4))  # Reorder shape: (time_steps, height, width, variables)- channels_last format
+  # dim(trainX)
+  # trainX <- array(trainX, dim = c(1, dim(trainX))) # Adjust dimension to include sample dimension to be 1
+  # dim(trainX)
+  # 
+  # trainY <- abind(as.array(fire_stack[[1:4]]), along = 4) |> aperm(c(3,1,2,4))  # Reorder shape: (time_steps, height, width, variables)- channels_last format
+  # # trainY <- to_categorical(abind(as.array(fire_stack[[1:4]]), along = 4) |> aperm(c(3,4,1,2)), num_classes = 2)
+  # 
+  # dim(trainY)
+  # trainY <- array(trainY, dim = c(1, dim(trainY))) # Adjust dimension to include sample dimension to be 1
+  # dim(trainY)
+  # 
+  # valX <- combined_array_norm[,,5,, drop = F] |> aperm(c(3,1,2,4))  # Reorder shape: (time_steps, height, width, variables)- channels_last format
+  # dim(valX)
+  # valX <- array(valX, dim = c(1, dim(valX))) # Adjust dimension to include sample dimension to be 1
+  # dim(valX)
+  # 
+  # valY <- abind(as.array(fire_stack[[5]]), along = 4) |> aperm(c(3,1,2,4))  # Reorder shape: (time_steps, height, width, variables)- channels_last format
+  # # valY <- to_categorical(abind(as.array(fire_stack[[5]]), along = 4) |> aperm(c(3,1,2,4)), num_classes = 2)
+  # dim(valY)
+  # valY <- array(valY, dim = c(1, dim(valY))) # Adjust dimension to include sample dimension to be 1
+  # dim(valY)
+  # 
+  # testX <- combined_array_norm[,,6,, drop = F] |> aperm(c(3,1,2,4))  # Reorder shape: (time_steps, height, width, variables)- channels_last format
+  # dim(testX)
+  # testX <- array(testX, dim = c(1, dim(testX))) # Adjust dimension to include sample dimension to be 1
+  # dim(testX)
+  # 
+  # testY <- abind(as.array(fire_stack[[6]]), along = 4) |> aperm(c(3,1,2,4))  # Reorder shape: (time_steps, height, width, variables)- channels_last format
+  # # testY <- to_categorical(abind(as.array(fire_stack[[6]]), along = 4) |> aperm(c(3,1,2,4)), num_classes = 2)
+  # dim(testY)
+  # testY <- array(testY, dim = c(1, dim(testY))) # Adjust dimension to include sample dimension to be 1
+  # dim(testY)
+  
+  # Defining a custom loss function that ignores -999
+  # This custom loss should mask out the pixels with the value -999 in y_true during training.
+  # masked_binary_crossentropy <- function(mask_value) {
+  #   function(y_true, y_pred) {
+  #     mask <- k_cast(k_not_equal(y_true, mask_value), k_floatx())  # mask is 0 where value == -999
+  #     loss <- k_binary_crossentropy(y_true, y_pred)  # compute standard BCE
+  #     masked_loss <- loss * mask  # zero out masked values
+  #     return(k_sum(masked_loss) / (k_sum(mask) + k_epsilon()))  # normalize by unmasked count
+  #   }
+  # }
+  # masked_binary_crossentropy_with_class_weights <- function(mask_value, class_weights = c('0' = NULL, '1' = NULL)) {
+  #   function(y_true, y_pred) {
+  #     # Create mask to exclude 9999
+  #     mask <- k_cast(k_not_equal(y_true, mask_value), k_floatx())
+  #     
+  #     # Apply class weights: if y_true == 1 → weight = class_weights["1"], else → weight = class_weights["0"]
+  #     weight_1 <- class_weights[["1"]]
+  #     weight_0 <- class_weights[["0"]]
+  #     weights <- k_cast(k_equal(y_true, 1), k_floatx()) * weight_1 + k_cast(k_equal(y_true, 0), k_floatx()) * weight_0
+  #     
+  #     # Compute binary crossentropy
+  #     loss <- k_binary_crossentropy(y_true, y_pred)
+  #     
+  #     # Apply both mask and weights
+  #     weighted_loss <- loss * weights * mask
+  #     
+  #     # Return mean loss over valid pixels
+  #     return(k_sum(weighted_loss) / (k_sum(weights * mask) + k_epsilon()))
+  #   }
+  # }
+  
+  
+  # masked_accuracy <- function(mask_value) {
+  #   function(y_true, y_pred) {
+  #     mask <- k_cast(k_not_equal(y_true, mask_value), k_floatx())
+  #     y_pred_binary <- k_cast(k_greater(y_pred, 0.5), k_floatx())  # binarize predictions
+  #     correct_preds <- k_cast(k_equal(y_true, y_pred_binary), k_floatx())
+  #     masked_acc <- correct_preds * mask
+  #     return(k_sum(masked_acc) / (k_sum(mask) + k_epsilon()))
+  #   }
+  # }
+  # 
+  # masked_weighted_accuracy <- function(mask_value, class_weights = c('0' = NULL, '1' = NULL)) {
+  #   function(y_true, y_pred) {
+  #     # Create mask for valid (non-masked) entries
+  #     mask <- k_cast(k_not_equal(y_true, mask_value), k_floatx())
+  #     
+  #     # Binarize predictions at 0.5 threshold
+  #     y_pred_binary <- k_cast(k_greater(y_pred, 0.5), k_floatx())
+  #     
+  #     # Compute whether predictions are correct
+  #     correct_preds <- k_cast(k_equal(y_true, y_pred_binary), k_floatx())
+  #     
+  #     # Assign class weights to each prediction based on y_true
+  #     weights <- (k_cast(k_equal(y_true, 0), k_floatx()) * class_weights["0"] +
+  #                   k_cast(k_equal(y_true, 1), k_floatx()) * class_weights["1"])
+  #     
+  #     # Apply mask to correct predictions and weights
+  #     weighted_correct <- correct_preds * weights * mask
+  #     masked_weights <- weights * mask
+  #     
+  #     # Compute weighted accuracy: sum(weighted correct preds) / sum(weights)
+  #     return(k_sum(weighted_correct) / (k_sum(masked_weights) + k_epsilon()))
+  #   }
+  # }
+  # 
+  
+}
 
 specificity_metric <- function(y_true, y_pred) {
   y_pred_binary <- k_cast(k_greater(y_pred, 0.5), k_floatx())
@@ -416,121 +435,137 @@ mcc_metric <- function(y_true, y_pred) {
   return(numerator / (denominator + k_epsilon()))
 }
 
+spatial_temporal_weight <- sapply(1:dim(trainY)[2], function(x){
+  fire_count_df <- fire_df %>%
+    group_by(Month,Fire_Value) %>%
+    tally()
+  
+  weight_values_calc <- fire_count_df %>%
+    filter(Month == x)
+  
+  if(length(weight_values_calc$Fire_Value) > 1){ # if both classed are present
+    spatial_temporal_weight <- (max(weight_values_calc$n)/weight_values_calc$n)[2]
+  }else{
+    spatial_temporal_weight <- 1
+  }
+  return(spatial_temporal_weight)
+})
+
+spatial_temporal_weight
+temporal_weight_array <- array(0, dim = c(1, 8, 32, 32, 1))
+
+for(i in 1:dim(trainY)[2]){
+  n <- i
+  x <- trainY[1,n,,,1]*spatial_temporal_weight[n]
+  w <- ifelse(x==0, 1, x)
+  temporal_weight_array[1, n, , , 1] <- w
+}
 
 
 # NOTE: Avoid max pooling and layer flattening for our purpose
-
 # Building a convolution lstm following this literature: Deep Learning Methods for Daily Wildfire Danger Forecasting
+{
+  tensorflow::set_random_seed(1)
+  model <- keras_model_sequential() %>%
+    # 1st ConvLSTM layer
+    layer_conv_lstm_2d(
+      input_shape = list(NULL, 32, 32, 2), # samples = 1, time_steps=NULL to allow for varying timesteps months, channels = 2 predictor variables, rows = 32, cols = 32
+      filters = 64, 
+      kernel_size = c(3, 3), 
+      data_format = 'channels_last',
+      kernel_regularizer = regularizer_l2(0.001), # applies L2 regularisation to the kernel weights
+      recurrent_regularizer = regularizer_l2(0.001), # applies it to recurrent weights (inside the LSTM)
+      bias_regularizer = regularizer_l2(0.001), # applies it to biases
+      activation = "tanh",
+      padding = "same", 
+      return_sequences = T, # It is important for this to be TRUE so that the time steps are also returned
+    ) %>%
+    
+    # Normalize the activations of the previous layer (commonly used!)- 1st batch normalisation
+    layer_batch_normalization() %>%
+    
+    # dropout
+    layer_dropout(rate = 0.2) %>%
+    
+    # 2nd ConvLSTM layer
+    layer_conv_lstm_2d(
+      filters = 64,
+      kernel_size = c(3, 3),
+      data_format = 'channels_last',
+      kernel_regularizer = regularizer_l2(0.001), # applies L2 regularisation to the kernel weights
+      recurrent_regularizer = regularizer_l2(0.001), # applies it to recurrent weights (inside the LSTM)
+      bias_regularizer = regularizer_l2(0.001), # applies it to biases
+      activation = "tanh",
+      padding = "same",
+      return_sequences = T, # It is important for this to be TRUE so that the time steps are also returned
+    ) %>%
+
+    # dropout
+    layer_dropout(rate = 0.2) %>%
+    
+    # # Dense layers
+    time_distributed(layer_dense(units = 50, activation = "relu")) %>%
+    
+    # dropout
+    layer_dropout(rate = 0.5) %>%
+
+    
+    # Output layer
+    time_distributed(layer_dense(units = 1, activation = "sigmoid"))
+  
+  # Compile the model
+  tensorflow::set_random_seed(1)
+  model %>% compile(
+    optimizer = optimizer_adam(learning_rate = 0.0001, weight_decay = 0.03),
+    # loss = "binary_crossentropy",
+    loss = focal_loss_fn(alpha = 0.25, gamma = 2),
+    metrics = list('accuracy',
+                   metric_recall(name = 'recall'),
+                   metric_precision(name = 'precision'),
+                   custom_metric("specificity", metric_fn = specificity_metric),
+                   custom_metric(name = 'f1_score', metric_fn = f1_score_metric),
+                   metric_auc(name = "auc_roc", curve = "ROC"),
+                   metric_auc(name = "auc_pr", curve = "PR"),
+                   custom_metric(name = 'MCC', metric_fn = mcc_metric),
+                   metric_false_negatives(name = 'fn'),
+                   metric_false_positives(name = 'fp'),
+                   metric_true_negatives(name = 'tn'),
+                   metric_true_positives(name = 'tp')
+    )
+  )
+  
+  # ?compile.keras.engine.training.Model
+  model%>%summary()
+  
+  tensorflow::set_random_seed(1)
+  history <- model %>% fit(
+    trainX, trainY,
+    validation_data = list(valX, valY),
+    use_multiprocessing = T,
+    epochs = 500,
+    batch_size = 4,
+    # class_weight = list('0' = 1, '1' = cw[2][[1]]), # this takes care of class imbalance (globally though!)
+    sample_weight = temporal_weight_array, # this assign weights to rasters on a more individual level as in a raster with fire with more weight than a raster with no fire
+    shuffle = F # very important to ensure temporal continuity/consistency
+  )
+  
+
+  # ?fit.keras.engine.training.Model
+  # plot(history)
+  options(scipen = 999)
+  tensorflow::set_random_seed(1)
+  evaluation <- model %>% evaluate(testX, testY);evaluation
+  # cat("Test Loss:", evaluation[['loss']], "\nTest Accuracy:", evaluation[['accuracy']], "\n")
+  # cat("Test Loss:", evaluation[['loss']], "\nTest Accuracy:", evaluation[['python_function']], "\n")
+} # run model and results
+
+
+# fire predicted for month 12
 tensorflow::set_random_seed(1)
-model <- keras_model_sequential() %>%
-  # 1st ConvLSTM layer
-  layer_conv_lstm_2d(
-    input_shape = list(NULL, 32, 32, 2), # samples = 1, time_steps=NULL to allow for varying timesteps months, channels = 2 predictor variables, rows = 32, cols = 32
-                     filters = 64, 
-                     kernel_size = c(3, 3), 
-                     data_format = 'channels_last',
-                     kernel_regularizer = regularizer_l2(0.001), # applies L2 regularisation to the kernel weights
-                     recurrent_regularizer = regularizer_l2(0.001), # applies it to recurrent weights (inside the LSTM)
-                     bias_regularizer = regularizer_l2(0.001), # applies it to biases
-                     # recurrent_activation='hard_sigmoid',
-                     activation = "relu",
-                     padding = "same", 
-                     return_sequences = T, # It is important for this to be TRUE so that the time steps are also returned
-                     ) %>%
-  
-  # Normalize the activations of the previous layer (commonly used!)- 1st batch normalisation
-  layer_batch_normalization() %>%
-  
-  # dropout
-  layer_dropout(rate = 0.2) %>%
-  
-  # 1st ConvLSTM layer
-  layer_conv_lstm_2d(
-    filters = 64, 
-    kernel_size = c(3, 3), 
-    data_format = 'channels_last',
-    # kernel_regularizer = regularizer_l2(0.001), # applies L2 regularisation to the kernel weights
-    # recurrent_regularizer = regularizer_l2(0.001), # applies it to recurrent weights (inside the LSTM)
-    # bias_regularizer = regularizer_l2(0.001), # applies it to biases
-    # recurrent_activation='hard_sigmoid',
-    activation = "relu",
-    padding = "same", 
-    return_sequences = T, # It is important for this to be TRUE so that the time steps are also returned
-  ) %>%
-  
-  # dropout
-  layer_dropout(rate = 0.2) %>%
-  
-  # flattening
-  # time_distributed(layer_flatten()) %>%
-
-  # # Dense layers
-  time_distributed(layer_dense(units = 50, activation = "relu")) %>%
-  
-  # dropout
-  layer_dropout(rate = 0.5) %>%
-  
-  # time_distributed(layer_dense(units = 8, activation = "relu")) %>%
- 
-  #  # dropout
-  # layer_dropout(rate = 0.5) %>%
-  # 
-  # # Output layer
-  time_distributed(layer_dense(units = 1, activation = "sigmoid"))
-
-# Compile the model
-tensorflow::set_random_seed(1)
-model %>% compile(
-  optimizer = optimizer_adam(learning_rate = 0.0001, weight_decay = 0.03),
-  loss = "binary_crossentropy",
-  # loss = masked_binary_crossentropy_with_class_weights(mask_value = 9999, class_weights = c('0' = 1, '1' = 3.9)),
-  # metrics = c('accuracy')
-  metrics = list('accuracy',
-                 metric_recall(name = 'recall'),
-                 metric_precision(name = 'precision'),
-                 custom_metric("specificity", metric_fn = specificity_metric),
-                 custom_metric(name = 'f1_score', metric_fn = f1_score_metric),
-                 metric_auc(name = "auc_roc", curve = "ROC"),
-                 metric_auc(name = "auc_pr", curve = "PR"),
-                 custom_metric(name = 'MCC', metric_fn = mcc_metric),
-                 metric_false_negatives(name = 'fn'),
-                 metric_false_positives(name = 'fp'),
-                 metric_true_negatives(name = 'tn'),
-                 metric_true_positives(name = 'tp')
-                 )
-  # metrics = masked_weighted_accuracy(mask_value = 9999, class_weights = c("0" = 1, "1" = 3.9))
-)
-# ?compile.keras.engine.training.Model
-model%>%summary()
-
-tensorflow::set_random_seed(1)
-history <- model %>% fit(
-  trainX, trainY,
-  validation_data = list(valX, valY),
-  use_multiprocessing = T,
-  # callbacks = callback_tensorboard(),
-  epochs = 1,
-  batch_size = 1,
-  class_weight = list('0' = 1, '1' = 681.6667), # this takes care of class imbalance (globally though!)
-  shuffle = F # very important to ensure temporal continuity/consistency
-)
-
-# ?fit.keras.engine.training.Model
-# plot(history)
-options(scipen = 999)
-evaluation <- model %>% evaluate(testX, testY);evaluation
-# cat("Test Loss:", evaluation[['loss']], "\nTest Accuracy:", evaluation[['accuracy']], "\n")
-# cat("Test Loss:", evaluation[['loss']], "\nTest Accuracy:", evaluation[['python_function']], "\n")
-
-evaluation['tn'][[1]]/(evaluation['tn'][[1]]+evaluation['fp'][[1]])
-
-
-# fire predicted for month 6
 predicted <- model %>% predict(testX)
 dim(predicted)
 summary(predicted)
 predicted_normal_Raster_format <- predicted[1, 1, , , 1]
-# predicted_normal_Raster_format[which(testY[1,1,,,1] == 9999)] <- NA # convert the masked values back to NA
 
 
 predicted_raster <- rast(predicted_normal_Raster_format, crs = "EPSG:4326", ext = ext(extent))
@@ -574,17 +609,17 @@ optimal_F1_score <- F1_SCORES[which.max(F1_SCORES)]
          h=optimal_F1_score,
          lty = "dashed",
          col= 'greenyellow')
-  text(optimal_threshold+.0002, 
-       optimal_F1_score-.3, 
-       labels=paste("Threshold = ", optimal_threshold|>round(3)),
-       cex=.6,
-       col="seagreen",
-       srt=270)
-  text(optimal_threshold-.002, 
-       optimal_F1_score-.02, 
-       labels=paste("F1 Score = ", optimal_F1_score|>round(3)),
-       cex=.6,
-       col="seagreen")
+  # text(optimal_threshold+.0002, 
+  #      optimal_F1_score-.3, 
+  #      labels=paste("Threshold = ", optimal_threshold|>round(3)),
+  #      cex=.6,
+  #      col="seagreen",
+  #      srt=270)
+  # text(optimal_threshold-.002, 
+  #      optimal_F1_score-.02, 
+  #      labels=paste("F1 Score = ", optimal_F1_score|>round(3)),
+  #      cex=.6,
+  #      col="seagreen")
 }
 
 
@@ -664,7 +699,7 @@ WS_visualisation <- function(raster_with_probabilities, raster_factor, classes_b
   
   # print(
     # Visualising the fire data used as testY
-    p1 <- tm_shape(fire_stack[[6]]|> rast())+
+    p1 <- tm_shape(fire_stack[[12]]|> rast())+
       tm_raster(style = "cat", title = "", palette = c('white','#FC3B09'))+
       tm_layout(main.title= 'True Fire map',
                 main.title.size =.9,

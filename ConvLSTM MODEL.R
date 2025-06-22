@@ -8,23 +8,23 @@
   library(tidyverse)
   library(rgdal)
   library(sf)
-  library(stars)
   library(naniar)
   library(terra)
-  library(gstat)
   library(colorRamps)
   library(pbapply)
-  library(ggspatial)
-  library(factoextra)
   library(caret)
   library(tmap)
   library(cowplot)
   library(gridExtra)
-  library(rgeoda)
   library(mltools)
   library(ROCR)
   library(parallel)
+  library(tfaddons)
+  
 }
+
+# reticulate::py_install("tensorflow-addons", pip = TRUE)
+
 
 
 # READING & LOADING RELEVANT OBJECTS --------------------------------------
@@ -94,6 +94,14 @@ fire_color_condition_func <- function(data){
   return(fire_color_condition)
 }
 
+tfa <- reticulate::import("tensorflow_addons", delay_load = TRUE)
+focal_loss <- tfa$losses$SigmoidFocalCrossEntropy
+focal_loss_fn <- function(alpha = 0.25, gamma = 2.0) {
+  loss_fn <- tfa$losses$SigmoidFocalCrossEntropy(alpha = alpha, gamma = gamma)
+  function(y_true, y_pred) {
+    loss_fn(y_true, y_pred)
+  }
+}
 
 
 # subset predictor variables data to test convLSTM
@@ -137,106 +145,102 @@ dim(testX) # (samples, time_steps, height, width, variables)- channels_last form
 testY <- response_variable_2021_2022_test
 dim(testY) # (samples, time_steps, height, width, variables)- channels_last format
 
-# NOTE: Avoid max pooling and layer flattening for our purpose
-# Building a convolution lstm for wildfire susceptibility
-tensorflow::set_random_seed(1)
-ConvLSTM_model <- keras_model_sequential() %>%
-  # 1st ConvLSTM layer
-  layer_conv_lstm_2d(
-    input_shape = list(NULL, 372, 382, 5), # samples = 1, time_steps=NULL to allow for varying timesteps months, channels = 2 predictor variables, rows = 32, cols = 32
-    filters = 64, 
-    kernel_size = c(3, 3), 
-    data_format = 'channels_last',
-    kernel_regularizer = regularizer_l2(0.001), # applies L2 regularisation to the kernel weights
-    recurrent_regularizer = regularizer_l2(0.001), # applies it to recurrent weights (inside the LSTM)
-    bias_regularizer = regularizer_l2(0.001), # applies it to biases
-    activation = "relu",
-    padding = "same", 
-    return_sequences = T, # It is important for this to be TRUE so that the time steps are also returned
-  ) %>%
-  
-  # Normalize the activations of the previous layer (commonly used!)- 1st batch normalisation
-  layer_batch_normalization() %>%
-  
-  # dropout
-  layer_dropout(rate = 0.2) %>%
-  
-  # 2nd ConvLSTM layer
-  layer_conv_lstm_2d(
-    filters = 64, 
-    kernel_size = c(3, 3), 
-    data_format = 'channels_last',
-    # kernel_regularizer = regularizer_l2(0.001), # applies L2 regularisation to the kernel weights
-    # recurrent_regularizer = regularizer_l2(0.001), # applies it to recurrent weights (inside the LSTM)
-    # bias_regularizer = regularizer_l2(0.001), # applies it to biases
-    activation = "relu",
-    padding = "same", 
-    return_sequences = T, # It is important for this to be TRUE so that the time steps are also returned
-  ) %>%
-  
-  # dropout
-  layer_dropout(rate = 0.2) %>%
-  
-  # flattening
-  # time_distributed(layer_flatten()) %>%
-  
-  # # Dense layers
-  time_distributed(layer_dense(units = 50, activation = "relu")) %>%
-  
-  # dropout
-  layer_dropout(rate = 0.5) %>%
-  
-  # time_distributed(layer_dense(units = 8, activation = "relu")) %>%
-  
-  #  # dropout
-  # layer_dropout(rate = 0.5) %>%
-  # 
-  # # Output layer
-  time_distributed(layer_dense(units = 1, activation = "sigmoid"))
 
-# Compile the ConvLSTM_model
-tensorflow::set_random_seed(1)
-ConvLSTM_model %>% compile(
-  optimizer = optimizer_adam(learning_rate = 0.0001, weight_decay = 0.03),
-  loss = "binary_crossentropy",
-  metrics = list('accuracy',
-                 metric_recall(name = 'recall'),
-                 metric_precision(name = 'precision'),
-                 custom_metric("specificity", metric_fn = specificity_metric),
-                 custom_metric(name = 'f1_score', metric_fn = f1_score_metric),
-                 metric_auc(name = "auc_roc", curve = "ROC"),
-                 metric_auc(name = "auc_pr", curve = "PR"),
-                 custom_metric(name = 'MCC', metric_fn = mcc_metric),
-                 metric_false_negatives(name = 'fn'),
-                 metric_false_positives(name = 'fp'),
-                 metric_true_negatives(name = 'tn'),
-                 metric_true_positives(name = 'tp'))
-)
+{
+  # NOTE: Avoid max pooling and layer flattening for our purpose
+  # Building a convolution lstm for wildfire susceptibility
+  tensorflow::set_random_seed(1)
+  ConvLSTM_model <- keras_model_sequential() %>%
+    # 1st ConvLSTM layer
+    layer_conv_lstm_2d(
+      input_shape = list(NULL, 372, 382, 5), # samples = 1, time_steps=NULL to allow for varying timesteps months, channels = 2 predictor variables, rows = 32, cols = 32
+      filters = 64, 
+      kernel_size = c(3, 3), 
+      data_format = 'channels_last',
+      kernel_regularizer = regularizer_l2(0.001), # applies L2 regularisation to the kernel weights
+      recurrent_regularizer = regularizer_l2(0.001), # applies it to recurrent weights (inside the LSTM)
+      bias_regularizer = regularizer_l2(0.001), # applies it to biases
+      activation = "tanh",
+      padding = "same", 
+      return_sequences = T, # It is important for this to be TRUE so that the time steps are also returned
+    ) %>%
+    
+    # Normalize the activations of the previous layer (commonly used!)- 1st batch normalisation
+    layer_batch_normalization() %>%
+    
+    # dropout
+    layer_dropout(rate = 0.2) %>%
+    
+    # 2nd ConvLSTM layer
+    layer_conv_lstm_2d(
+      filters = 64, 
+      kernel_size = c(3, 3), 
+      data_format = 'channels_last',
+      kernel_regularizer = regularizer_l2(0.001), # applies L2 regularisation to the kernel weights
+      recurrent_regularizer = regularizer_l2(0.001), # applies it to recurrent weights (inside the LSTM)
+      bias_regularizer = regularizer_l2(0.001), # applies it to biases
+      activation = "tanh",
+      padding = "same", 
+      return_sequences = T, # It is important for this to be TRUE so that the time steps are also returned
+    ) %>%
+    
+    # dropout
+    layer_dropout(rate = 0.2) %>%
+    
+    # # Dense layers
+    time_distributed(layer_dense(units = 50, activation = "relu")) %>%
+    
+    # dropout
+    layer_dropout(rate = 0.5) %>%
+    
 
-# ?compile.keras.engine.training.Model
+    # # Output layer
+    time_distributed(layer_dense(units = 1, activation = "sigmoid"))
+  
+  # Compile the ConvLSTM_model
+  tensorflow::set_random_seed(1)
+  ConvLSTM_model %>% compile(
+    optimizer = optimizer_adam(learning_rate = 0.0001, weight_decay = 0.03),
+    loss = focal_loss_fn(alpha = 0.25, gamma = 2), # focal loss sigmoid crossentropy
+    metrics = list('accuracy',
+                   metric_recall(name = 'recall'),
+                   metric_precision(name = 'precision'),
+                   custom_metric("specificity", metric_fn = specificity_metric),
+                   custom_metric(name = 'f1_score', metric_fn = f1_score_metric),
+                   metric_auc(name = "auc_roc", curve = "ROC"),
+                   metric_auc(name = "auc_pr", curve = "PR"),
+                   custom_metric(name = 'MCC', metric_fn = mcc_metric),
+                   metric_false_negatives(name = 'fn'),
+                   metric_false_positives(name = 'fp'),
+                   metric_true_negatives(name = 'tn'),
+                   metric_true_positives(name = 'tp'))
+  )
+  
+  # ?compile.keras.engine.training.Model
+  
+  ConvLSTM_model%>%summary()
+  
+  tensorflow::set_random_seed(1)
+  history <- ConvLSTM_model %>% fit(
+    trainX, trainY,
+    validation_data = list(valX, valY),
+    use_multiprocessing = T,
+    epochs = 500,
+    batch_size = 4,
+    sample_weight = ,
+    shuffle = F # very important to ensure temporal continuity/consistency
+  )
+  
+  # ?fit.keras.engine.training.Model
+  # plot(history)
+  tensorflow::set_random_seed(1)
+  evaluation <- ConvLSTM_model %>% evaluate(testX, testY);evaluation
+}
 
-ConvLSTM_model%>%summary()
-
-tensorflow::set_random_seed(1)
-history <- ConvLSTM_model %>% fit(
-  trainX, trainY,
-  validation_data = list(valX, valY),
-  use_multiprocessing = T,
-  # callbacks = callback_tensorboard(),
-  epochs = 10,
-  batch_size = 10,
-  class_weight = list('0' = 1, '1' = round(calculated_class_weights_subset[2][[1]],1)), # this takes care of class imbalance
-  shuffle = F # very important to ensure temporal continuity/consistency
-)
-
-# ?fit.keras.engine.training.Model
-plot(history)
-evaluation <- ConvLSTM_model %>% evaluate(testX, testY)
-cat("Test Loss:", evaluation[['loss']], "\nTest Accuracy:", evaluation[['accuracy']], "\n")
-# cat("Test Loss:", evaluation[['loss']], "\nTest Accuracy:", evaluation[['python_function']], "\n")
 
 
 # fire predicted for 2021 and 2022 - This is where all the probabilities are stored
+tensorflow::set_random_seed(1)
 predicted <- ConvLSTM_model %>% predict(testX)
 dim(predicted)
 summary(predicted)
