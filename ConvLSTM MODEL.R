@@ -23,20 +23,26 @@
   
 }
 
-# reticulate::py_install("tensorflow-addons", pip = TRUE)
+reticulate::py_install("tensorflow-addons", pip = TRUE)
 
+# PRELIMINARY FUNCTIONS ---------------------------------------------------
 
-
-# READING & LOADING RELEVANT OBJECTS --------------------------------------
-
-# Import TMNR shapefile 
-roi <- readOGR('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/SANParks shapefiles/TMNR shapefile/tmnr_boundary.shp')
-roi_trans <- spTransform(roi, CRS('+proj=utm +zone=34 +south +datum=WGS84 +units=m +no_defs')) # convert coordinate system to EPSG:32734 (WGS 84 / UTM zone 34S)
-
-# Add more here.....................................
-
-
-# FUNCTIONS ---------------------------------------------------------------
+# Function to be applied on the raster values; return: rasterLayer object
+raster_stack_minmax_norm <- function(stack_raster, index) {
+  
+  data <- stack_raster # raster stack
+  min_val <-  min(minValue(data)) # global minimum of raster stack
+  max_val <- max(maxValue(data)) # global maximum of raster stack
+  index <- index # raster index
+  val <- data[[index]] # relevant raster only
+  
+  x <- (val - min_val) / (max_val - min_val) # normalisation calculation
+  x[is.na(values(x))] <- 0 # convert all NA values after normalisation to 0
+  x[x < 0] <- 0     # correct tiny negative values due to floating point error to 0
+  x[x > 1] <- 1     # similarly just in case of overshoots restrict value to 1
+  
+  return(x)
+}
 
 # Specificity metric created for the Keras interface
 specificity_metric <- function(y_true, y_pred) {
@@ -94,6 +100,7 @@ fire_color_condition_func <- function(data){
   return(fire_color_condition)
 }
 
+
 tfa <- reticulate::import("tensorflow_addons", delay_load = TRUE)
 focal_loss <- tfa$losses$SigmoidFocalCrossEntropy
 focal_loss_fn <- function(alpha = 0.25, gamma = 2.0) {
@@ -104,24 +111,89 @@ focal_loss_fn <- function(alpha = 0.25, gamma = 2.0) {
 }
 
 
+
+# READING & LOADING RELEVANT OBJECTS --------------------------------------
+
+# Import TMNR shapefile 
+roi <- readOGR('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/SANParks shapefiles/TMNR shapefile/tmnr_boundary.shp')
+roi_trans <- spTransform(roi, CRS('+proj=utm +zone=34 +south +datum=WGS84 +units=m +no_defs')) # convert coordinate system to EPSG:32734 (WGS 84 / UTM zone 34S)
+
+# identifying dupicates aerial imageries from 2014 to 2022
+duplicate_aerial_imageries_to_remove <- c('20140425', '20140612', '20140714', '20141002', '20150122', '20150223', '20150903',
+                                          '20161226', '20180319', '20181130', '20200425', '20210106', '20211224', '20220610', '20231003',
+                                          '20231206')
+
+# LULC for resampling to obtain correct dimensions 
+load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/RAW/FINAL_LULC.Rdata', envir = .GlobalEnv)
+
+# reading all the file names
+final_lulc_names <- sapply(seq_along(FINAL_LULC), function (x){sub('LULC ', '', FINAL_LULC[[x]]@file@name)})
+
+# removing the duplicate LULC
+LULC <- lapply(seq_along(which(!final_lulc_names %in% duplicate_aerial_imageries_to_remove)), 
+               function (x) {FINAL_LULC[[which(!final_lulc_names %in% duplicate_aerial_imageries_to_remove)[x]]]})
+
+# exclude 2023 period from LULC- we're only dealing with 108 periods now from 2014 to 2022
+LULC_2014_2022 <- lapply(1:108, function (x) {LULC[[x]]})
+
+lapply(1:108, function (x) {names(LULC_2014_2022[[x]]) <- LULC_2014_2022[[x]]@file@name
+names(LULC_2014_2022[[x]]) <<- gsub('[.]','', names(LULC_2014_2022[[x]]))}) # rename layers
+
+# Import fire data alone for weight computations
+load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/RAW/FIRE_DATA.Rdata', envir = .GlobalEnv)
+
+FIRE_2002_2022 <- lapply(1:252, function(x) {FIRE_DATA[[x]]})
+FIRE_2014_2022 <- lapply(145:252, function(x) {FIRE_2002_2022[[x]]})
+
+# response variable 2014 to 2022
+FIRE_2014_2022_stack <- stack(FIRE_2014_2022) |> resample(LULC_2014_2022[[1]], method = 'ngb') |> stack()
+
+FIRE_2014_2018_stack_train <- pblapply(1:60, # 2014-2018: FIRE training set 
+                                       function(x) {FIRE_2014_2022_stack[[x]]}) |> stack()
+FIRE_2014_2018_stack_norm_train <- pblapply(seq_along(FIRE_2014_2018_stack_train@layers), # 2014-2018: FIRE training set normalised
+                                            function(x) {raster_stack_minmax_norm(FIRE_2014_2018_stack_train, x)}) |> stack()
+
+# Loading full 2014 to 2022 dataset in convLSTM format
+load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/ConvLSTM data format/predictor_variables_2014_2018_train.RData')
+load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/ConvLSTM data format/response_variable_2014_2018_train.RData')
+
+load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/ConvLSTM data format/predictor_variables_2019_2020_val.RData')
+load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/ConvLSTM data format/response_variable_2019_2020_val.RData')
+
+load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/ConvLSTM data format/predictor_variables_2021_2022_test.RData')
+load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/ConvLSTM data format/response_variable_2021_2022_test.RData')
+
+
 # subset predictor variables data to test convLSTM
 # subset training set
 # extracting only 2017 and 2018 rasters timesteps and selecting only NDVI, NDMI, ATP, AMT and ANSWS 
 predictor_variables_2014_2018_train_subset <- predictor_variables_2014_2018_train[,37:60,,,c(2,3,5,6,7), drop = F]
-
 dim(predictor_variables_2014_2018_train_subset)
 
 # subset response variables data to test convLSTM
 response_variable_2014_2018_train_subset <- response_variable_2014_2018_train[,37:60,,,, drop = F]
-dim(response_variable_2014_2018_train)
+dim(response_variable_2014_2018_train_subset)
 
 # subset validation set for predictor variable only as the timesteps were not disturbed
 predictor_variables_2019_2020_val_subset <- predictor_variables_2019_2020_val[,,,,c(2,3,5,6,7), drop = F]
+dim(predictor_variables_2019_2020_val_subset)
 
 # subset test set for predictor variable only as the timesteps were not disturbed
 predictor_variables_2021_2022_test_subset <- predictor_variables_2021_2022_test[,,,,c(2,3,5,6,7), drop = F]
 dim(predictor_variables_2021_2022_test_subset)
 
+# Convert training fire stack into a dataframe to find out the ratio of class imbalance for fire to non-fire events
+fire_df <- as.data.frame(FIRE_2014_2018_stack_norm_train, xy = T) %>% # converting stacked fire into dataframe
+  pivot_longer(
+    cols = starts_with("Fire"),
+    names_to = "Fire",
+    values_to = "Fire_Value"
+  ) %>% 
+  na.omit() %>%
+  mutate(Year = str_extract(Fire, "\\d{4}")|>as.integer(), # extract year from date
+         Month = str_extract(Fire, "(?<=\\d{4}\\.)\\d{2}")|>as.integer()) %>% # extract month from date
+  dplyr::select(c('x', 'y', 'Year', 'Month', 'Fire_Value')) %>% # select relevant columns only
+  filter(Year %in% c(2017, 2018)) # filter out 2017 and 2018 from the data to match the subset
 
 # CONVOLUTION LSTM FULL FRAMEWORK -----------------------------------------
 
@@ -131,9 +203,56 @@ dim(trainX) # (samples, time_steps, height, width, variables)- channels_last for
 trainY <- response_variable_2014_2018_train_subset
 dim(trainY) # (samples, time_steps, height, width, variables)- channels_last format
 
-fire_class_imbalance_subset <- table(response_variable_2014_2018_train_subset) # fire class imbalance
-fire_class_imbalance_prop_subset <- prop.table(table(response_variable_2014_2018_train_subset)) # fire class imbalance proportion
-calculated_class_weights_subset <- max(fire_class_imbalance_subset)/fire_class_imbalance_subset # class weights to be applied to convLSTM
+# fire_class_imbalance_subset <- table(response_variable_2014_2018_train_subset) # fire class imbalance (global imbalance)
+# fire_class_imbalance_prop_subset <- prop.table(table(response_variable_2014_2018_train_subset)) # fire class imbalance proportion
+# calculated_class_weights_subset <- max(fire_class_imbalance_subset)/fire_class_imbalance_subset # global class weights if we are using class_weight in the algorithm
+
+# Sample weight preparation
+spatial_temporal_weight <- function(year, temporal_weight){sapply(1:12, function(x){ # spatial weight is systematically calculated already in this function
+  
+  fire_count_df <- fire_df %>%
+    group_by(Year,Month,Fire_Value) %>%
+    tally() # count the number of fire or no fire pixels per month per year
+  
+  fire_seasons <- c(1,2,3,4,10,11,12) # adding more weights temporally for months who had fire conistently over the years
+  
+  weight_values_calc <- fire_count_df %>%
+    filter(Year == year, Month == x)
+  
+  if(x %in% fire_seasons){ # if month are in the fire seasons define above...
+
+    if(length(weight_values_calc$Fire_Value) > 1){ # if both classed are present
+      spatial_temporal_weight <- ((max(weight_values_calc$n)/weight_values_calc$n)[2])*temporal_weight #... increase weight by a factor of n
+    }else{
+      spatial_temporal_weight <- 1
+    }
+  } else{ # if month are not in the fire seasons define above...
+    
+    if(length(weight_values_calc$Fire_Value) > 1){ # if both classed are present
+      spatial_temporal_weight <- (max(weight_values_calc$n)/weight_values_calc$n)[2]
+    }else{
+      spatial_temporal_weight <- 1
+    }
+  }
+  
+  return(spatial_temporal_weight)
+})}
+
+# These are the weights that will be assigned to fire pixels otherwise 1 to no fire pixels
+concatenated_spatial_temporal_weight <- pbsapply(seq_along(unique(fire_df$Year)), function(x){
+  spatial_temporal_weight(year = unique(fire_df$Year)[x], temporal_weight = 1.5)
+})|>c()
+
+# spatial temporal sample weight array
+spatial_temporal_weight_array <- array(0, dim = dim(trainY)) # defining empty array for weighted fire rasters
+dim(spatial_temporal_weight_array)
+for(i in 1:dim(trainY)[2]){
+  n <- i
+  x <- trainY[1,n,,,1]*concatenated_spatial_temporal_weight[n]
+  w <- ifelse(x==0, 1, x)
+  spatial_temporal_weight_array[1, n, , , 1] <- w
+}
+
 
 valX <- predictor_variables_2019_2020_val_subset
 dim(valX) # (samples, time_steps, height, width, variables)- channels_last format
@@ -145,7 +264,6 @@ dim(testX) # (samples, time_steps, height, width, variables)- channels_last form
 testY <- response_variable_2021_2022_test
 dim(testY) # (samples, time_steps, height, width, variables)- channels_last format
 
-
 {
   # NOTE: Avoid max pooling and layer flattening for our purpose
   # Building a convolution lstm for wildfire susceptibility
@@ -153,7 +271,7 @@ dim(testY) # (samples, time_steps, height, width, variables)- channels_last form
   ConvLSTM_model <- keras_model_sequential() %>%
     # 1st ConvLSTM layer
     layer_conv_lstm_2d(
-      input_shape = list(NULL, 372, 382, 5), # samples = 1, time_steps=NULL to allow for varying timesteps months, channels = 2 predictor variables, rows = 32, cols = 32
+      input_shape = list(NULL, dim(trainX)[3], dim(trainX)[4], dim(trainX)[5]), # samples = 1, time_steps=NULL to allow for varying timesteps months, channels = 2 predictor variables, rows = 32, cols = 32
       filters = 64, 
       kernel_size = c(3, 3), 
       data_format = 'channels_last',
@@ -227,16 +345,16 @@ dim(testY) # (samples, time_steps, height, width, variables)- channels_last form
     use_multiprocessing = T,
     epochs = 500,
     batch_size = 4,
-    sample_weight = ,
+    sample_weight = spatial_temporal_weight_array, # this assign weights to rasters on a more individual level (spatial-temporal) as in a raster with fire with more weight than a raster with no fire
     shuffle = F # very important to ensure temporal continuity/consistency
   )
   
-  # ?fit.keras.engine.training.Model
-  # plot(history)
-  tensorflow::set_random_seed(1)
-  evaluation <- ConvLSTM_model %>% evaluate(testX, testY);evaluation
 }
 
+# ?fit.keras.engine.training.Model
+# plot(history)
+tensorflow::set_random_seed(1)
+evaluation <- ConvLSTM_model %>% evaluate(testX, testY);evaluation
 
 
 # fire predicted for 2021 and 2022 - This is where all the probabilities are stored
@@ -419,7 +537,7 @@ for(i in 1:length(ConvLSTM_f1_score_list)){
   
 }
 
-View(ConvLSTM_test_results)
+# View(ConvLSTM_test_results)
 
 # Creating a function to plot the optimal threshold chosen while maximising either f1 score or specificity where appropriate
 optmised_threshold_plot <- function(fire_period){
@@ -611,7 +729,11 @@ WS_visualisation <- function(true_raster, raster_with_probabilities, raster_fact
 }
 
 
-call_fire_period <- 'Fire 2022-03'
+
+
+# VISUALISATION OF WSM ----------------------------------------------------
+
+call_fire_period <- 'Fire 2021-04'
 
 optmised_threshold_plot(fire_period = call_fire_period)
 
