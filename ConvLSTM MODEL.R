@@ -46,49 +46,57 @@ raster_stack_minmax_norm <- function(stack_raster, index) {
 }
 
 # Specificity metric created for the Keras interface
-specificity_metric <- function(y_true, y_pred, threshold) {
-  y_pred_binary <- k_cast(k_greater(y_pred, threshold), k_floatx())
-  y_true_binary <- k_cast(y_true, k_floatx())
-  
-  # True Negatives: predicted 0 and actual 0
-  tn <- k_sum(k_cast(k_equal(y_pred_binary + y_true_binary, 0), k_floatx()))
-  
-  # False Positives: predicted 1 but actual 0
-  fp <- k_sum(k_cast(k_equal(y_pred_binary - y_true_binary, 1), k_floatx()))
-  
-  specificity <- tn / (tn + fp + k_epsilon())  # Avoid division by zero
-  return(specificity)
+specificity_metric <- function(threshold){
+  function(y_true, y_pred) {
+    y_pred_binary <- k_cast(k_greater(y_pred, threshold), k_floatx())
+    y_true_binary <- k_cast(y_true, k_floatx())
+    
+    # True Negatives: predicted 0 and actual 0
+    tn <- k_sum(k_cast(k_equal(y_pred_binary + y_true_binary, 0), k_floatx()))
+    
+    # False Positives: predicted 1 but actual 0
+    fp <- k_sum(k_cast(k_equal(y_pred_binary - y_true_binary, 1), k_floatx()))
+    
+    specificity <- tn / (tn + fp + k_epsilon())  # Avoid division by zero
+    return(specificity)
+  }
 }
 
 # F1 score metric created for the Keras interface
-f1_score_metric <- function(y_true, y_pred, threshold) {
-  y_pred_binary <- k_cast(k_greater(y_pred, threshold), k_floatx())
+f1_score_metric <- function(threshold){
+  function(y_true, y_pred) {
+    y_pred_binary <- k_cast(k_greater(y_pred, threshold), k_floatx())
+    
+    tp <- k_sum(y_true * y_pred_binary)
+    fp <- k_sum((1 - y_true) * y_pred_binary)
+    fn <- k_sum(y_true * (1 - y_pred_binary))
+    
+    precision <- tp / (tp + fp + k_epsilon())
+    recall <- tp / (tp + fn + k_epsilon())
+    
+    f1 <- 2 * (precision * recall) / (precision + recall + k_epsilon())
+    return(f1)
+  } # checked! It is doing the right calculation
   
-  tp <- k_sum(y_true * y_pred_binary)
-  fp <- k_sum((1 - y_true) * y_pred_binary)
-  fn <- k_sum(y_true * (1 - y_pred_binary))
-  
-  precision <- tp / (tp + fp + k_epsilon())
-  recall <- tp / (tp + fn + k_epsilon())
-  
-  f1 <- 2 * (precision * recall) / (precision + recall + k_epsilon())
-  return(f1)
-} # checked! It is doing the right calculation
+}
 
 # MCC metric created for the Keras interface
-mcc_metric <- function(y_true, y_pred, threshold) {
-  y_pred_binary <- k_cast(k_greater(y_pred, threshold), k_floatx())
-  
-  tp <- k_sum(y_true * y_pred_binary)
-  tn <- k_sum((1 - y_true) * (1 - y_pred_binary))
-  fp <- k_sum((1 - y_true) * y_pred_binary)
-  fn <- k_sum(y_true * (1 - y_pred_binary))
-  
-  numerator <- (tp * tn) - (fp * fn)
-  denominator <- k_sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
-  
-  return(numerator / (denominator + k_epsilon()))
+mcc_metric <- function(threshold){
+  function(y_true, y_pred) {
+    y_pred_binary <- k_cast(k_greater(y_pred, threshold), k_floatx())
+    
+    tp <- k_sum(y_true * y_pred_binary)
+    tn <- k_sum((1 - y_true) * (1 - y_pred_binary))
+    fp <- k_sum((1 - y_true) * y_pred_binary)
+    fn <- k_sum(y_true * (1 - y_pred_binary))
+    
+    numerator <- (tp * tn) - (fp * fn)
+    denominator <- k_sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
+    
+    return(numerator / (denominator + k_epsilon()))
+  }
 }
+
 
 # Define color code for fire rasters
 fire_color_condition_func <- function(data){
@@ -215,7 +223,7 @@ spatial_temporal_weight <- function(year, temporal_weight){sapply(1:12, function
     group_by(Year,Month,Fire_Value) %>%
     tally() # count the number of fire or no fire pixels per month per year
   
-  fire_seasons <- c(1,2,3,4,10,11,12) # adding more weights temporally for months who had fire conistently over the years
+  fire_seasons <- c(1,2,3,4,10,11,12) # adding more weights temporally for months which had fire conisstently over the years
   
   weight_values_calc <- fire_count_df %>%
     filter(Year == year, Month == x)
@@ -265,8 +273,8 @@ dim(testX) # (samples, time_steps, height, width, variables)- channels_last form
 testY <- response_variable_2021_2022_test
 dim(testY) # (samples, time_steps, height, width, variables)- channels_last format
 
-{
-  # NOTE: Avoid max pooling and layer flattening for our purpose
+
+ConvLSTM_framework <- function(t){
   # Building a convolution lstm for wildfire susceptibility
   tensorflow::set_random_seed(1)
   ConvLSTM_model <- keras_model_sequential() %>%
@@ -303,6 +311,9 @@ dim(testY) # (samples, time_steps, height, width, variables)- channels_last form
       return_sequences = T, # It is important for this to be TRUE so that the time steps are also returned
     ) %>%
     
+    # Normalize the activations of the previous layer (commonly used!)- 2nd batch normalisation
+    layer_batch_normalization() %>%
+    
     # dropout
     layer_dropout(rate = 0.2) %>%
     
@@ -312,33 +323,46 @@ dim(testY) # (samples, time_steps, height, width, variables)- channels_last form
     # dropout
     layer_dropout(rate = 0.5) %>%
     
-
+    
     # # Output layer
     time_distributed(layer_dense(units = 1, activation = "sigmoid"))
   
+  focal_loss_fn_alpha_0_9_gamma_2 <- focal_loss_fn(alpha = 0.9, gamma = 2)
   # Compile the ConvLSTM_model
   tensorflow::set_random_seed(1)
   ConvLSTM_model %>% compile(
     optimizer = optimizer_adam(learning_rate = 0.0001, weight_decay = 0.03),
     # focal loss sigmoid crossentropy
-    loss = focal_loss_fn(alpha = 0.99, # Gives higher weight to minority class- set alpha to proportion of negetive class!
-                         gamma = 3), # Focuses more on hard samples
-    metrics = list('accuracy',
-                   metric_recall(name = 'recall'),
-                   metric_precision(name = 'precision'),
-                   custom_metric("specificity", metric_fn = specificity_metric),
-                   custom_metric(name = 'f1_score', metric_fn = f1_score_metric),
-                   custom_metric(name = 'MCC', metric_fn = mcc_metric),
-                   metric_false_negatives(name = 'fn'),
-                   metric_false_positives(name = 'fp'),
-                   metric_true_negatives(name = 'tn'),
-                   metric_true_positives(name = 'tp'))
+    loss = focal_loss_fn_alpha_0_9_gamma_2,
+    metrics = list(
+      metric_binary_accuracy(name = 'binary_accuracy', threshold = t),
+      metric_recall(name = 'recall', thresholds = t),
+      metric_precision(name = 'precision', thresholds = t),
+      custom_metric("specificity", metric_fn = specificity_metric(threshold = t)),
+      custom_metric(name = 'f1_score', metric_fn = f1_score_metric(threshold = t)),
+      custom_metric(name = 'MCC', metric_fn = mcc_metric(threshold = t)),
+      metric_false_negatives(name = 'fn'),
+      metric_false_positives(name = 'fp'),
+      metric_true_negatives(name = 'tn'),
+      metric_true_positives(name = 'tp')
+    )
+    
   )
+}
+# ?compile.keras.engine.training.Model
+
+main_training_results <- list()
+# thresholds <- seq(0.4,0.7, by = .01) # threshold list 
+thresholds <- c(0.5,0.6)
+for(t in thresholds){
+  cat("Training for threshold: ", t, "\n")
   
-  # ?compile.keras.engine.training.Model
+  tensorflow::set_random_seed(1)
+  ConvLSTM_model <- ConvLSTM_framework(t = t)
+  # ConvLSTM_model%>%summary()
   
-  ConvLSTM_model%>%summary()
-  
+model_path <- paste0("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/ConvLSTM best model per threshold/model_threshold_", sprintf("%.2f", t), ".h5")
+
   callback_list <- list(
     callback_early_stopping(
       monitor = "val_MCC",
@@ -346,6 +370,12 @@ dim(testY) # (samples, time_steps, height, width, variables)- channels_last form
       patience = 50,           # number of epochs to wait for improvement
       mode = "max",            # because higher MCC is better
       restore_best_weights = TRUE
+    ),
+    callback_model_checkpoint(
+      filepath = model_path,
+      save_best_only = TRUE,
+      monitor = "val_MCC",
+      mode = "max"
     )
   )
   
@@ -354,16 +384,70 @@ dim(testY) # (samples, time_steps, height, width, variables)- channels_last form
     trainX, trainY,
     validation_data = list(valX, valY),
     use_multiprocessing = T,
-    epochs = 1, # 300 looks reasonable
+    epochs = 3, # 300 looks reasonable
     batch_size = 100,
     sample_weight = spatial_temporal_weight_array, # this assign weights to rasters on a more individual level (spatial-temporal) as in a raster with fire with more weight than a raster with no fire
     callbacks = callback_list,
     shuffle = F # very important to ensure temporal continuity/consistency
   )
   
+  # save all training metrics in a list
+  main_training_results[[as.character(t)]] <- list(threshold = t,
+                                                   history = history,
+                                                   best_epoch = which.max(history$metrics$val_MCC),
+                                                   model_file = model_path,
+                                                   best_val_MCC = max(history$metrics$val_MCC))
+  
 }
 
+save(main_training_results, file = '..directory.../main_training_results.Rdata')
+
+# Extract all the best validation MCCs from the different thresholds
+best_val_MCCs <- sapply(seq_along(main_training_results), function(x){main_training_results[[x]]$best_val_MCC})
+
+# Visualise the best validation MCCs of the best model for each threshold
+#....
+
+optimal_ConvLSTM_model_index <- which.max(best_val_MCCs)
+
+validation_metrics <- c(val_loss = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_loss[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
+  val_binary_accuracy = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_binary_accuracy[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
+  val_recall = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_recall[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
+  val_precision = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_precision[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
+  val_specificity = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_specificity[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
+  val_f1_score = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
+  val_MCC = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
+  val_fn = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_fn[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
+  val_fp = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_fp[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
+  val_tn = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_tn[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
+  val_tp = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_tp[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)])
+
+
+
+# Creating a function to load each best model for each threshold
+load_model_by_threshold <- function(file_path, t){
+  tensorflow::set_random_seed(1)
+  path <- file_path
+  x <- load_model_hdf5(path, 
+                       custom_objects = list(specificity = specificity_metric(threshold = t),
+                                             f1_score = f1_score_metric(threshold = t),
+                                             MCC = mcc_metric(threshold = t),
+                                             focal_loss_fn_alpha_0_9_gamma_2 = focal_loss_fn(alpha = 0.9, gamma = 2)),
+                       compile = T)
+}
+
+
+# reading file names from folder if needed
+# MODELS_PATH <- list.files('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/ConvLSTM best model per threshold/')
+
+optimal_ConvLSTM_threshold <- main_training_results[[optimal_ConvLSTM_model_index]]$threshold
+# Loading the BEST model from the optimal threshold
+optimal_ConvLSTM_model <- load_model_by_threshold(file_path = main_training_results[[optimal_ConvLSTM_model_index]]$model_file,
+                         t = optimal_ConvLSTM_threshold) # extract the threshold as part of the name to ensure consistency
+
+# Creating a function to calculate AUC_ROC and AUC_PR separately
 AUC_metrics <- function(best_model, true_dataX, true_dataY, threshold){
+  tensorflow::set_random_seed(1)
   predicted_dataX <- best_model %>% predict(true_dataX)
   x <- ifelse(as.vector(predicted_dataX) > threshold, 1, 0)
   p <- prediction(x, as.vector(true_dataY))
@@ -373,23 +457,38 @@ AUC_metrics <- function(best_model, true_dataX, true_dataY, threshold){
   return(c(AUC_ROC = AUC_ROC, AUC_PR = AUC_PR))
 }
 
-names(history$metrics)
-history$metrics$val_f1_score[500]
-history$metrics$val_MCC[500]
+val_AUCs <- AUC_metrics(best_model = optimal_ConvLSTM_model, 
+            true_dataX = valX, 
+            true_dataY = valY, 
+            threshold = optimal_ConvLSTM_threshold)
 
-history$metrics$val_MCC[which.max(history$metrics$val_MCC)]
-history$metrics$val_f1_score[which.max(history$metrics$val_MCC)]
+
+
+tensorflow::set_random_seed(1)
+val_acc_check <- optimal_ConvLSTM_model %>% evaluate(valX, valY)
+
+# Check if the optimal model is correctly extracted to match the optimal outcome of the validation accuracy of the best model prior to loading the best model
+if(all(val_acc_check == validation_metrics)){
+  print('Verification Successful!')
+}else{
+  print('Verification Unsuccessful!')
+}
 
 
 # ?fit.keras.engine.training.Model
 # plot(history)
 tensorflow::set_random_seed(1)
-evaluation <- ConvLSTM_model %>% evaluate(testX, testY);evaluation
+test_metrics <- optimal_ConvLSTM_model %>% evaluate(testX, testY);test_metrics
+
+test_AUCs <- AUC_metrics(best_model = optimal_ConvLSTM_model, 
+                        true_dataX = testX, 
+                        true_dataY = testY, 
+                        threshold = optimal_ConvLSTM_threshold)
 
 
 # fire predicted for 2021 and 2022 - This is where all the probabilities are stored
 tensorflow::set_random_seed(1)
-predicted <- ConvLSTM_model %>% predict(testX)
+predicted <- optimal_ConvLSTM_model %>% predict(testX)
 dim(predicted)
 summary(predicted)
 # as.vector(predicted[1,15,,,1])[which(as.vector(testY[1,15,,,1])==1)]|>summary()
@@ -460,14 +559,14 @@ for (i in 1:length(predicted_raster_list)){
   cat('Iteration ', i, ' out of ', length(predicted_raster_list), '\n')
   i <- i
   index <- i
-  threshold <- seq(minValue(predicted_raster_list[[index]]), maxValue(predicted_raster_list[[index]]), by = 0.00001) # generate a sequence of threshold to classify response variable based on probability class
-  
+  # threshold <- seq(minValue(predicted_raster_list[[index]]), maxValue(predicted_raster_list[[index]]), by = 0.00001) # generate a sequence of threshold to classify response variable based on probability class
+  threshold <- optimal_ConvLSTM_threshold
   # To allow parallel processing in pbapply functions export items used in the function to the cluster
   clusterExport(cl, varlist = c('predicted_raster_list', 'true_test_raster_list', 'threshold', 'index')) 
   
   # This function output the f1 score (if both classes exist) or specificity (if only the negative class exists) for each threshold generated for each test raster
   F1_SCORES_SPECIFICITY <- pbsapply(seq_along(threshold), function (x){
-    pred_class <- ifelse(as.vector(predicted_raster_list[[index]]) > threshold[x], 1, 0)
+    pred_class <- ifelse(as.vector(predicted_raster_list[[index]]) > threshold, 1, 0)
     confusion_matrix <- confusionMatrix(factor(as.vector(pred_class), levels = c('0','1')), 
                                         factor(as.vector(true_test_raster_list[[index]]), 
                                                levels = c('0','1')), 
@@ -562,7 +661,7 @@ for(i in 1:length(ConvLSTM_f1_score_list)){
                                        AUC_ROC = test_AUC_ROC,
                                        AUC_PR = test_AUC_PR,
                                        MCC = test_MCC,
-                                       fire_period = timesteps_labels[i],
+                                       fire_period = timesteps_labels[index],
                                        true_fire_status = ifelse(maxValue(true_test_raster_list[[index]])==1, 
                                                                  'positive',
                                                                  'negative')))
@@ -570,89 +669,6 @@ for(i in 1:length(ConvLSTM_f1_score_list)){
 }
 
 # View(ConvLSTM_test_results)
-
-# Creating a function to plot the optimal threshold chosen while maximising either f1 score or specificity where appropriate
-optmised_threshold_plot <- function(fire_period){
-  index <- which(timesteps_labels==as.character(fire_period))
-  if(ConvLSTM_test_results$true_fire_status[index]=='positive'){ # if there's indeed a fire outbreak, then the threshold was optimised based on the f1 score...
-    {
-      par(mar = c(4.1, 4, .2, .8)) # customised margin
-      plot(ConvLSTM_threshold_list[[index]], ConvLSTM_f1_score_list[[index]],
-           type = 'l',
-           # pch = 19,
-           # main = 'Chosen Threshold from Optimal Model',
-           # cex.main = .9,
-           cex.lab = .8,
-           cex.axis = .8,
-           # cex = .3,
-           col = 'seagreen',
-           xlab = 'Threshold',
-           ylab = 'F1 Score',
-           # xlim = c(min(threshold), 0.01)
-      )
-      points(ConvLSTM_test_results$optimal_threshold[index],
-             ConvLSTM_test_results$F1_score[index],
-             pch = 19, cex = .1, col = 'seagreen')
-      points(ConvLSTM_test_results$optimal_threshold[index],
-             ConvLSTM_test_results$F1_score[index],
-             pch = 19, cex = .5, col = 'greenyellow')
-      abline(v=ConvLSTM_test_results$optimal_threshold[index],
-             h=ConvLSTM_test_results$F1_score[index],
-             lty = "dashed",
-             col= 'greenyellow')
-      text(ConvLSTM_test_results$optimal_threshold[index]+.0004,
-           ConvLSTM_test_results$F1_score[index]-.09,
-           labels=paste("Threshold = ", ConvLSTM_test_results$optimal_threshold[index]|>round(3)),
-           cex=.6,
-           col="seagreen",
-           srt=270)
-      text(ConvLSTM_test_results$optimal_threshold[index]-.002,
-           ConvLSTM_test_results$F1_score[index]-.01,
-           labels=paste("F1 Score = ", ConvLSTM_test_results$F1_score[index]|>round(3)),
-           cex=.6,
-           col="seagreen")
-    }
-    
-  }else{ #...otherwise threshold was optimised on specificity
-    {
-      par(mar = c(4.1, 4, .2, .8)) # customised margin
-      plot(ConvLSTM_threshold_list[[index]], ConvLSTM_specificity_list[[index]],
-           type = 'l',
-           # pch = 19,
-           # main = 'Chosen Threshold from Optimal Model',
-           # cex.main = .9,
-           cex.lab = .8,
-           cex.axis = .8,
-           # cex = .3,
-           col = 'seagreen',
-           xlab = 'Threshold',
-           ylab = 'Specificity',
-           # xlim = c(min(threshold), 0.01)
-      )
-      points(ConvLSTM_test_results$optimal_threshold[index],
-             ConvLSTM_test_results$specificity[index],
-             pch = 19, cex = .1, col = 'seagreen')
-      points(ConvLSTM_test_results$optimal_threshold[index],
-             ConvLSTM_test_results$specificity[index],
-             pch = 19, cex = .5, col = 'greenyellow')
-      abline(v=ConvLSTM_test_results$optimal_threshold[index],
-             h=ConvLSTM_test_results$specificity[index],
-             lty = "dashed",
-             col= 'greenyellow')
-      text(ConvLSTM_test_results$optimal_threshold[index]+.0004,
-           ConvLSTM_test_results$specificity[index]-.09,
-           labels=paste("Threshold = ", ConvLSTM_test_results$optimal_threshold[index]|>round(3)),
-           cex=.6,
-           col="seagreen",
-           srt=270)
-      text(ConvLSTM_test_results$optimal_threshold[index]-.002,
-           ConvLSTM_test_results$specificity[index]-.01,
-           labels=paste("Specificity = ", ConvLSTM_test_results$specificity[index]|>round(3)),
-           cex=.6,
-           col="seagreen")
-    }
-  }
-}
 
 # creating a function for visualisation
 WS_visualisation <- function(true_raster, raster_with_probabilities, raster_factor, classes_breaks_method = c('natural_breaks', 'quantile')){
@@ -733,6 +749,7 @@ WS_visualisation <- function(true_raster, raster_with_probabilities, raster_fact
     )+
     tm_graticules(lines = F)
   # )
+  
   p2 <- tm_shape(raster_factor)+
     tm_raster(style = "cat", title = "", palette = fire_color_condition_func(raster_factor))+
     tm_layout(main.title= 'Predicted Fire Map',
@@ -745,8 +762,22 @@ WS_visualisation <- function(true_raster, raster_with_probabilities, raster_fact
     tm_graticules(lines = F)
   
   # print(
+  # Visualise the sd of wildfire probabilities raster
+  p3 <- tm_shape(raster_with_probabilities)+
+    tm_raster(style = "sd", title = "", palette = '-RdBu')+
+    tm_layout(main.title= 'SD Map',
+              main.title.size =.9,
+              main.title.position = c("center", "top"),
+              legend.outside = F,
+              legend.text.size = .5,
+              # legend.outside.position = 'bottom'
+    )+
+    tm_graticules(lines = F)
+  # )
+  
+  # print(
   # Visualise the classified raster
-  p3 <- tm_shape(classified_raster)+
+  p4 <- tm_shape(classified_raster)+
     tm_raster(style = "cat", title = "", palette = WS_palette[c(levels(classified_raster)[[1]]$ID)])+
     tm_layout(main.title= 'Wildfire Susceptibility Map',
               main.title.size =.9,
@@ -757,17 +788,16 @@ WS_visualisation <- function(true_raster, raster_with_probabilities, raster_fact
     )+
     tm_graticules(lines = F)
   # )
-  return(tmap_arrange(p1,p2,p3, nrow = 2, ncol = 2)) 
+  
+  return(tmap_arrange(p1,p2,p3,p4, nrow = 2, ncol = 2)) 
 }
-
-
 
 
 # VISUALISATION OF WSM ----------------------------------------------------
 
 call_fire_period <- 'Fire 2022-03'
 
-optmised_threshold_plot(fire_period = call_fire_period)
+# optmised_threshold_plot(fire_period = call_fire_period)
 
 WS_visualisation(true_raster = true_test_raster_list[[which(timesteps_labels==call_fire_period)]], 
                  raster_with_probabilities = predicted_raster_list[[which(timesteps_labels==call_fire_period)]], 
