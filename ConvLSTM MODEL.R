@@ -353,7 +353,7 @@ ConvLSTM_framework <- function(t){
 
 main_training_results <- list()
 # thresholds <- seq(0.4,0.7, by = .01) # threshold list 
-thresholds <- c(0.5,0.6)
+thresholds <- c(0.5,0.51, 0.52)
 for(t in thresholds){
   cat("Training for threshold: ", t, "\n")
   
@@ -384,7 +384,7 @@ model_path <- paste0("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd 
     trainX, trainY,
     validation_data = list(valX, valY),
     use_multiprocessing = T,
-    epochs = 3, # 300 looks reasonable
+    epochs = 4, # 300 looks reasonable
     batch_size = 100,
     sample_weight = spatial_temporal_weight_array, # this assign weights to rasters on a more individual level (spatial-temporal) as in a raster with fire with more weight than a raster with no fire
     callbacks = callback_list,
@@ -407,7 +407,7 @@ best_val_MCCs <- sapply(seq_along(main_training_results), function(x){main_train
 
 # Visualise the best validation MCCs of the best model for each threshold
 #....
-
+main_training_results[[1]]$history$metrics
 optimal_ConvLSTM_model_index <- which.max(best_val_MCCs)
 
 validation_metrics <- c(val_loss = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_loss[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
