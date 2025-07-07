@@ -864,115 +864,204 @@ FIRE_2021_2022_stack_norm_test <- pblapply(seq_along(FIRE_2021_2022_stack_test@l
 
 #------------------------------------------------------------------------------------------------------------
 # Normalising the 2002 to 2022 stack using the min-max normalisation function with all NAs converted to 0
-ATP_2002_2018_stack_norm_train <- pblapply(1:204, 
-                                     function(x) {raster_stack_minmax_norm(ATP_2002_2022_stack, x)}) |> stack()
-save(ATP_2002_2018_stack_norm_train, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/ATP_2002_2018_stack_norm_train.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/ATP_2002_2018_stack_norm_train.Rdata')
+ATP_2002_2018_stack_long_train <- pblapply(1:204, # 2002-2018: ATP train set
+                                      function(x){ATP_2002_2022_stack[[x]]}) |> stack()
+ATP_2002_2018_stack_long_norm_train <- pblapply(seq_along(ATP_2002_2018_stack_long_train@layers), # 2002-2018: ATP train set normalised
+                                     function(x) {raster_stack_minmax_norm(ATP_2002_2018_stack_long_train, x)}) |> stack()
+# save(ATP_2002_2018_stack_long_norm_train, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/ATP_2002_2018_stack_long_norm_train.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/ATP_2002_2018_stack_long_norm_train.Rdata')
 
-ATP_2019_2020_stack_norm_val <- pblapply(205:228, 
-                                           function(x) {raster_stack_minmax_norm(ATP_2002_2022_stack, x)}) |> stack()
-save(ATP_2019_2020_stack_norm_val, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/ATP_2019_2020_stack_norm_val.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/ATP_2019_2020_stack_norm_val.Rdata')
+ATP_2019_2020_stack_long_val <- pblapply(205:228,  # 2019-2020: ATP val set
+                                         function(x) {ATP_2002_2022_stack[[x]]}) |> stack()
 
-ATP_2021_2022_stack_norm_test <- pblapply(229:252, 
-                                         function(x) {raster_stack_minmax_norm(ATP_2002_2022_stack, x)}) |> stack()
+ATP_2019_2020_stack_long_norm_val <- pblapply(seq_along(ATP_2019_2020_stack_long_val@layers), # 2019-2020: ATP val set normalised
+                                           function(x) {raster_stack_minmax_norm(ATP_2019_2020_stack_long_val, x)}) |> stack() 
+# save(ATP_2019_2020_stack_long_norm_val, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/ATP_2019_2020_stack_long_norm_val.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/ATP_2019_2020_stack_long_norm_val.Rdata')
 
-save(ATP_2021_2022_stack_norm_test, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/ATP_2021_2022_stack_norm_test.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/ATP_2021_2022_stack_norm_test.Rdata')
+ATP_2021_2022_stack_long_test <- pblapply(229:252, # 2021-2022: ATP test set
+                                          function(x) {ATP_2002_2022_stack[[x]]}) |> stack()
 
-ANSWS_2002_2018_stack_norm_train <- pblapply(1:204, 
-                                           function(x) {raster_stack_minmax_norm(ANSWS_2002_2022_stack, x)}) |> stack()
-save(ANSWS_2002_2018_stack_norm_train, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/ANSWS_2002_2018_stack_norm_train.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/ANSWS_2002_2018_stack_norm_train.Rdata')
+ATP_2021_2022_stack_long_norm_test <- pblapply(seq_along(ATP_2021_2022_stack_long_test@layers), # 2021-2022: ATP test set normalised
+                                         function(x) {raster_stack_minmax_norm(ATP_2021_2022_stack_long_test, x)}) |> stack()
 
-ANSWS_2019_2020_stack_norm_val <- pblapply(205:228, 
-                                         function(x) {raster_stack_minmax_norm(ANSWS_2002_2022_stack, x)}) |> stack()
-save(ANSWS_2019_2020_stack_norm_val, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/ANSWS_2019_2020_stack_norm_val.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/ANSWS_2019_2020_stack_norm_val.Rdata')
+# save(ATP_2021_2022_stack_long_norm_test, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/ATP_2021_2022_stack_long_norm_test.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/ATP_2021_2022_stack_long_norm_test.Rdata')
 
-ANSWS_2021_2022_stack_norm_test <- pblapply(229:252, 
-                                          function(x) {raster_stack_minmax_norm(ANSWS_2002_2022_stack, x)}) |> stack()
+AMT_2002_2018_stack_long_train <- pblapply(1:204, # 2002-2018: AMT train set
+                                           function(x){AMT_2002_2022_stack[[x]]}) |> stack()
+AMT_2002_2018_stack_long_norm_train <- pblapply(seq_along(AMT_2002_2018_stack_long_train@layers), # 2002-2018: AMT train set normalised
+                                                function(x) {raster_stack_minmax_norm(AMT_2002_2018_stack_long_train, x)}) |> stack()
+# save(AMT_2002_2018_stack_long_norm_train, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/AMT_2002_2018_stack_long_norm_train.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/AMT_2002_2018_stack_long_norm_train.Rdata')
 
-save(ANSWS_2021_2022_stack_norm_test, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/ANSWS_2021_2022_stack_norm_test.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/ANSWS_2021_2022_stack_norm_test.Rdata')
+AMT_2019_2020_stack_long_val <- pblapply(205:228,  # 2019-2020: AMT val set
+                                         function(x) {AMT_2002_2022_stack[[x]]}) |> stack()
 
-ARH_2002_2018_stack_norm_train <- pblapply(1:204, 
-                                             function(x) {raster_stack_minmax_norm(ARH_2002_2022_stack, x)}) |> stack()
-save(ARH_2002_2018_stack_norm_train, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/ARH_2002_2018_stack_norm_train.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/ARH_2002_2018_stack_norm_train.Rdata')
+AMT_2019_2020_stack_long_norm_val <- pblapply(seq_along(AMT_2019_2020_stack_long_val@layers), # 2019-2020: AMT val set normalised
+                                              function(x) {raster_stack_minmax_norm(AMT_2019_2020_stack_long_val, x)}) |> stack() 
+# save(AMT_2019_2020_stack_long_norm_val, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/AMT_2019_2020_stack_long_norm_val.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/AMT_2019_2020_stack_long_norm_val.Rdata')
 
-ARH_2019_2020_stack_norm_val <- pblapply(205:228, 
-                                           function(x) {raster_stack_minmax_norm(ARH_2002_2022_stack, x)}) |> stack()
-save(ARH_2019_2020_stack_norm_val, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/ARH_2019_2020_stack_norm_val.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/ARH_2019_2020_stack_norm_val.Rdata')
+AMT_2021_2022_stack_long_test <- pblapply(229:252, # 2021-2022: AMT test set
+                                          function(x) {AMT_2002_2022_stack[[x]]}) |> stack()
 
-ARH_2021_2022_stack_norm_test <- pblapply(229:252, 
-                                            function(x) {raster_stack_minmax_norm(ARH_2002_2022_stack, x)}) |> stack()
+AMT_2021_2022_stack_long_norm_test <- pblapply(seq_along(AMT_2021_2022_stack_long_test@layers), # 2021-2022: AMT test set normalised
+                                               function(x) {raster_stack_minmax_norm(AMT_2021_2022_stack_long_test, x)}) |> stack()
 
-save(ARH_2021_2022_stack_norm_test, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/ARH_2021_2022_stack_norm_test.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/ARH_2021_2022_stack_norm_test.Rdata')
+# save(AMT_2021_2022_stack_long_norm_test, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/AMT_2021_2022_stack_long_norm_test.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/AMT_2021_2022_stack_long_norm_test.Rdata')
 
-ELEV_2002_2018_stack_norm_train <- pblapply(1:204, 
-                                            function(x) {raster_stack_minmax_norm(elevation_replicated_for_2002_to_2022_stack, x)}) |> stack()
-save(ELEV_2002_2018_stack_norm_train, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/ELEV_2002_2018_stack_norm_train.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/ELEV_2002_2018_stack_norm_train.Rdata')
+ANSWS_2002_2018_stack_long_train <- pblapply(1:204, # 2002-2018: ANSWS train set
+                                           function(x){ANSWS_2002_2022_stack[[x]]}) |> stack()
+ANSWS_2002_2018_stack_long_norm_train <- pblapply(seq_along(ANSWS_2002_2018_stack_long_train@layers), # 2002-2018: ANSWS train set normalised
+                                                function(x) {raster_stack_minmax_norm(ANSWS_2002_2018_stack_long_train, x)}) |> stack()
+# save(ANSWS_2002_2018_stack_long_norm_train, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/ANSWS_2002_2018_stack_long_norm_train.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/ANSWS_2002_2018_stack_long_norm_train.Rdata')
 
-ELEV_2019_2020_stack_norm_val <- pblapply(205:228, 
-                                            function(x) {raster_stack_minmax_norm(elevation_replicated_for_2002_to_2022_stack, x)}) |> stack()
-save(ELEV_2019_2020_stack_norm_val, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/ELEV_2019_2020_stack_norm_val.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/ELEV_2019_2020_stack_norm_val.Rdata')
+ANSWS_2019_2020_stack_long_val <- pblapply(205:228,  # 2019-2020: ANSWS val set
+                                         function(x) {ANSWS_2002_2022_stack[[x]]}) |> stack()
 
-ELEV_2021_2022_stack_norm_test <- pblapply(229:252, 
-                                           function(x) {raster_stack_minmax_norm(elevation_replicated_for_2002_to_2022_stack, x)}) |> stack()
-save(ELEV_2021_2022_stack_norm_test, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/ELEV_2021_2022_stack_norm_test.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/ELEV_2021_2022_stack_norm_test.Rdata')
+ANSWS_2019_2020_stack_long_norm_val <- pblapply(seq_along(ANSWS_2019_2020_stack_long_val@layers), # 2019-2020: ANSWS val set normalised
+                                              function(x) {raster_stack_minmax_norm(ANSWS_2019_2020_stack_long_val, x)}) |> stack() 
+# save(ANSWS_2019_2020_stack_long_norm_val, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/ANSWS_2019_2020_stack_long_norm_val.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/ANSWS_2019_2020_stack_long_norm_val.Rdata')
 
-SLOPE_2002_2018_stack_norm_train <- pblapply(1:204, 
-                                            function(x) {raster_stack_minmax_norm(slope_replicated_for_2002_to_2022_stack, x)}) |> stack()
-save(SLOPE_2002_2018_stack_norm_train, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/SLOPE_2002_2018_stack_norm_train.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/SLOPE_2002_2018_stack_norm_train.Rdata')
+ANSWS_2021_2022_stack_long_test <- pblapply(229:252, # 2021-2022: ANSWS test set
+                                          function(x) {ANSWS_2002_2022_stack[[x]]}) |> stack()
 
-SLOPE_2019_2020_stack_norm_val <- pblapply(205:228, 
-                                          function(x) {raster_stack_minmax_norm(slope_replicated_for_2002_to_2022_stack, x)}) |> stack()
-save(SLOPE_2019_2020_stack_norm_val, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/SLOPE_2019_2020_stack_norm_val.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/SLOPE_2019_2020_stack_norm_val.Rdata')
+ANSWS_2021_2022_stack_long_norm_test <- pblapply(seq_along(ANSWS_2021_2022_stack_long_test@layers), # 2021-2022: ANSWS test set normalised
+                                               function(x) {raster_stack_minmax_norm(ANSWS_2021_2022_stack_long_test, x)}) |> stack()
 
-SLOPE_2021_2022_stack_norm_test <- pblapply(229:252, 
-                                           function(x) {raster_stack_minmax_norm(slope_replicated_for_2002_to_2022_stack, x)}) |> stack()
-save(SLOPE_2021_2022_stack_norm_test, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/SLOPE_2021_2022_stack_norm_test.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/SLOPE_2021_2022_stack_norm_test.Rdata')
+# save(ANSWS_2021_2022_stack_long_norm_test, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/ANSWS_2021_2022_stack_long_norm_test.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/ANSWS_2021_2022_stack_long_norm_test.Rdata')
 
-ASPECT_2002_2018_stack_norm_train <- pblapply(1:204, 
-                                             function(x) {raster_stack_minmax_norm(aspect_replicated_for_2002_to_2022_stack, x)}) |> stack()
-save(ASPECT_2002_2018_stack_norm_train, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/ASPECT_2002_2018_stack_norm_train.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/ASPECT_2002_2018_stack_norm_train.Rdata')
 
-ASPECT_2019_2020_stack_norm_val <- pblapply(205:228, 
-                                           function(x) {raster_stack_minmax_norm(aspect_replicated_for_2002_to_2022_stack, x)}) |> stack()
-save(ASPECT_2019_2020_stack_norm_val, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/ASPECT_2019_2020_stack_norm_val.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/ASPECT_2019_2020_stack_norm_val.Rdata')
+ARH_2002_2018_stack_long_train <- pblapply(1:204, # 2002-2018: ARH train set
+                                             function(x){ARH_2002_2022_stack[[x]]}) |> stack()
+ARH_2002_2018_stack_long_norm_train <- pblapply(seq_along(ARH_2002_2018_stack_long_train@layers), # 2002-2018: ARH train set normalised
+                                                  function(x) {raster_stack_minmax_norm(ARH_2002_2018_stack_long_train, x)}) |> stack()
+# save(ARH_2002_2018_stack_long_norm_train, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/ARH_2002_2018_stack_long_norm_train.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/ARH_2002_2018_stack_long_norm_train.Rdata')
 
-ASPECT_2021_2022_stack_norm_test <- pblapply(229:252, 
-                                            function(x) {raster_stack_minmax_norm(aspect_replicated_for_2002_to_2022_stack, x)}) |> stack()
-save(ASPECT_2021_2022_stack_norm_test, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/ASPECT_2021_2022_stack_norm_test.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/ASPECT_2021_2022_stack_norm_test.Rdata')
+ARH_2019_2020_stack_long_val <- pblapply(205:228,  # 2019-2020: ARH val set
+                                           function(x) {ARH_2002_2022_stack[[x]]}) |> stack()
 
-FIRE_2002_2018_stack_norm_train <- pblapply(1:204, 
-                                           function(x) {raster_stack_minmax_norm(FIRE_2002_2022_stack, x)}) |> stack()
-save(FIRE_2002_2018_stack_norm_train, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/FIRE_2002_2018_stack_norm_train.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/FIRE_2002_2018_stack_norm_train.Rdata')
+ARH_2019_2020_stack_long_norm_val <- pblapply(seq_along(ARH_2019_2020_stack_long_val@layers), # 2019-2020: ARH val set normalised
+                                                function(x) {raster_stack_minmax_norm(ARH_2019_2020_stack_long_val, x)}) |> stack() 
+# save(ARH_2019_2020_stack_long_norm_val, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/ARH_2019_2020_stack_long_norm_val.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/ARH_2019_2020_stack_long_norm_val.Rdata')
 
-FIRE_2019_2020_stack_norm_val <- pblapply(205:228, 
-                                         function(x) {raster_stack_minmax_norm(FIRE_2002_2022_stack, x)}) |> stack()
-save(FIRE_2019_2020_stack_norm_val, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/FIRE_2019_2020_stack_norm_val.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/FIRE_2019_2020_stack_norm_val.Rdata')
+ARH_2021_2022_stack_long_test <- pblapply(229:252, # 2021-2022: ARH test set
+                                            function(x) {ARH_2002_2022_stack[[x]]}) |> stack()
 
-FIRE_2021_2022_stack_norm_test <- pblapply(229:252, 
-                                          function(x) {raster_stack_minmax_norm(FIRE_2002_2022_stack, x)}) |> stack()
+ARH_2021_2022_stack_long_norm_test <- pblapply(seq_along(ARH_2021_2022_stack_long_test@layers), # 2021-2022: ARH test set normalised
+                                                 function(x) {raster_stack_minmax_norm(ARH_2021_2022_stack_long_test, x)}) |> stack()
 
-save(FIRE_2021_2022_stack_norm_test, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/FIRE_2021_2022_stack_norm_test.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/FIRE_2021_2022_stack_norm_test.Rdata')
+# save(ARH_2021_2022_stack_long_norm_test, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/ARH_2021_2022_stack_long_norm_test.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/ARH_2021_2022_stack_long_norm_test.Rdata')
 
+
+ELEV_2002_2018_stack_long_train <- pblapply(1:204, # 2002-2018: ELEV train set
+                                           function(x){elevation_replicated_for_2002_to_2022_stack[[x]]}) |> stack()
+ELEV_2002_2018_stack_long_norm_train <- pblapply(seq_along(ELEV_2002_2018_stack_long_train@layers), # 2002-2018: ELEV train set normalised
+                                                function(x) {raster_stack_minmax_norm(ELEV_2002_2018_stack_long_train, x)}) |> stack()
+# save(ELEV_2002_2018_stack_long_norm_train, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/ELEV_2002_2018_stack_long_norm_train.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/ELEV_2002_2018_stack_long_norm_train.Rdata')
+
+ELEV_2019_2020_stack_long_val <- pblapply(205:228,  # 2019-2020: ELEV val set
+                                         function(x) {elevation_replicated_for_2002_to_2022_stack[[x]]}) |> stack()
+
+ELEV_2019_2020_stack_long_norm_val <- pblapply(seq_along(ELEV_2019_2020_stack_long_val@layers), # 2019-2020: ELEV val set normalised
+                                              function(x) {raster_stack_minmax_norm(ELEV_2019_2020_stack_long_val, x)}) |> stack() 
+# save(ELEV_2019_2020_stack_long_norm_val, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/ELEV_2019_2020_stack_long_norm_val.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/ELEV_2019_2020_stack_long_norm_val.Rdata')
+
+ELEV_2021_2022_stack_long_test <- pblapply(229:252, # 2021-2022: ELEV test set
+                                          function(x) {elevation_replicated_for_2002_to_2022_stack[[x]]}) |> stack()
+
+ELEV_2021_2022_stack_long_norm_test <- pblapply(seq_along(ELEV_2021_2022_stack_long_test@layers), # 2021-2022: ELEV test set normalised
+                                               function(x) {raster_stack_minmax_norm(ELEV_2021_2022_stack_long_test, x)}) |> stack()
+
+# save(ELEV_2021_2022_stack_long_norm_test, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/ELEV_2021_2022_stack_long_norm_test.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/ELEV_2021_2022_stack_long_norm_test.Rdata')
+
+SLOPE_2002_2018_stack_long_train <- pblapply(1:204, # 2002-2018: SLOPE train set
+                                            function(x){slope_replicated_for_2002_to_2022_stack[[x]]}) |> stack()
+SLOPE_2002_2018_stack_long_norm_train <- pblapply(seq_along(SLOPE_2002_2018_stack_long_train@layers), # 2002-2018: SLOPE train set normalised
+                                                 function(x) {raster_stack_minmax_norm(SLOPE_2002_2018_stack_long_train, x)}) |> stack()
+# save(SLOPE_2002_2018_stack_long_norm_train, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/SLOPE_2002_2018_stack_long_norm_train.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/SLOPE_2002_2018_stack_long_norm_train.Rdata')
+
+SLOPE_2019_2020_stack_long_val <- pblapply(205:228,  # 2019-2020: SLOPE val set
+                                          function(x) {slope_replicated_for_2002_to_2022_stack[[x]]}) |> stack()
+
+SLOPE_2019_2020_stack_long_norm_val <- pblapply(seq_along(SLOPE_2019_2020_stack_long_val@layers), # 2019-2020: SLOPE val set normalised
+                                               function(x) {raster_stack_minmax_norm(SLOPE_2019_2020_stack_long_val, x)}) |> stack() 
+# save(SLOPE_2019_2020_stack_long_norm_val, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/SLOPE_2019_2020_stack_long_norm_val.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/SLOPE_2019_2020_stack_long_norm_val.Rdata')
+
+SLOPE_2021_2022_stack_long_test <- pblapply(229:252, # 2021-2022: SLOPE test set
+                                           function(x) {slope_replicated_for_2002_to_2022_stack[[x]]}) |> stack()
+
+SLOPE_2021_2022_stack_long_norm_test <- pblapply(seq_along(SLOPE_2021_2022_stack_long_test@layers), # 2021-2022: SLOPE test set normalised
+                                                function(x) {raster_stack_minmax_norm(SLOPE_2021_2022_stack_long_test, x)}) |> stack()
+
+# save(SLOPE_2021_2022_stack_long_norm_test, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/SLOPE_2021_2022_stack_long_norm_test.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/SLOPE_2021_2022_stack_long_norm_test.Rdata')
+
+
+ASPECT_2002_2018_stack_long_train <- pblapply(1:204, # 2002-2018: ASPECT train set
+                                             function(x){aspect_replicated_for_2002_to_2022_stack[[x]]}) |> stack()
+ASPECT_2002_2018_stack_long_norm_train <- pblapply(seq_along(ASPECT_2002_2018_stack_long_train@layers), # 2002-2018: ASPECT train set normalised
+                                                  function(x) {raster_stack_minmax_norm(ASPECT_2002_2018_stack_long_train, x)}) |> stack()
+# save(ASPECT_2002_2018_stack_long_norm_train, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/ASPECT_2002_2018_stack_long_norm_train.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/ASPECT_2002_2018_stack_long_norm_train.Rdata')
+
+ASPECT_2019_2020_stack_long_val <- pblapply(205:228,  # 2019-2020: ASPECT val set
+                                           function(x) {aspect_replicated_for_2002_to_2022_stack[[x]]}) |> stack()
+
+ASPECT_2019_2020_stack_long_norm_val <- pblapply(seq_along(ASPECT_2019_2020_stack_long_val@layers), # 2019-2020: ASPECT val set normalised
+                                                function(x) {raster_stack_minmax_norm(ASPECT_2019_2020_stack_long_val, x)}) |> stack() 
+# save(ASPECT_2019_2020_stack_long_norm_val, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/ASPECT_2019_2020_stack_long_norm_val.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/ASPECT_2019_2020_stack_long_norm_val.Rdata')
+
+ASPECT_2021_2022_stack_long_test <- pblapply(229:252, # 2021-2022: ASPECT test set
+                                            function(x) {aspect_replicated_for_2002_to_2022_stack[[x]]}) |> stack()
+
+ASPECT_2021_2022_stack_long_norm_test <- pblapply(seq_along(ASPECT_2021_2022_stack_long_test@layers), # 2021-2022: ASPECT test set normalised
+                                                 function(x) {raster_stack_minmax_norm(ASPECT_2021_2022_stack_long_test, x)}) |> stack()
+
+# save(ASPECT_2021_2022_stack_long_norm_test, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/ASPECT_2021_2022_stack_long_norm_test.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/ASPECT_2021_2022_stack_long_norm_test.Rdata')
+
+
+FIRE_2002_2018_stack_long_train <- pblapply(1:204, # 2002-2018: FIRE train set
+                                           function(x){FIRE_2002_2022_stack[[x]]}) |> stack()
+FIRE_2002_2018_stack_long_norm_train <- pblapply(seq_along(FIRE_2002_2018_stack_long_train@layers), # 2002-2018: FIRE train set normalised
+                                                function(x) {raster_stack_minmax_norm(FIRE_2002_2018_stack_long_train, x)}) |> stack()
+# save(FIRE_2002_2018_stack_long_norm_train, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/FIRE_2002_2018_stack_long_norm_train.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Training Set/FIRE_2002_2018_stack_long_norm_train.Rdata')
+
+FIRE_2019_2020_stack_long_val <- pblapply(205:228,  # 2019-2020: FIRE val set
+                                         function(x) {FIRE_2002_2022_stack[[x]]}) |> stack()
+
+FIRE_2019_2020_stack_long_norm_val <- pblapply(seq_along(FIRE_2019_2020_stack_long_val@layers), # 2019-2020: FIRE val set normalised
+                                              function(x) {raster_stack_minmax_norm(FIRE_2019_2020_stack_long_val, x)}) |> stack() 
+# save(FIRE_2019_2020_stack_long_norm_val, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/FIRE_2019_2020_stack_long_norm_val.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Validation Set/FIRE_2019_2020_stack_long_norm_val.Rdata')
+
+FIRE_2021_2022_stack_long_test <- pblapply(229:252, # 2021-2022: FIRE test set
+                                          function(x) {FIRE_2002_2022_stack[[x]]}) |> stack()
+
+FIRE_2021_2022_stack_long_norm_test <- pblapply(seq_along(FIRE_2021_2022_stack_long_test@layers), # 2021-2022: FIRE test set normalised
+                                               function(x) {raster_stack_minmax_norm(FIRE_2021_2022_stack_long_test, x)}) |> stack()
+
+# save(FIRE_2021_2022_stack_long_norm_test, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/FIRE_2021_2022_stack_long_norm_test.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/Test Set/FIRE_2021_2022_stack_long_norm_test.Rdata')
+
+
+# ---------------------------------------------------------------------------------------------------------------
 # Normalising the 2023 stack using the min-max normalisation function with all NAs converted to 0 (just in case!)
 LULC_2023_stack_norm <- pblapply(1:nlayers(LULC_2023_stack), 
                                  function(x) {raster_stack_minmax_norm(LULC_2023_stack, x)}) |> stack()
@@ -1031,7 +1120,7 @@ save(ASPECT_2023_stack_norm, file = '/Volumes/Hard Drive (29-08-22)/Data Science
 
 
 # Reshape for ConvLSTM format  --------------------------------------------
-# Full training set
+# Full training set 2014-2022 dataframe
 predictor_variables_2014_2018_train <- abind(LULC_2014_2018_stack_norm_train|> as.array(),
                                        NDVI_2014_2018_stack_norm_train|> as.array(),
                                        NDMI_2014_2018_stack_norm_train|> as.array(),
@@ -1069,7 +1158,7 @@ fire_class_imbalance_prop <- prop.table(table(response_variable_2014_2018_train)
 calculated_class_weights <- max(fire_class_imbalance)/fire_class_imbalance # class weights to be applied to convLSTM
 
 
-# Full validation set
+# Full validation set 2014-2022 dataframe
 predictor_variables_2019_2020_val <- abind(LULC_2019_2020_stack_norm_val|> as.array(),
                                              NDVI_2019_2020_stack_norm_val|> as.array(),
                                              NDMI_2019_2020_stack_norm_val|> as.array(),
@@ -1099,7 +1188,7 @@ dim(response_variable_2019_2020_val)
 # save(response_variable_2019_2020_val, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/ConvLSTM data format/response_variable_2019_2020_val.RData')
 # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/ConvLSTM data format/response_variable_2019_2020_val.RData')
 
-# Full test set
+# Full test set 2014-2022 dataframe
 predictor_variables_2021_2022_test <- abind(LULC_2021_2022_stack_norm_test|> as.array(),
                                            NDVI_2021_2022_stack_norm_test|> as.array(),
                                            NDMI_2021_2022_stack_norm_test|> as.array(),
@@ -1129,25 +1218,96 @@ dim(response_variable_2021_2022_test)
 # save(response_variable_2021_2022_test, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/ConvLSTM data format/response_variable_2021_2022_test.RData')
 # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/ConvLSTM data format/response_variable_2021_2022_test.RData')
 
+# ---------------------------------------------
+# Full training set 2002-2022 dataframe
+predictor_variables_long_2002_2018_train <- abind(ATP_2002_2018_stack_long_norm_train|> as.array(),
+                                             AMT_2002_2018_stack_long_norm_train|> as.array(),
+                                             ANSWS_2002_2018_stack_long_norm_train|> as.array(),
+                                             ARH_2002_2018_stack_long_norm_train|> as.array(),
+                                             ELEV_2002_2018_stack_long_norm_train|> as.array(),
+                                             SLOPE_2002_2018_stack_long_norm_train|> as.array(),
+                                             ASPECT_2002_2018_stack_long_norm_train|> as.array(),
+                                             along = 4) |> # Shape: ([1] height/row, [2] width/column, [3] time_steps, [4] variables/channels)
+  aperm(c(3,1,2,4))  # Reorder shape: (time_steps, height, width, variables)- channels_last format
+
+dim(predictor_variables_long_2002_2018_train)
+predictor_variables_long_2002_2018_train <- array(predictor_variables_long_2002_2018_train, dim = c(1, dim(predictor_variables_long_2002_2018_train))) # Adjust dimension to include sample dimension to be 1
+dim(predictor_variables_long_2002_2018_train)
+
+# save(predictor_variables_long_2002_2018_train, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/ConvLSTM data format/predictor_variables_long_2002_2018_train.RData')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/ConvLSTM data format/predictor_variables_long_2002_2018_train.RData')
+
+response_variable_long_2002_2018_train <- abind(FIRE_2002_2018_stack_long_norm_train|>as.array(), 
+                                           along = 4)|> # Shape: ([1] height/row, [2] width/column, [3] time_steps, [4] variables/channels)
+  aperm(c(3,1,2,4))  # Reorder shape: (time_steps, height, width, variables)- channels_last format)
+dim(response_variable_long_2002_2018_train)
+response_variable_long_2002_2018_train <- array(response_variable_long_2002_2018_train, dim = c(1, dim(response_variable_long_2002_2018_train))) # Adjust dimension to include sample dimension to be 1
+dim(response_variable_long_2002_2018_train)
+
+save(response_variable_long_2002_2018_train, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/ConvLSTM data format/response_variable_long_2002_2018_train.RData')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/ConvLSTM data format/response_variable_long_2002_2018_train.RData')
 
 
+fire_class_imbalance_long <- table(response_variable_long_2002_2018_train) # fire class imbalance
+fire_class_imbalance_prop_long <- prop.table(table(response_variable_long_2002_2018_train)) # fire class imbalance proportion
+calculated_class_weights_long <- max(fire_class_imbalance_long)/fire_class_imbalance_long # class weights to be applied to convLSTM
 
 
+# Full validation set 2002-2022 dataframe
+predictor_variables_long_2019_2020_val <- abind(ATP_2019_2020_stack_long_norm_val|> as.array(),
+                                                AMT_2019_2020_stack_long_norm_val|> as.array(),
+                                                ANSWS_2019_2020_stack_long_norm_val|> as.array(),
+                                                ARH_2019_2020_stack_long_norm_val|> as.array(),
+                                                ELEV_2019_2020_stack_long_norm_val|> as.array(),
+                                                SLOPE_2019_2020_stack_long_norm_val|> as.array(),
+                                                ASPECT_2019_2020_stack_long_norm_val|> as.array(),
+                                                along = 4) |> # Shape: ([1] height/row, [2] width/column, [3] time_steps, [4] variables/channels)
+  aperm(c(3,1,2,4))  # Reorder shape: (time_steps, height, width, variables)- channels_last format
 
+dim(predictor_variables_long_2019_2020_val)
+predictor_variables_long_2019_2020_val <- array(predictor_variables_long_2019_2020_val, dim = c(1, dim(predictor_variables_long_2019_2020_val))) # Adjust dimension to include sample dimension to be 1
+dim(predictor_variables_long_2019_2020_val)
 
+# save(predictor_variables_long_2019_2020_val, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/ConvLSTM data format/predictor_variables_long_2019_2020_val.RData')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/ConvLSTM data format/predictor_variables_long_2019_2020_val.RData')
 
+response_variable_long_2019_2020_val <- abind(FIRE_2019_2020_stack_long_norm_val|>as.array(), 
+                                                along = 4)|> # Shape: ([1] height/row, [2] width/column, [3] time_steps, [4] variables/channels)
+  aperm(c(3,1,2,4))  # Reorder shape: (time_steps, height, width, variables)- channels_last format)
+dim(response_variable_long_2019_2020_val)
+response_variable_long_2019_2020_val <- array(response_variable_long_2019_2020_val, dim = c(1, dim(response_variable_long_2019_2020_val))) # Adjust dimension to include sample dimension to be 1
+dim(response_variable_long_2019_2020_val)
 
+# save(response_variable_long_2019_2020_val, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/ConvLSTM data format/response_variable_long_2019_2020_val.RData')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/ConvLSTM data format/response_variable_long_2019_2020_val.RData')
 
+# Full test set 2002-2022 dataframe
+predictor_variables_long_2021_2022_test <- abind(ATP_2021_2022_stack_long_norm_test|> as.array(),
+                                                AMT_2021_2022_stack_long_norm_test|> as.array(),
+                                                ANSWS_2021_2022_stack_long_norm_test|> as.array(),
+                                                ARH_2021_2022_stack_long_norm_test|> as.array(),
+                                                ELEV_2021_2022_stack_long_norm_test|> as.array(),
+                                                SLOPE_2021_2022_stack_long_norm_test|> as.array(),
+                                                ASPECT_2021_2022_stack_long_norm_test|> as.array(),
+                                                along = 4) |> # Shape: ([1] height/row, [2] width/column, [3] time_steps, [4] variables/channels)
+  aperm(c(3,1,2,4))  # Reorder shape: (time_steps, height, width, variables)- channels_last format
 
+dim(predictor_variables_long_2021_2022_test)
+predictor_variables_long_2021_2022_test <- array(predictor_variables_long_2021_2022_test, dim = c(1, dim(predictor_variables_long_2021_2022_test))) # Adjust dimension to include sample dimension to be 1
+dim(predictor_variables_long_2021_2022_test)
 
+# save(predictor_variables_long_2021_2022_test, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/ConvLSTM data format/predictor_variables_long_2021_2022_test.RData')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/ConvLSTM data format/predictor_variables_long_2021_2022_test.RData')
 
+response_variable_long_2021_2022_test <- abind(FIRE_2021_2022_stack_long_norm_test|>as.array(), 
+                                              along = 4)|> # Shape: ([1] height/row, [2] width/column, [3] time_steps, [4] variables/channels)
+  aperm(c(3,1,2,4))  # Reorder shape: (time_steps, height, width, variables)- channels_last format)
+dim(response_variable_long_2021_2022_test)
+response_variable_long_2021_2022_test <- array(response_variable_long_2021_2022_test, dim = c(1, dim(response_variable_long_2021_2022_test))) # Adjust dimension to include sample dimension to be 1
+dim(response_variable_long_2021_2022_test)
 
-
-
-
-
-
-
+# save(response_variable_long_2021_2022_test, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/ConvLSTM data format/response_variable_long_2021_2022_test.RData')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/ConvLSTM data format/response_variable_long_2021_2022_test.RData')
 
 
 
