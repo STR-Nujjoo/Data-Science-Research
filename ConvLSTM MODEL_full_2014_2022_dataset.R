@@ -123,9 +123,9 @@ focal_loss_fn <- function(alpha = NULL, gamma = NULL) {
 
 # READING & LOADING RELEVANT OBJECTS --------------------------------------
 
-# Import TMNR shapefile 
-roi <- readOGR('Wildfire_Data_Stefan/TMNR shapefile/tmnr_boundary.shp')
-roi_trans <- spTransform(roi, CRS('+proj=utm +zone=34 +south +datum=WGS84 +units=m +no_defs')) # convert coordinate system to EPSG:32734 (WGS 84 / UTM zone 34S)
+# Import TMNR shapefile
+# roi <- readOGR('Wildfire_Data_Stefan/TMNR shapefile/tmnr_boundary.shp')
+# roi_trans <- spTransform(roi, CRS('+proj=utm +zone=34 +south +datum=WGS84 +units=m +no_defs')) # convert coordinate system to EPSG:32734 (WGS 84 / UTM zone 34S)
 
 # identifying dupicates aerial imageries from 2014 to 2022
 duplicate_aerial_imageries_to_remove <- c('20140425', '20140612', '20140714', '20141002', '20150122', '20150223', '20150903',
@@ -133,10 +133,12 @@ duplicate_aerial_imageries_to_remove <- c('20140425', '20140612', '20140714', '2
                                           '20231206')
 
 # LULC for resampling to obtain correct dimensions 
-load('Wildfire_Data_Stefan/FINAL_LULC.Rdata', envir = .GlobalEnv)
+final_lulc_filenames <- list.files('LULC 2014-2023 (post-processing)', pattern = '.tif')
+FINAL_LULC <- pblapply(seq_along(final_lulc_filenames), 
+                       function(x) {raster(paste0('LULC 2014-2023 (post-processing)/',final_lulc_filenames[x]))})
 
 # reading all the file names
-final_lulc_names <- sapply(seq_along(FINAL_LULC), function (x){sub('LULC ', '', FINAL_LULC[[x]]@file@name)})
+final_lulc_names <- sapply(seq_along(FINAL_LULC), function (x){sub('LULC.', '', names(FINAL_LULC[[x]]))})
 
 # removing the duplicate LULC
 LULC <- lapply(seq_along(which(!final_lulc_names %in% duplicate_aerial_imageries_to_remove)), 
@@ -145,11 +147,13 @@ LULC <- lapply(seq_along(which(!final_lulc_names %in% duplicate_aerial_imageries
 # exclude 2023 period from LULC- we're only dealing with 108 periods now from 2014 to 2022
 LULC_2014_2022 <- lapply(1:108, function (x) {LULC[[x]]})
 
-lapply(1:108, function (x) {names(LULC_2014_2022[[x]]) <- LULC_2014_2022[[x]]@file@name
-names(LULC_2014_2022[[x]]) <<- gsub('[.]','', names(LULC_2014_2022[[x]]))}) # rename layers
+# lapply(1:108, function (x) {names(LULC_2014_2022[[x]]) <- LULC_2014_2022[[x]]@file@name
+# names(LULC_2014_2022[[x]]) <<- gsub('[.]','', names(LULC_2014_2022[[x]]))}) # rename layers
 
 # Import fire data alone for weight computations
-load('Wildfire_Data_Stefan/FIRE_DATA.Rdata', envir = .GlobalEnv)
+fire_data_filenames <- list.files('SANParks', pattern = '.tif')
+FIRE_DATA <- pblapply(seq_along(fire_data_filenames), 
+                       function(x) {raster(paste0('SANParks/',fire_data_filenames[x]))})
 
 FIRE_2002_2022 <- lapply(1:252, function(x) {FIRE_DATA[[x]]})
 FIRE_2014_2022 <- lapply(145:252, function(x) {FIRE_2002_2022[[x]]})
@@ -163,14 +167,14 @@ FIRE_2014_2018_stack_norm_train <- pblapply(seq_along(FIRE_2014_2018_stack_train
                                             function(x) {raster_stack_minmax_norm(FIRE_2014_2018_stack_train, x)}) |> stack()
 
 # Loading full 2014 to 2022 dataset in convLSTM format
-load('Wildfire_Data_Stefan/ConvLSTM data format/predictor_variables_2014_2018_train.RData')
-load('Wildfire_Data_Stefan/ConvLSTM data format/response_variable_2014_2018_train.RData')
+load('ConvLSTM data format/predictor_variables_2014_2018_train.RData')
+load('ConvLSTM data format/response_variable_2014_2018_train.RData')
 
-load('Wildfire_Data_Stefan/ConvLSTM data format/predictor_variables_2019_2020_val.RData')
-load('Wildfire_Data_Stefan/ConvLSTM data format/response_variable_2019_2020_val.RData')
+load('ConvLSTM data format/predictor_variables_2019_2020_val.RData')
+load('ConvLSTM data format/response_variable_2019_2020_val.RData')
 
-load('Wildfire_Data_Stefan/ConvLSTM data format/predictor_variables_2021_2022_test.RData')
-load('Wildfire_Data_Stefan/ConvLSTM data format/response_variable_2021_2022_test.RData')
+load('ConvLSTM data format/predictor_variables_2021_2022_test.RData')
+load('ConvLSTM data format/response_variable_2021_2022_test.RData')
 
 
 # training set
