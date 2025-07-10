@@ -1244,7 +1244,7 @@ dim(response_variable_long_2002_2018_train)
 response_variable_long_2002_2018_train <- array(response_variable_long_2002_2018_train, dim = c(1, dim(response_variable_long_2002_2018_train))) # Adjust dimension to include sample dimension to be 1
 dim(response_variable_long_2002_2018_train)
 
-save(response_variable_long_2002_2018_train, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/ConvLSTM data format/response_variable_long_2002_2018_train.RData')
+# save(response_variable_long_2002_2018_train, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/ConvLSTM data format/response_variable_long_2002_2018_train.RData')
 # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/ConvLSTM data format/response_variable_long_2002_2018_train.RData')
 
 
