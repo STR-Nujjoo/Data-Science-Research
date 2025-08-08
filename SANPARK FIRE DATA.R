@@ -14,7 +14,7 @@
 }
 options(scipen = 999, digits = 10) # avoid scientific notation
 # Import TMNR shapefile 
-roi <- readOGR('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/Shapefiles/TMNR shapefile/tmnr_boundary.shp')
+roi <- readOGR('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/SANParks shapefiles/TMNR shapefile/tmnr_boundary.shp')
 roi_trans <- spTransform(roi, CRS('+proj=utm +zone=34 +south +datum=WGS84 +units=m +no_defs')) # convert coordinate system to EPSG:32734 (WGS 84 / UTM zone 34S)
 
 # Import SANPARK fire data
@@ -186,8 +186,12 @@ monthly_sanpark_fire_shpfile <- function(data, index, plot=NULL){
 
 # Visualise monthly SANPARKs fire data- Missing month means that no fire detected
 monthly_sanpark_fire_shpfile(data = sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed_MONTHLY, 
-                             index = 24, 
+                             index = 34, 
                              plot = T)
+
+
+
+
 
 par(mfrow = c(3,3))
 monthly_sanpark_fire_shpfile_list <- pblapply(seq_along(Sanpark_unique_yearmonth_list), 
@@ -392,7 +396,7 @@ Sanparks_yearmonth_fire_recorded <- as.Date(paste0(Sanparks_yearmonth_fire_recor
 
 # Fire period recorded by FIRMS from 2014 to 2022 in terms of year-month
 FIRMS_yearmonth_fire_recorded <- levels(firms_fire_shpfile_trans_df_2002_2023_monthly_list[[1]]$ACQ_YEARMONTH)[15:27]
-FIRMS_yearmonth_fire_recorded <- as.Date(paste0(FIRMS_yearmonth_fire_recorded, "/01"), format = "%Y/%m/%d")
+FIRMS_yearmonth_fire_recorded <- as.Date(paste0(FIRMS_yearmonth_fire_recorded, "-01"), format = "%Y-%m-%d")
 
 # Which period was a fire detected by FIRMS but not mapped by SANParks
 FIRMS_yearmonth_fire_recorded[which(FIRMS_yearmonth_fire_recorded %in% Sanparks_yearmonth_fire_recorded==F)]

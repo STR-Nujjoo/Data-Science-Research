@@ -91,7 +91,8 @@ FIRMS_monthly_fire_plots <- function(data, index){
 
 # converting 2022 data into polygon
 FIRMS_monthly_fire_plots(data = firms_fire_shpfile_trans_df_2002_2023_monthly_list,
-                         index = 27)
+                         index = 22)
+
 plot(st_convex_hull(st_union(firms_fire_shpfile_trans_df_2002_2023_monthly_list[[27]])), 
      add = T, border = 'red', col = alpha('red',.3))
 
