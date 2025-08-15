@@ -98,75 +98,47 @@ fire_color_condition_func <- function(data){
 roi <- readOGR('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/SANParks shapefiles/TMNR shapefile/tmnr_boundary.shp')
 roi_trans <- spTransform(roi, CRS('+proj=utm +zone=34 +south +datum=WGS84 +units=m +no_defs')) # convert coordinate system to EPSG:32734 (WGS 84 / UTM zone 34S)
 
-# identifying dupicates aerial imageries from 2014 to 2022
-duplicate_aerial_imageries_to_remove <- c('20140425', '20140612', '20140714', '20141002', '20150122', '20150223', '20150903',
-                                          '20161226', '20180319', '20181130', '20200425', '20210106', '20211224', '20220610', '20231003',
-                                          '20231206')
+# Import ATP data for consistent resampling
+ATP_filenames <- list.files('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Wildfire_Data_Stefan_2002-2022/WorldClim', pattern = '.tif')
+ATP_2002_2022 <- pblapply(seq_along(ATP_filenames), function(x) {raster(paste0('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Wildfire_Data_Stefan_2002-2022/WorldClim/', ATP_filenames[[x]]))})
 
-# LULC for resampling to obtain correct dimensions 
-load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/RAW/FINAL_LULC.Rdata', envir = .GlobalEnv)
+# import variables 
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/ConvLSTM data format/predictor_variables_long_2019_2020_val.RData')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/ConvLSTM data format/response_variable_long_2019_2020_val.RData')
+# 
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/ConvLSTM data format/predictor_variables_long_2021_2022_test.RData')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2002-2022/Rasterstack format/Normalised/ConvLSTM data format/response_variable_long_2021_2022_test.RData')
 
-# reading all the file names
-final_lulc_names <- sapply(seq_along(FINAL_LULC), function (x){sub('LULC ', '', FINAL_LULC[[x]]@file@name)})
+valXX <- predictor_variables_long_2019_2020_val
+dim(valXX) # (samples, time_steps, height, width, variables)- channels_last format
+valYY <- response_variable_long_2019_2020_val
+dim(valYY) # (samples, time_steps, height, width, variables)- channels_last format
 
-# removing the duplicate LULC
-LULC <- lapply(seq_along(which(!final_lulc_names %in% duplicate_aerial_imageries_to_remove)), 
-               function (x) {FINAL_LULC[[which(!final_lulc_names %in% duplicate_aerial_imageries_to_remove)[x]]]})
+testXX <- predictor_variables_long_2021_2022_test
+dim(testXX) # (samples, time_steps, height, width, variables)- channels_last format
+testYY <- response_variable_long_2021_2022_test
+dim(testYY) # (samples, time_steps, height, width, variables)- channels_last format
 
-# exclude 2023 period from LULC- we're only dealing with 108 periods now from 2014 to 2022
-LULC_2014_2022 <- lapply(1:108, function (x) {LULC[[x]]})
-
-lapply(1:108, function (x) {names(LULC_2014_2022[[x]]) <- LULC_2014_2022[[x]]@file@name
-names(LULC_2014_2022[[x]]) <<- gsub('[.]','', names(LULC_2014_2022[[x]]))}) # rename layers
-
-# Import fire data 
-load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/RAW/FIRE_DATA.Rdata', envir = .GlobalEnv)
-
-FIRE_2002_2022 <- lapply(1:252, function(x) {FIRE_DATA[[x]]})
-FIRE_2014_2022 <- lapply(145:252, function(x) {FIRE_2002_2022[[x]]})
-
-thresholds <- seq(0.4,0.7, by = .01) # threshold list
-
-load('Wildfire_Data_Stefan/main_training_results_2014_2022.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/ConvLSTM data format/predictor_variables_2019_2020_val.RData')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/ConvLSTM data format/response_variable_2019_2020_val.RData')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/ConvLSTM data format/predictor_variables_2021_2022_test.RData')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/ConvLSTM data format/response_variable_2021_2022_test.RData')
-
-predictor_variables_2019_2020_val_modified <- predictor_variables_2019_2020_val[,,,,-4, drop = F]
-valX <- predictor_variables_2019_2020_val_modified
-dim(valX) # (samples, time_steps, height, width, variables)- channels_last format
-valY <- response_variable_2019_2020_val
-dim(valY) # (samples, time_steps, height, width, variables)- channels_last format
-
-predictor_variables_2021_2022_test_modified <- predictor_variables_2021_2022_test[,,,,-4, drop = F]
-dim(predictor_variables_2021_2022_test_modified)
-testX <- predictor_variables_2021_2022_test_modified
-dim(testX) # (samples, time_steps, height, width, variables)- channels_last format
-testY <- response_variable_2021_2022_test
-dim(testY) # (samples, time_steps, height, width, variables)- channels_last format
-
-str(main_training_results)
 
 # Extract all the best validation MCCs from the different thresholds
-best_val_MCCs <- sapply(seq_along(main_training_results), function(x){main_training_results[[x]]$best_val_MCC})
+best_val_MCCs_long <- sapply(seq_along(main_training_results_long_df), function(x){main_training_results_long_df[[x]]$best_val_MCC})
 
 # Visualise the best validation MCCs of the best model for each threshold
-#...
-main_training_results[[1]]$history$metrics
-optimal_ConvLSTM_model_index <- which.max(best_val_MCCs)
+#....
 
-validation_metrics <- c(val_loss = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_loss[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
-                        val_binary_accuracy = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_binary_accuracy[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
-                        val_recall = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_recall[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
-                        val_precision = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_precision[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
-                        val_specificity = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_specificity[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
-                        val_f1_score = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
-                        val_MCC = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
-                        val_fn = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_fn[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
-                        val_fp = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_fp[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
-                        val_tn = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_tn[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
-                        val_tp = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_tp[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)])
+optimal_ConvLSTM_model_long_index <- which.max(best_val_MCCs_long)
+
+validation_metrics_long <- c(val_loss = main_training_results_long_df[[optimal_ConvLSTM_model_long_index]]$history$metrics$val_loss[which.max(main_training_results_long_df[[optimal_ConvLSTM_model_long_index]]$history$metrics$val_MCC)],
+                        val_binary_accuracy = main_training_results_long_df[[optimal_ConvLSTM_model_long_index]]$history$metrics$val_binary_accuracy[which.max(main_training_results_long_df[[optimal_ConvLSTM_model_long_index]]$history$metrics$val_MCC)],
+                        val_recall = main_training_results_long_df[[optimal_ConvLSTM_model_long_index]]$history$metrics$val_recall[which.max(main_training_results_long_df[[optimal_ConvLSTM_model_long_index]]$history$metrics$val_MCC)],
+                        val_precision = main_training_results_long_df[[optimal_ConvLSTM_model_long_index]]$history$metrics$val_precision[which.max(main_training_results_long_df[[optimal_ConvLSTM_model_long_index]]$history$metrics$val_MCC)],
+                        val_specificity = main_training_results_long_df[[optimal_ConvLSTM_model_long_index]]$history$metrics$val_specificity[which.max(main_training_results_long_df[[optimal_ConvLSTM_model_long_index]]$history$metrics$val_MCC)],
+                        val_f1_score = main_training_results_long_df[[optimal_ConvLSTM_model_long_index]]$history$metrics$val_f1_score[which.max(main_training_results_long_df[[optimal_ConvLSTM_model_long_index]]$history$metrics$val_MCC)],
+                        val_MCC = main_training_results_long_df[[optimal_ConvLSTM_model_long_index]]$history$metrics$val_MCC[which.max(main_training_results_long_df[[optimal_ConvLSTM_model_long_index]]$history$metrics$val_MCC)],
+                        val_fn = main_training_results_long_df[[optimal_ConvLSTM_model_long_index]]$history$metrics$val_fn[which.max(main_training_results_long_df[[optimal_ConvLSTM_model_long_index]]$history$metrics$val_MCC)],
+                        val_fp = main_training_results_long_df[[optimal_ConvLSTM_model_long_index]]$history$metrics$val_fp[which.max(main_training_results_long_df[[optimal_ConvLSTM_model_long_index]]$history$metrics$val_MCC)],
+                        val_tn = main_training_results_long_df[[optimal_ConvLSTM_model_long_index]]$history$metrics$val_tn[which.max(main_training_results_long_df[[optimal_ConvLSTM_model_long_index]]$history$metrics$val_MCC)],
+                        val_tp = main_training_results_long_df[[optimal_ConvLSTM_model_long_index]]$history$metrics$val_tp[which.max(main_training_results_long_df[[optimal_ConvLSTM_model_long_index]]$history$metrics$val_MCC)])
 
 
 
@@ -184,12 +156,13 @@ load_model_by_threshold <- function(file_path, t){
 
 
 # reading file names from folder if needed
-MODELS_PATH <- list.files('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Wildfire_Data_Stefan/Models/')
+MODELS_PATH_long <- list.files('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Wildfire_Data_Stefan_2002-2022/Models_long/')
 
-optimal_ConvLSTM_threshold <- main_training_results[[optimal_ConvLSTM_model_index]]$threshold
+# optimal_ConvLSTM_threshold_long <- main_training_results_long_df[[optimal_ConvLSTM_model_long_index]]$threshold
+optimal_ConvLSTM_threshold_long <- 0.62
 # Loading the BEST model from the optimal threshold
-optimal_ConvLSTM_model <- load_model_by_threshold(file_path = paste0('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Wildfire_Data_Stefan/Models/', MODELS_PATH[optimal_ConvLSTM_model_index]),
-                                                  t = optimal_ConvLSTM_threshold) # extract the threshold as part of the name to ensure consistency
+optimal_ConvLSTM_model_long <- load_model_by_threshold(file_path = paste0('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Wildfire_Data_Stefan_2002-2022/Models_long/', MODELS_PATH_long[13]), # forcing to use threshold 0.62 model
+                                                  t = optimal_ConvLSTM_threshold_long) # extract the threshold as part of the name to ensure consistency
 
 # Creating a function to calculate AUC_ROC and AUC_PR separately
 AUC_metrics <- function(best_model, true_dataX, true_dataY, threshold){
@@ -203,18 +176,18 @@ AUC_metrics <- function(best_model, true_dataX, true_dataY, threshold){
   return(c(AUC_ROC = AUC_ROC, AUC_PR = AUC_PR))
 }
 
-val_AUCs <- AUC_metrics(best_model = optimal_ConvLSTM_model, 
-                        true_dataX = valX, 
-                        true_dataY = valY, 
-                        threshold = optimal_ConvLSTM_threshold)
+val_AUCs_long <- AUC_metrics(best_model = optimal_ConvLSTM_model_long, 
+                        true_dataX = valXX, 
+                        true_dataY = valYY, 
+                        threshold = optimal_ConvLSTM_threshold_long)
 
 
 
 tensorflow::set_random_seed(1)
-val_acc_check <- optimal_ConvLSTM_model %>% evaluate(valX, valY)
+val_acc_check_long <- optimal_ConvLSTM_model_long %>% evaluate(valXX, valYY)
 
 # Check if the optimal model is correctly extracted to match the optimal outcome of the validation accuracy of the best model prior to loading the best model
-if(all(val_acc_check == validation_metrics)){
+if(all(val_acc_check_long == validation_metrics_long)){
   print('Verification Successful!')
 }else{
   print('Verification Unsuccessful!')
@@ -224,20 +197,20 @@ if(all(val_acc_check == validation_metrics)){
 # ?fit.keras.engine.training.Model
 # plot(history)
 tensorflow::set_random_seed(1)
-test_metrics <- optimal_ConvLSTM_model %>% evaluate(testX, testY);test_metrics
+test_metrics_long <- optimal_ConvLSTM_model_long %>% evaluate(testXX, testYY);test_metrics_long
 
-test_AUCs <- AUC_metrics(best_model = optimal_ConvLSTM_model, 
-                         true_dataX = testX, 
-                         true_dataY = testY, 
-                         threshold = optimal_ConvLSTM_threshold)
+test_AUCs_long <- AUC_metrics(best_model = optimal_ConvLSTM_model_long, 
+                         true_dataX = testXX, 
+                         true_dataY = testYY, 
+                         threshold = optimal_ConvLSTM_threshold_long)
 
 
 # fire predicted for 2021 and 2022 - This is where all the probabilities are stored
 tensorflow::set_random_seed(1)
-predicted <- optimal_ConvLSTM_model %>% predict(testX)
-dim(predicted)
-summary(predicted)
-# as.vector(predicted[1,15,,,1])[which(as.vector(testY[1,15,,,1])==1)]|>summary()
+predicted_long <- optimal_ConvLSTM_model_long %>% predict(testXX)
+dim(predicted_long)
+summary(predicted_long)
+# as.vector(predicted_long[1,15,,,1])[which(as.vector(testYY[1,15,,,1])==1)]|>summary()
 
 
 # creating time label
@@ -248,7 +221,7 @@ timesteps_labels <- c('Fire 2021-01', 'Fire 2021-02', 'Fire 2021-03', 'Fire 2021
 # Detect cores on system and create clusters
 cl <- makeCluster(detectCores() - 1)
 # To allow parallel processing in pbapply functions export items used in the function to the cluster
-clusterExport(cl, varlist = c("predicted", 'roi_trans', 'LULC_2014_2022', 'timesteps_labels', 'testY')) 
+clusterExport(cl, varlist = c("predicted_long", 'roi_trans', 'ATP_2002_2022', 'timesteps_labels', 'testYY')) 
 # Loading relevant packages on cluster
 clusterEvalQ(cl, {
   library(caret)
@@ -257,20 +230,20 @@ clusterEvalQ(cl, {
 })
 
 # Converting the predicted probabilities into their respective raster while cropping each raster to the study area
-predicted_raster_list <- pblapply(1:dim(predicted)[2],
+predicted_raster_list_long <- pblapply(1:dim(predicted_long)[2],
                                   function(x){
                                     index <- x
                                     
-                                    predicted_normal_Raster_format <- predicted[1, index, , , 1] # not rasterised yet!
+                                    predicted_normal_Raster_format <- predicted_long[1, index, , , 1] # not rasterised yet!
                                     dim(predicted_normal_Raster_format)
                                     
                                     # Rasterise predicted probabilities
                                     predicted_raster <- raster(predicted_normal_Raster_format, 
                                                                crs = crs(roi_trans), 
-                                                               xmn = extent(LULC_2014_2022[[1]])[1], #xmin 
-                                                               xmx = extent(LULC_2014_2022[[1]])[2], #xmax
-                                                               ymn = extent(LULC_2014_2022[[1]])[3], #ymin
-                                                               ymx = extent(LULC_2014_2022[[1]])[4] #ymax
+                                                               xmn = extent(ATP_2002_2022[[1]])[1], #xmin 
+                                                               xmx = extent(ATP_2002_2022[[1]])[2], #xmax
+                                                               ymn = extent(ATP_2002_2022[[1]])[3], #ymin
+                                                               ymx = extent(ATP_2002_2022[[1]])[4] #ymax
                                     ) |> mask(roi_trans) # mask to study area to remove unecessary probabiliities
                                     res(predicted_raster) <- 30 # update spatial resolution to 30m
                                     names(predicted_raster) <- timesteps_labels[index] # rename layer
@@ -279,16 +252,16 @@ predicted_raster_list <- pblapply(1:dim(predicted)[2],
                                   cl = cl) # parallelise computation
 
 # Converting the original fire test array for the test set into rasters again while cropping each raster to the study area
-true_test_raster_list <- pblapply(1:dim(testY)[2], function(x){
+true_test_raster_list_long <- pblapply(1:dim(testYY)[2], function(x){
   index <- x
-  y_true <- testY[1, index, , , 1] 
+  y_true <- testYY[1, index, , , 1] 
   # Rasterise fire test data restricted to roi
   y_true_raster <- raster(y_true, 
                           crs = crs(roi_trans), 
-                          xmn = extent(LULC_2014_2022[[1]])[1], #xmin 
-                          xmx = extent(LULC_2014_2022[[1]])[2], #xmax
-                          ymn = extent(LULC_2014_2022[[1]])[3], #ymin
-                          ymx = extent(LULC_2014_2022[[1]])[4] #ymax
+                          xmn = extent(ATP_2002_2022[[1]])[1], #xmin 
+                          xmx = extent(ATP_2002_2022[[1]])[2], #xmax
+                          ymn = extent(ATP_2002_2022[[1]])[3], #ymin
+                          ymx = extent(ATP_2002_2022[[1]])[4] #ymax
   ) |> mask(roi_trans) # mask to study area to remove unecessary probabiliities
   res(y_true_raster) <- 30 # update spatial resolution to 30m
   names(y_true_raster) <- timesteps_labels[index]  # rename layer
@@ -298,23 +271,23 @@ true_test_raster_list <- pblapply(1:dim(testY)[2], function(x){
 cl = cl)
 
 # create empty list to save threshold list and relevant metrics for each predicted rasters
-ConvLSTM_threshold_list <- list()
-ConvLSTM_specificity_list <- list()
-ConvLSTM_f1_score_list <- list()
-for (i in 1:length(predicted_raster_list)){
-  cat('Iteration ', i, ' out of ', length(predicted_raster_list), '\n')
+ConvLSTM_threshold_list_long <- list()
+ConvLSTM_specificity_list_long <- list()
+ConvLSTM_f1_score_list_long <- list()
+for (i in 1:length(predicted_raster_list_long)){
+  cat('Iteration ', i, ' out of ', length(predicted_raster_list_long), '\n')
   i <- i
   index <- i
-  # threshold <- seq(minValue(predicted_raster_list[[index]]), maxValue(predicted_raster_list[[index]]), by = 0.00001) # generate a sequence of threshold to classify response variable based on probability class
-  threshold <- optimal_ConvLSTM_threshold
+  # threshold <- seq(minValue(predicted_raster_list_long[[index]]), maxValue(predicted_raster_list_long[[index]]), by = 0.00001) # generate a sequence of threshold to classify response variable based on probability class
+  threshold <- optimal_ConvLSTM_threshold_long
   # To allow parallel processing in pbapply functions export items used in the function to the cluster
-  clusterExport(cl, varlist = c('predicted_raster_list', 'true_test_raster_list', 'threshold', 'index')) 
+  clusterExport(cl, varlist = c('predicted_raster_list_long', 'true_test_raster_list_long', 'threshold', 'index')) 
   
   # This function output the f1 score (if both classes exist) or specificity (if only the negative class exists) for each threshold generated for each test raster
   F1_SCORES_SPECIFICITY <- pbsapply(seq_along(threshold), function (x){
-    pred_class <- ifelse(as.vector(predicted_raster_list[[index]]) > threshold, 1, 0)
+    pred_class <- ifelse(as.vector(predicted_raster_list_long[[index]]) > threshold, 1, 0)
     confusion_matrix <- confusionMatrix(factor(as.vector(pred_class), levels = c('0','1')), 
-                                        factor(as.vector(true_test_raster_list[[index]]), 
+                                        factor(as.vector(true_test_raster_list_long[[index]]), 
                                                levels = c('0','1')), 
                                         positive = '1', 
                                         mode = 'everything') # apply threshold on positive class; 1 in this case
@@ -323,19 +296,22 @@ for (i in 1:length(predicted_raster_list)){
       c(Specificity=confusion_matrix$byClass['Specificity'][[1]])
       
     }else{ # if both classes are available, then use f1 score instead
-      c(F1_score=confusion_matrix$byClass['F1'][[1]])
+      if(is.na(confusion_matrix$byClass['F1'][[1]])){ # if F1 score is still NA due to poor thresholding then just use specificity
+        c(Specificity=confusion_matrix$byClass['Specificity'][[1]])
+      } else{c(F1_score=confusion_matrix$byClass['F1'][[1]])}
+      
     }
     
   }, cl = cl)
   
-  ConvLSTM_threshold_list[[i]] <- threshold
+  ConvLSTM_threshold_list_long[[i]] <- threshold
   
   if(names(F1_SCORES_SPECIFICITY)[1]=='Specificity'){ # if function outputs specificity
-    ConvLSTM_specificity_list[[i]] <- F1_SCORES_SPECIFICITY|>unname()
-    ConvLSTM_f1_score_list[[i]] <- NA
+    ConvLSTM_specificity_list_long[[i]] <- F1_SCORES_SPECIFICITY|>unname()
+    ConvLSTM_f1_score_list_long[[i]] <- NA
   }else{ # if function outputs f1 score
-    ConvLSTM_specificity_list[[i]] <- NA
-    ConvLSTM_f1_score_list[[i]] <- F1_SCORES_SPECIFICITY|>unname()
+    ConvLSTM_specificity_list_long[[i]] <- NA
+    ConvLSTM_f1_score_list_long[[i]] <- F1_SCORES_SPECIFICITY|>unname()
   }
   
 }
@@ -343,41 +319,41 @@ for (i in 1:length(predicted_raster_list)){
 stopCluster(cl)
 
 # creating empty list to save relevant output
-y_pred_raster_list <- list()
-ConvLSTM_metrics_list <- list()
-ConvLSTM_test_results <- NULL
-for(i in 1:length(ConvLSTM_f1_score_list)){
+y_pred_raster_list_long <- list()
+ConvLSTM_metrics_list_long <- list()
+ConvLSTM_test_results_long <- NULL
+for(i in 1:length(ConvLSTM_f1_score_list_long)){
   
-  cat('Iteration ', i, ' out of ', length(ConvLSTM_f1_score_list), '\n')
+  cat('Iteration ', i, ' out of ', length(ConvLSTM_f1_score_list_long), '\n')
   
   index <- i # index for each raster prediction
-  if(all(is.na(ConvLSTM_f1_score_list[[index]]))){ # if f1 score is irrelevant/NA
-    optimal_threshold <-  optimal_ConvLSTM_threshold # optimal threshold 
-    optimal_specificity <- ConvLSTM_specificity_list[[index]][which.max(ConvLSTM_specificity_list[[index]])]
+  if(all(is.na(ConvLSTM_f1_score_list_long[[index]]))){ # if f1 score is irrelevant/NA
+    optimal_threshold <- ConvLSTM_threshold_list_long[[index]][which.max(ConvLSTM_specificity_list_long[[index]])] # optimal threshold will be based on maximised specificity
+    optimal_specificity <- ConvLSTM_specificity_list_long[[index]][which.max(ConvLSTM_specificity_list_long[[index]])]
     optimal_F1_score <- NA
   }else{ # if specificity is irrelevant/NA
-    optimal_threshold <- optimal_ConvLSTM_threshold # optimal threshold  
-    optimal_F1_score <- ConvLSTM_f1_score_list[[index]][which.max(ConvLSTM_f1_score_list[[index]])] 
+    optimal_threshold <- ConvLSTM_threshold_list_long[[index]][which.max(ConvLSTM_f1_score_list_long[[index]])] # optimal threshold will be based on maximised f1 score
+    optimal_F1_score <- ConvLSTM_f1_score_list_long[[index]][which.max(ConvLSTM_f1_score_list_long[[index]])] 
     optimal_specificity <- NA
   }
   
   # predicted classes after optimal threshold is applied
-  y_pred <- ifelse(as.array(predicted_raster_list[[index]]) > optimal_threshold, 1, 0)
+  y_pred <- ifelse(as.array(predicted_raster_list_long[[index]]) > optimal_threshold, 1, 0)
   
   # Rasterise predicted classes after optimal threshold has been applied
   y_pred_raster <- raster(y_pred[,,1], 
                           crs = crs(roi_trans), 
-                          xmn = extent(LULC_2014_2022[[1]])[1], #xmin 
-                          xmx = extent(LULC_2014_2022[[1]])[2], #xmax
-                          ymn = extent(LULC_2014_2022[[1]])[3], #ymin
-                          ymx = extent(LULC_2014_2022[[1]])[4] #ymax
+                          xmn = extent(ATP_2002_2022[[1]])[1], #xmin 
+                          xmx = extent(ATP_2002_2022[[1]])[2], #xmax
+                          ymn = extent(ATP_2002_2022[[1]])[3], #ymin
+                          ymx = extent(ATP_2002_2022[[1]])[4] #ymax
   )|>mask(roi_trans)
   res(y_pred_raster) <- 30 # update spatial resolution to 30m
   names(y_pred_raster) <- paste0(timesteps_labels[index]," (predicted)")
   
   # generate confusion matrix with all metrics
   CM <- confusionMatrix(factor(as.vector(y_pred_raster), levels = c('0','1')),
-                        factor(as.vector(true_test_raster_list[[index]]), levels = c('0','1')), 
+                        factor(as.vector(true_test_raster_list_long[[index]]), levels = c('0','1')), 
                         positive = '1', mode = 'everything')
   
   if(sum(CM$table[,2])==0){ # if no fire events exist at all (i.e, raster has only negatives/0) 
@@ -386,18 +362,18 @@ for(i in 1:length(ConvLSTM_f1_score_list)){
     test_AUC_PR <- NA
     test_MCC <- NA
   }else{ # both positives and negatives exist
-    ROCR_test_prediction <- prediction(as.vector(y_pred_raster)|>na.omit()|>as.vector(), as.vector(true_test_raster_list[[index]])|>na.omit()|>as.vector())
+    ROCR_test_prediction <- prediction(as.vector(y_pred_raster)|>na.omit()|>as.vector(), as.vector(true_test_raster_list_long[[index]])|>na.omit()|>as.vector())
     test_AUC_ROC <- performance(ROCR_test_prediction, measure = 'auc')@y.values[[1]] # AUC_ROC
     test_AUC_PR <- performance(ROCR_test_prediction, measure = 'aucpr')@y.values[[1]] # AUC_PR
     # An MCC value of +1 indicates perfect agreement between the model's predictions and the actual labels, 
     # while -1 indicates total disagreement.
     # A value of 0 suggests the model performs no better than random guessing
-    test_MCC <- mcc(as.factor(as.vector(y_pred_raster)),as.factor(as.vector(true_test_raster_list[[index]]))) # test accuracy using matthew's correlation coefficient
+    test_MCC <- mcc(as.factor(as.vector(y_pred_raster)),as.factor(as.vector(true_test_raster_list_long[[index]]))) # test accuracy using matthew's correlation coefficient
     
   }
-  y_pred_raster_list[[i]] <- y_pred_raster
-  ConvLSTM_metrics_list[[i]] <- CM
-  ConvLSTM_test_results <- rbind(ConvLSTM_test_results, 
+  y_pred_raster_list_long[[i]] <- y_pred_raster
+  ConvLSTM_metrics_list_long[[i]] <- CM
+  ConvLSTM_test_results_long <- rbind(ConvLSTM_test_results_long, 
                                  tibble(optimal_threshold = optimal_threshold,
                                         overall_accuracy = CM$overall['Accuracy'][[1]],
                                         precision = CM$byClass['Precision'][[1]],
@@ -408,13 +384,13 @@ for(i in 1:length(ConvLSTM_f1_score_list)){
                                         AUC_PR = test_AUC_PR,
                                         MCC = test_MCC,
                                         fire_period = timesteps_labels[index],
-                                        true_fire_status = ifelse(maxValue(true_test_raster_list[[index]])==1, 
+                                        true_fire_status = ifelse(maxValue(true_test_raster_list_long[[index]])==1, 
                                                                   'positive',
                                                                   'negative')))
   
 }
 
-# View(ConvLSTM_test_results)
+# View(ConvLSTM_test_results_long)
 
 # creating a function for visualisation
 WS_visualisation <- function(true_raster, raster_with_probabilities, raster_factor, classes_breaks_method = c('natural_breaks', 'quantile')){
@@ -486,7 +462,7 @@ WS_visualisation <- function(true_raster, raster_with_probabilities, raster_fact
   # Visualising the fire data used as testY
   p1 <- tm_shape(true_raster)+
     tm_raster(style = "cat", title = "", palette = fire_color_condition_func(true_raster))+
-    tm_layout(main.title= 'True Fire map',
+    tm_layout(main.title= 'True Fire Status Map',
               main.title.size =.9,
               main.title.position = c("center", "top"),
               legend.outside = F,
@@ -498,7 +474,7 @@ WS_visualisation <- function(true_raster, raster_with_probabilities, raster_fact
   
   p2 <- tm_shape(raster_factor)+
     tm_raster(style = "cat", title = "", palette = fire_color_condition_func(raster_factor))+
-    tm_layout(main.title= 'Predicted Fire Map',
+    tm_layout(main.title= 'Predicted Fire Status Map',
               main.title.size =.9,
               main.title.position = c("center", "top"),
               legend.outside = F,
@@ -511,7 +487,7 @@ WS_visualisation <- function(true_raster, raster_with_probabilities, raster_fact
   # Visualise the sd of wildfire probabilities raster
   p3 <- tm_shape(raster_with_probabilities)+
     tm_raster(style = "sd", title = "", palette = '-RdBu')+
-    tm_layout(main.title= 'Standard Deviation Map',
+    tm_layout(main.title= 'SD Map',
               main.title.size =.9,
               main.title.position = c("center", "top"),
               legend.outside = F,
@@ -535,41 +511,37 @@ WS_visualisation <- function(true_raster, raster_with_probabilities, raster_fact
     tm_graticules(lines = F)
   # )
   
-  return(tmap_arrange(p1,p2,p3,p4, nrow = 2, ncol = 2)) 
+  maps <- tmap_arrange(p1,p2,p3,p4, nrow = 2, ncol = 2)
+  
+  return(maps) 
 }
 
 
 # VISUALISATION OF WSM ----------------------------------------------------
 
-call_fire_period <- 'Fire 2022-12'
+call_fire_period <- 'Fire 2021-04'
 
 # optmised_threshold_plot(fire_period = call_fire_period)
 
-# WS_visualisation(true_raster = true_test_raster_list[[which(timesteps_labels==call_fire_period)]], 
-#                  raster_with_probabilities = predicted_raster_list[[which(timesteps_labels==call_fire_period)]], 
-#                  raster_factor = y_pred_raster_list[[which(timesteps_labels==call_fire_period)]], 
-#                  classes_breaks_method = 'natural_breaks')
+WS_visualisation(true_raster = true_test_raster_list_long[[which(timesteps_labels==call_fire_period)]], 
+                 raster_with_probabilities = predicted_raster_list_long[[which(timesteps_labels==call_fire_period)]], 
+                 raster_factor = y_pred_raster_list_long[[which(timesteps_labels==call_fire_period)]], 
+                 classes_breaks_method = 'natural_breaks')
 
-WS_visualisation(true_raster = true_test_raster_list[[which(timesteps_labels==call_fire_period)]], 
-                 raster_with_probabilities = predicted_raster_list[[which(timesteps_labels==call_fire_period)]], 
-                 raster_factor = y_pred_raster_list[[which(timesteps_labels==call_fire_period)]], 
+WS_visualisation(true_raster = true_test_raster_list_long[[which(timesteps_labels==call_fire_period)]], 
+                 raster_with_probabilities = predicted_raster_list_long[[which(timesteps_labels==call_fire_period)]], 
+                 raster_factor = y_pred_raster_list_long[[which(timesteps_labels==call_fire_period)]], 
                  classes_breaks_method = 'quantile')
 
 # # save all results
 # save(
-#      predicted,
-#      predicted_raster_list,
-#      true_test_raster_list,
+#      predicted_long,
+#      predicted_raster_list_long,
+#      true_test_raster_list_long,
 #      ConvLSTM_threshold_list,
-#      ConvLSTM_specificity_list,
-#      ConvLSTM_f1_score_list,
-#      y_pred_raster_list,
-#      ConvLSTM_metrics_list,
-#      ConvLSTM_test_results,
+#      ConvLSTM_specificity_list_long,
+#      ConvLSTM_f1_score_list_long,
+#      y_pred_raster_list_long,
+#      ConvLSTM_metrics_list_long,
+#      ConvLSTM_test_results_long,
 #      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/ConvLSTM main subset results/ConvLSTM_main_outputs_on_subset.Rdata')
-
-
-
-
-
-
