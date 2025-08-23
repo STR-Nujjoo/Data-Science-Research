@@ -50,49 +50,51 @@ specificity_metric <- function(threshold){
   function(y_true, y_pred) {
     y_pred_binary <- k_cast(k_greater(y_pred, threshold), k_floatx())
     y_true_binary <- k_cast(y_true, k_floatx())
-    
+
     # True Negatives: predicted 0 and actual 0
     tn <- k_sum(k_cast(k_equal(y_pred_binary + y_true_binary, 0), k_floatx()))
-    
+
     # False Positives: predicted 1 but actual 0
     fp <- k_sum(k_cast(k_equal(y_pred_binary - y_true_binary, 1), k_floatx()))
-    
+
     specificity <- tn / (tn + fp + k_epsilon())  # Avoid division by zero
     return(specificity)
   }
 }
 
+
 # F1 score metric created for the Keras interface
 f1_score_metric <- function(threshold){
   function(y_true, y_pred) {
     y_pred_binary <- k_cast(k_greater(y_pred, threshold), k_floatx())
-    
+
     tp <- k_sum(y_true * y_pred_binary)
     fp <- k_sum((1 - y_true) * y_pred_binary)
     fn <- k_sum(y_true * (1 - y_pred_binary))
-    
+
     precision <- tp / (tp + fp + k_epsilon())
     recall <- tp / (tp + fn + k_epsilon())
-    
+
     f1 <- 2 * (precision * recall) / (precision + recall + k_epsilon())
     return(f1)
   } # checked! It is doing the right calculation
-  
+
 }
+
 
 # MCC metric created for the Keras interface
 mcc_metric <- function(threshold){
   function(y_true, y_pred) {
     y_pred_binary <- k_cast(k_greater(y_pred, threshold), k_floatx())
-    
+
     tp <- k_sum(y_true * y_pred_binary)
     tn <- k_sum((1 - y_true) * (1 - y_pred_binary))
     fp <- k_sum((1 - y_true) * y_pred_binary)
     fn <- k_sum(y_true * (1 - y_pred_binary))
-    
+
     numerator <- (tp * tn) - (fp * fn)
     denominator <- k_sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
-    
+
     return(numerator / (denominator + k_epsilon()))
   }
 }
@@ -341,10 +343,10 @@ ConvLSTM_framework <- function(t){
       custom_metric("specificity", metric_fn = specificity_metric(threshold = t)),
       custom_metric(name = 'f1_score', metric_fn = f1_score_metric(threshold = t)),
       custom_metric(name = 'MCC', metric_fn = mcc_metric(threshold = t)),
-      metric_false_negatives(name = 'fn'),
-      metric_false_positives(name = 'fp'),
-      metric_true_negatives(name = 'tn'),
-      metric_true_positives(name = 'tp')
+      metric_false_negatives(name = 'fn', thresholds = t),
+      metric_false_positives(name = 'fp', thresholds = t),
+      metric_true_negatives(name = 'tn', thresholds = t),
+      metric_true_positives(name = 'tp', thresholds = t)
     )
     
   )
@@ -353,7 +355,7 @@ ConvLSTM_framework <- function(t){
 
 main_training_results <- list()
 # thresholds <- seq(0.4,0.7, by = .01) # threshold list 
-thresholds <- c(0.5,0.51, 0.52)
+thresholds <- c(0.5,0.6)
 for(t in thresholds){
   cat("Training for threshold: ", t, "\n")
   
@@ -366,7 +368,7 @@ model_path <- paste0("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd 
   callback_list <- list(
     callback_early_stopping(
       monitor = "val_MCC",
-      min_delta = 0.0005,
+      min_delta = 0.1,
       patience = 50,           # number of epochs to wait for improvement
       mode = "max",            # because higher MCC is better
       restore_best_weights = TRUE
@@ -400,14 +402,14 @@ model_path <- paste0("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd 
   
 }
 
-save(main_training_results, file = '..directory.../main_training_results.Rdata')
+# save(main_training_results, file = '..directory.../main_training_results.Rdata')
 
 # Extract all the best validation MCCs from the different thresholds
 best_val_MCCs <- sapply(seq_along(main_training_results), function(x){main_training_results[[x]]$best_val_MCC})
 
 # Visualise the best validation MCCs of the best model for each threshold
 #....
-main_training_results[[1]]$history$metrics
+main_training_results[[2]]$history$metrics
 optimal_ConvLSTM_model_index <- which.max(best_val_MCCs)
 
 validation_metrics <- c(val_loss = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_loss[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
