@@ -411,6 +411,8 @@ FIRE_2014_2022 <- lapply(145:252, function(x) {FIRE_2002_2022[[x]]})
 # save(FIRE_2014_2022, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Individual raster format (not normalised)/FIRE_2014_2022.Rdata')
 # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Individual raster format (not normalised)/FIRE_2014_2022.Rdata')
 
+# Lagged fire data- 2013-12 to 2022-11
+LAGGED_FIRE_2014_2022 <-lapply(144:251, function(x){FIRE_DATA[[x]]})
 
 # # Visualising the fire data to check if everything is in order
 # lapply(seq_along(FIRE_2014_2022), function (x) {
@@ -461,11 +463,16 @@ slope_replicated_for_2014_to_2022_stack <- stack(slope_replicated_for_2014_to_20
 aspect_replicated_for_2014_to_2022_stack <- stack(aspect_replicated_for_2014_to_2022) |> resample(LULC_2014_2022[[1]], method = 'ngb') |> stack()
 # save(aspect_replicated_for_2014_to_2022_stack, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Not-Normalised/aspect_replicated_for_2014_to_2022_stack.Rdata')
 # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Not-Normalised/aspect_replicated_for_2014_to_2022_stack.Rdata')
+LAGGED_FIRE_2014_2022_stack <- stack(LAGGED_FIRE_2014_2022)|> resample(LULC_2014_2022[[1]], method = 'ngb') |> stack()
+# save(LAGGED_FIRE_2014_2022_stack, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Not-Normalised/LAGGED_FIRE_2014_2022_stack.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Not-Normalised/LAGGED_FIRE_2014_2022_stack.Rdata')
 
 # response variable 2014 to 2022
 FIRE_2014_2022_stack <- stack(FIRE_2014_2022) |> resample(LULC_2014_2022[[1]], method = 'ngb') |> stack()
 # save(FIRE_2014_2022_stack, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Not-Normalised/FIRE_2014_2022_stack.Rdata')
 # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Not-Normalised/FIRE_2014_2022_stack.Rdata')
+
+
 
 # RESAMPLED_FIRE_2014_2022_training_stack <- stack(RESAMPLED_FIRE_2014_2022_training_list) |> resample(LULC_2014_2022[[1]], method = 'ngb') |> stack()
 # save(RESAMPLED_FIRE_2014_2022_training_stack, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Not-Normalised/RESAMPLED_FIRE_2014_2022_training_stack.Rdata')
@@ -837,6 +844,26 @@ ASPECT_2021_2022_stack_norm_test <- pblapply(seq_along(ASPECT_2021_2022_stack_te
 # save(ASPECT_2021_2022_stack_norm_test, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/Test Set/ASPECT_2021_2022_stack_norm_test.Rdata')
 # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/Test Set/ASPECT_2021_2022_stack_norm_test.Rdata')
 
+LAGGED_FIRE_2014_2022_stack_train <-pblapply(1:60, # 2013-12-2018-11: lagged FIRE training set 
+                                             function(x) {LAGGED_FIRE_2014_2022_stack[[x]]}) |> stack()
+LAGGED_FIRE_2014_2022_stack_norm_train <- pblapply(seq_along(LAGGED_FIRE_2014_2022_stack_train@layers), # 2013-12-2018-11: lagged FIRE training set normalised
+         function(x) {raster_stack_minmax_norm(LAGGED_FIRE_2014_2022_stack_train, x)}) |> stack()
+# save(LAGGED_FIRE_2014_2022_stack_norm_train, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/Test Set/LAGGED_FIRE_2014_2022_stack_norm_train.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/Test Set/LAGGED_FIRE_2014_2022_stack_norm_train.Rdata')
+
+LAGGED_FIRE_2014_2022_stack_val <-pblapply(61:84, # 2018-12-2020-11: lagged FIRE validation set 
+                                             function(x) {LAGGED_FIRE_2014_2022_stack[[x]]}) |> stack()
+LAGGED_FIRE_2014_2022_stack_norm_val <- pblapply(seq_along(LAGGED_FIRE_2014_2022_stack_val@layers), # 2018-12-2020-11: lagged FIRE training set normalised
+                                                   function(x) {raster_stack_minmax_norm(LAGGED_FIRE_2014_2022_stack_val, x)}) |> stack()
+# save(LAGGED_FIRE_2014_2022_stack_norm_val, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/Test Set/LAGGED_FIRE_2014_2022_stack_norm_val.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/Test Set/LAGGED_FIRE_2014_2022_stack_norm_val.Rdata')
+
+LAGGED_FIRE_2014_2022_stack_test <-pblapply(85:108, # 2020-12-2022-11: lagged FIRE test set 
+                                           function(x) {LAGGED_FIRE_2014_2022_stack[[x]]}) |> stack()
+LAGGED_FIRE_2014_2022_stack_norm_test <- pblapply(seq_along(LAGGED_FIRE_2014_2022_stack_test@layers), # 2020-12-2022-11: lagged FIRE training set normalised
+                                                 function(x) {raster_stack_minmax_norm(LAGGED_FIRE_2014_2022_stack_test, x)}) |> stack()
+# save(LAGGED_FIRE_2014_2022_stack_norm_test, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/Test Set/LAGGED_FIRE_2014_2022_stack_norm_test.Rdata')
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/Test Set/LAGGED_FIRE_2014_2022_stack_norm_test.Rdata')
 
 FIRE_2014_2018_stack_train <- pblapply(1:60, # 2014-2018: FIRE training set 
                                       function(x) {FIRE_2014_2022_stack[[x]]}) |> stack()
@@ -845,6 +872,7 @@ FIRE_2014_2018_stack_norm_train <- pblapply(seq_along(FIRE_2014_2018_stack_train
 
 # save(FIRE_2014_2018_stack_norm_train, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/Training Set/FIRE_2014_2018_stack_norm_train.Rdata')
 # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Normalised/Training Set/FIRE_2014_2018_stack_norm_train.Rdata')
+
 
 FIRE_2019_2020_stack_val <- pblapply(61:84, # 2019-2020: FIRE validation set 
                                     function(x) {FIRE_2014_2022_stack[[x]]}) |> stack()
@@ -1276,6 +1304,69 @@ Dec_covariate_stack_val <- pblapply(seq_along(focused_validation_timeframe), fun
                    focused_month = seq(as.Date("2019-12-01"), as.Date("2020-12-01"), by="12 month"))})|>stack()
 
 
+# monthly covariate stack for validation set
+focused_testing_timeframe <- seq(as.Date("2021-01-01"), as.Date("2022-12-01"), by="1 month") 
+
+Jan_covariate_stack_test <- pblapply(seq_along(focused_testing_timeframe), function(x){
+  create_covariate(index=x, 
+                   focused_timeframe = focused_testing_timeframe,
+                   focused_month = seq(as.Date("2021-01-01"), as.Date("2022-12-01"), by="12 month"))})|>stack()
+
+Feb_covariate_stack_test <- pblapply(seq_along(focused_testing_timeframe), function(x){
+  create_covariate(index=x, 
+                   focused_timeframe = focused_testing_timeframe,
+                   focused_month = seq(as.Date("2021-02-01"), as.Date("2022-12-01"), by="12 month"))})|>stack()
+
+Mar_covariate_stack_test <- pblapply(seq_along(focused_testing_timeframe), function(x){
+  create_covariate(index=x, 
+                   focused_timeframe = focused_testing_timeframe,
+                   focused_month = seq(as.Date("2021-03-01"), as.Date("2022-12-01"), by="12 month"))})|>stack()
+
+Apr_covariate_stack_test <- pblapply(seq_along(focused_testing_timeframe), function(x){
+  create_covariate(index=x, 
+                   focused_timeframe = focused_testing_timeframe,
+                   focused_month = seq(as.Date("2021-04-01"), as.Date("2022-12-01"), by="12 month"))})|>stack()
+
+May_covariate_stack_test <- pblapply(seq_along(focused_testing_timeframe), function(x){
+  create_covariate(index=x, 
+                   focused_timeframe = focused_testing_timeframe,
+                   focused_month = seq(as.Date("2021-05-01"), as.Date("2022-12-01"), by="12 month"))})|>stack()
+
+Jun_covariate_stack_test <- pblapply(seq_along(focused_testing_timeframe), function(x){
+  create_covariate(index=x, 
+                   focused_timeframe = focused_testing_timeframe,
+                   focused_month = seq(as.Date("2021-06-01"), as.Date("2022-12-01"), by="12 month"))})|>stack()
+
+Jul_covariate_stack_test <- pblapply(seq_along(focused_testing_timeframe), function(x){
+  create_covariate(index=x, 
+                   focused_timeframe = focused_testing_timeframe,
+                   focused_month = seq(as.Date("2021-07-01"), as.Date("2022-12-01"), by="12 month"))})|>stack()
+
+Aug_covariate_stack_test <- pblapply(seq_along(focused_testing_timeframe), function(x){
+  create_covariate(index=x, 
+                   focused_timeframe = focused_testing_timeframe,
+                   focused_month = seq(as.Date("2021-08-01"), as.Date("2022-12-01"), by="12 month"))})|>stack()
+
+Sep_covariate_stack_test <- pblapply(seq_along(focused_testing_timeframe), function(x){
+  create_covariate(index=x, 
+                   focused_timeframe = focused_testing_timeframe,
+                   focused_month = seq(as.Date("2021-09-01"), as.Date("2022-12-01"), by="12 month"))})|>stack()
+
+Oct_covariate_stack_test <- pblapply(seq_along(focused_testing_timeframe), function(x){
+  create_covariate(index=x, 
+                   focused_timeframe = focused_testing_timeframe,
+                   focused_month = seq(as.Date("2021-10-01"), as.Date("2022-12-01"), by="12 month"))})|>stack()
+
+Nov_covariate_stack_test <- pblapply(seq_along(focused_testing_timeframe), function(x){
+  create_covariate(index=x, 
+                   focused_timeframe = focused_testing_timeframe,
+                   focused_month = seq(as.Date("2021-11-01"), as.Date("2022-12-01"), by="12 month"))})|>stack()
+
+Dec_covariate_stack_test <- pblapply(seq_along(focused_testing_timeframe), function(x){
+  create_covariate(index=x, 
+                   focused_timeframe = focused_testing_timeframe,
+                   focused_month = seq(as.Date("2021-12-01"), as.Date("2022-12-01"), by="12 month"))})|>stack()
+
 # Reshape for ConvLSTM format  --------------------------------------------
 # Full training set 2014-2022 dataframe
 predictor_variables_2014_2018_train <- abind(LULC_2014_2018_stack_norm_train|> as.array(),
@@ -1289,7 +1380,9 @@ predictor_variables_2014_2018_train <- abind(LULC_2014_2018_stack_norm_train|> a
                                        ELEV_2014_2018_stack_norm_train|> as.array(),
                                        SLOPE_2014_2018_stack_norm_train|> as.array(),
                                        ASPECT_2014_2018_stack_norm_train|> as.array(),
-                                       # adding covariates to training set
+                                       # adding monthly lag to training set
+                                       LAGGED_FIRE_2014_2022_stack_norm_train|> as.array(),
+                                       # adding seasonal covariates to training set
                                        Jan_covariate_stack_train|> as.array(),
                                        Feb_covariate_stack_train|> as.array(),
                                        Mar_covariate_stack_train|> as.array(),
@@ -1340,7 +1433,9 @@ predictor_variables_2019_2020_val <- abind(LULC_2019_2020_stack_norm_val|> as.ar
                                              ELEV_2019_2020_stack_norm_val|> as.array(),
                                              SLOPE_2019_2020_stack_norm_val|> as.array(),
                                              ASPECT_2019_2020_stack_norm_val|> as.array(),
-                                           # adding covariates to training set
+                                           # adding seasonal covariates to validation set
+                                           LAGGED_FIRE_2014_2022_stack_norm_val|> as.array(),
+                                           # adding covariates to validation set
                                            Jan_covariate_stack_val|> as.array(),
                                            Feb_covariate_stack_val|> as.array(),
                                            Mar_covariate_stack_val|> as.array(),
@@ -1383,6 +1478,21 @@ predictor_variables_2021_2022_test <- abind(LULC_2021_2022_stack_norm_test|> as.
                                            ELEV_2021_2022_stack_norm_test|> as.array(),
                                            SLOPE_2021_2022_stack_norm_test|> as.array(),
                                            ASPECT_2021_2022_stack_norm_test|> as.array(),
+                                           # adding seasonal covariates to test set
+                                           LAGGED_FIRE_2014_2022_stack_norm_test|> as.array(),
+                                           # adding covariates to test set
+                                           Jan_covariate_stack_test|> as.array(),
+                                           Feb_covariate_stack_test|> as.array(),
+                                           Mar_covariate_stack_test|> as.array(),
+                                           Apr_covariate_stack_test|> as.array(),
+                                           May_covariate_stack_test|> as.array(),
+                                           Jun_covariate_stack_test|> as.array(),
+                                           Jul_covariate_stack_test|> as.array(),
+                                           Aug_covariate_stack_test|> as.array(),
+                                           Sep_covariate_stack_test|> as.array(),
+                                           Oct_covariate_stack_test|> as.array(),
+                                           Nov_covariate_stack_test|> as.array(),
+                                           Dec_covariate_stack_test|> as.array(),
                                            along = 4) |> # Shape: ([1] height/row, [2] width/column, [3] time_steps, [4] variables/channels)
   aperm(c(3,1,2,4))  # Reorder shape: (time_steps, height, width, variables)- channels_last format
 
