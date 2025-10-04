@@ -319,17 +319,37 @@ ConvLSTM_framework <- function(t){
     # dropout
     layer_dropout(rate = 0.2) %>%
     
+    # # add 3D convolution- may be too redundant
+    # layer_conv_3d(filters = 64,
+    #               kernel_size = c(3,3,3),
+    #               activation = "tanh",
+    #               padding = "same") %>%
+    
+    # add 2D convolution
+    time_distributed(layer_conv_2d(filters = 64,
+                  kernel_size = c(3,3),
+                  activation = "tanh",
+                  padding = "same"))%>%
+    
+    layer_batch_normalization() %>%
+    
     # # Dense layers
     time_distributed(layer_dense(units = 50, activation = "tanh")) %>%
     
     # dropout
     layer_dropout(rate = 0.5) %>%
     
+    # Output layer
+    time_distributed(layer_dense(units = 1, activation = "sigmoid")) 
     
-    # # Output layer
-    time_distributed(layer_dense(units = 1, activation = "sigmoid"))
+
+    
+   # layer_reshape(target_shape = c(372, 382, 24))
   
-  focal_loss_fn_alpha_0_9_gamma_2 <- focal_loss_fn(alpha = 0.9, gamma = 2)
+  
+
+  
+  focal_loss_fn_alpha_0_9_gamma_2 <- focal_loss_fn(alpha = 0.6, gamma = 2)
   # Compile the ConvLSTM_model
   tensorflow::set_random_seed(1)
   ConvLSTM_model %>% compile(
@@ -352,10 +372,12 @@ ConvLSTM_framework <- function(t){
   )
 }
 # ?compile.keras.engine.training.Model
+M <- ConvLSTM_framework(t = 0.5)
+M %>% summary()
 
 main_training_results <- list()
 # thresholds <- seq(0.4,0.7, by = .01) # threshold list 
-thresholds <- c(0.5,0.6)
+thresholds <- c(0.6)
 for(t in thresholds){
   cat("Training for threshold: ", t, "\n")
   
@@ -434,7 +456,7 @@ load_model_by_threshold <- function(file_path, t){
                        custom_objects = list(specificity = specificity_metric(threshold = t),
                                              f1_score = f1_score_metric(threshold = t),
                                              MCC = mcc_metric(threshold = t),
-                                             focal_loss_fn_alpha_0_9_gamma_2 = focal_loss_fn(alpha = 0.9, gamma = 2)),
+                                             focal_loss_fn_alpha_0_9_gamma_2 = focal_loss_fn(alpha = 0.6, gamma = 2)),
                        compile = T)
 }
 
@@ -797,7 +819,7 @@ WS_visualisation <- function(true_raster, raster_with_probabilities, raster_fact
 
 # VISUALISATION OF WSM ----------------------------------------------------
 
-call_fire_period <- 'Fire 2022-03'
+call_fire_period <- 'Fire 2022-06'
 
 # optmised_threshold_plot(fire_period = call_fire_period)
 

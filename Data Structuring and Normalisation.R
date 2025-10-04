@@ -465,7 +465,7 @@ aspect_replicated_for_2014_to_2022_stack <- stack(aspect_replicated_for_2014_to_
 # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Not-Normalised/aspect_replicated_for_2014_to_2022_stack.Rdata')
 LAGGED_FIRE_2014_2022_stack <- stack(LAGGED_FIRE_2014_2022)|> resample(LULC_2014_2022[[1]], method = 'ngb') |> stack()
 # save(LAGGED_FIRE_2014_2022_stack, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Not-Normalised/LAGGED_FIRE_2014_2022_stack.Rdata')
-# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Not-Normalised/LAGGED_FIRE_2014_2022_stack.Rdata')
+load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Not-Normalised/LAGGED_FIRE_2014_2022_stack.Rdata')
 
 # response variable 2014 to 2022
 FIRE_2014_2022_stack <- stack(FIRE_2014_2022) |> resample(LULC_2014_2022[[1]], method = 'ngb') |> stack()

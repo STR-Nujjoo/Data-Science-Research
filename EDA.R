@@ -358,4 +358,590 @@ plotRGB(good_AI, r=3 , g=2 , b=1,
         main = paste0(as.Date(str_extract(good_AI@file@name, "\\d{8}"), format = '%Y%m%d')),
         cex.main = .8)
 
+# FIRE EDA
+
+# Import TMNR shapefile 
+roi <- readOGR('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/SANParks shapefiles/TMNR shapefile/tmnr_boundary.shp')
+roi_trans <- spTransform(roi, CRS('+proj=utm +zone=34 +south +datum=WGS84 +units=m +no_defs')) # convert coordinate system to EPSG:32734 (WGS 84 / UTM zone 34S)
+
+# Import SANPARK fire data
+sanpark_fire_data <- list.files('Raw Data/SANParks fire data/1962-2022', pattern = '.shp')
+sanpark_fire_data <- sanpark_fire_data[seq(1, length(sanpark_fire_data), by = 2)]
+
+sanpark_fire_shpfile_list <- pblapply(seq_along(sanpark_fire_data), function(x){
+  readOGR(paste0('Raw Data/SANParks fire data/1962-2022/', sanpark_fire_data[x]))
+}) # read in all shapefiles in a list
+
+
+# Rearrange data columns for consistency and assign original coordinate system to shapefiles
+sanpark_fire_shpfile_df_list <- pblapply(seq_along(sanpark_fire_data), function(x) {
+  proj4string(sanpark_fire_shpfile_list[[x]]) <- '+proj=tmerc +lat_0=0 +lon_0=19 +k=1 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs' # Lo19 Hartebbesthoek94
+  st_as_sf(sanpark_fire_shpfile_list[[x]])  %>% # convert spatial features to data frame
+    select(FIRETYPE, FIRECAUSE, YEAR, 
+           STARTDATE,XHECTARES, geometry)})
+
+# Merge all the shapefiles
+sanpark_fire_shpfile_combind_list <- do.call(rbind,sanpark_fire_shpfile_df_list)
+
+sanpark_fire_shpfile_combind_list_fixed <- st_buffer(sanpark_fire_shpfile_combind_list, dist = 0) # hack to fix geometry
+sanpark_fire_shpfile_combind_list_fixed <- as(sanpark_fire_shpfile_combind_list_fixed, 'Spatial') # convert dataframe back to spatial features
+sanpark_fire_shpfile_combind_list_trans <- spTransform(sanpark_fire_shpfile_combind_list_fixed, CRS(proj4string(roi_trans))) # convert coordinate system to EPSG:32734 (WGS 84 / UTM zone 34S)
+sanpark_fire_shpfile_combind_list_trans_intersect <- intersect(sanpark_fire_shpfile_combind_list_trans, roi_trans) # crop polygon to ROI
+
+# Cleaning data
+sanpark_fire_shpfile_combind_list_trans_intersect <- st_as_sf(sanpark_fire_shpfile_combind_list_trans_intersect) %>% # convert spatial feature to spatial dataframe
+  mutate(FIRECAUSE = case_when(FIRECAUSE == "Accident"~"Accident",
+                               FIRECAUSE == "Accident - Vagrants"~"Vagrant",
+                               FIRECAUSE == "Arson"~"Arson",
+                               FIRECAUSE == "Arson - Vagrants" ~ "Vagrant",
+                               FIRECAUSE == "Lighting Strike" ~ "Lightning Strike",
+                               FIRECAUSE == "Lightning Strike" ~ "Lightning Strike",
+                               FIRECAUSE == "Prescribed"~"Prescribed",
+                               FIRECAUSE == "Prescribed Burn"~"Prescribed",
+                               FIRECAUSE == "Prescribed burn"~"Prescribed",
+                               FIRECAUSE == "prescribed burn"~"Prescribed",
+                               FIRECAUSE == "unknown"~"Unknown",
+                               FIRECAUSE == "Unknown"~"Unknown",
+                               FIRECAUSE == "Vagrant"~"Vagrant",
+                               FIRECAUSE == "Wildfire"~"Wildfire",
+                               FIRECAUSE == "Wild Fire"~"Wildfire",
+                               FIRECAUSE == "negligence"~"negligence"),
+         
+         FIRETYPE = case_when(FIRETYPE=="cigarette"~"Cigarette",
+                              FIRETYPE=="Prescribed"~"Prescribed",
+                              FIRETYPE == "Prescribed Burn"~"Prescribed",
+                              FIRETYPE == "Prescribed burn"~"Prescribed",
+                              FIRETYPE=="unknown"~"Unknown",
+                              FIRETYPE == "Unknown"~"Unknown",
+                              FIRETYPE=="wildfire"~"Wildfire",
+                              FIRETYPE=="Wild Fire"~"Wildfire",
+                              FIRETYPE=="Wildfire"~"Wildfire",
+                              FIRETYPE=="WildFire"~"Wildfire"))  %>%
+  
+  mutate(STARTDATE = as.Date(STARTDATE, format = '%Y%m%d'), # reformat date
+         STARTDATE = case_when(STARTDATE== as.Date('2020-12-17', format = '%Y-%m-%d')~as.Date('2021-04-18', format = '%Y-%m-%d'), # correct erroneous entry
+                               T ~ as.Date(STARTDATE, format = '%Y%m%d')),
+         YEARMONTH = format(as.Date(STARTDATE), '%Y-%m') |> as.factor(), # extract year and month
+         YEAR_extract = year(STARTDATE) |> as.factor(), # extract year only 
+         Area_calc_in_ha = as.numeric(st_area(geometry)/10000)) %>% # calculate missing areas in ha
+  arrange(STARTDATE) %>% # rearrange date in correct order
+  select(-YEAR, -XHECTARES) %>% # remove supplied year as it creates confusion as in the year for2007-11-30 will be 2008 (we want to keep the year!)
+  as('Spatial') # convert dataframe to spatial feature again
+
+# View(st_as_sf(sanpark_fire_shpfile_combind_list_trans_intersect))
+
+# Removing prescribed burning from burnt area
+sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed <- st_as_sf(sanpark_fire_shpfile_combind_list_trans_intersect) %>%
+  filter(FIRECAUSE!="Prescribed") %>%
+  as('Spatial')
+
+# View(st_as_sf(sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed))
+
+rasterise_polygons <- function(study_area, polygon_shapefile, index, resolution, plot = NULL){
+  empty_raster <- raster(extent(study_area), res = resolution) # creating empty raster with 30x30 spatial resolution
+  crs(empty_raster) <- crs(study_area) # assigning crs to empty raster
+  # rasterise polygon shape file with 1s and 0s
+  rasterised_polygon <- rasterize(polygon_shapefile[index,], 
+                                  empty_raster,
+                                  field = 1,
+                                  background = 0) |>
+    crop(study_area) |>
+    mask(study_area) |>
+    ratify() # make raster as a factor
+  
+  levels(rasterised_polygon) <- data.frame(ID = c(0, 1), fire_status = c("No Fire", "Fire")) # redefine levels
+  
+  if(plot ==T){
+    plot(rasterised_polygon, col= c('lightgray','red'), main = polygon_shapefile[index,]@data$YEARMONTH[1], legend = F)
+    plot(study_area, col = 'transparent', border = 'black', lwd = 1,
+         add = T)
+  }
+  return(rasterised_polygon)
+}
+
+# rasterise all fire polygons
+sanpark_all_historical_fire_raster_list <- pblapply(seq_along(sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed), function(x){
+  rasterise_polygons(study_area = roi_trans,
+                     polygon_shapefile = sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed,
+                     index = x,
+                     resolution = 30,
+                     plot = T)
+})
+
+
+# rename SANparks fire rasters 
+pblapply(seq_along(sanpark_all_historical_fire_raster_list), function(x){names(sanpark_all_historical_fire_raster_list[[x]]) <<- paste0("Fire Event ", seq_along(sanpark_all_historical_fire_raster_list)[x])})
+
+sanpark_all_historical_fire_raster_stack <- stack(sanpark_all_historical_fire_raster_list)
+sanpark_all_historical_fire_raster_stack_df <- as.data.frame(sanpark_all_historical_fire_raster_stack, xy = T, na.rm = T)
+str(sanpark_all_historical_fire_raster_stack_df)
+
+# sanpark_all_historical_fire_raster_stack_df <- ifelse(sanpark_all_historical_fire_raster_stack_df == 'No Fire',NA,1)
+# str(sanpark_all_historical_fire_raster_stack_df)
+
+# separate the xy coordinates
+sanpark_all_historical_fire_raster_stack_dfxy <- sanpark_all_historical_fire_raster_stack_df[,c('x','y')]
+# redefine no fire to 0 and fire to 1
+sanpark_all_historical_fire_raster_stack_df_var <- sanpark_all_historical_fire_raster_stack_df[,-(1:2)]
+sanpark_all_historical_fire_raster_stack_df_var <- ifelse(sanpark_all_historical_fire_raster_stack_df_var=='No Fire',0,1)
+# View(sanpark_all_historical_fire_raster_stack_df_var)
+
+# sum the number of times a fire occur at each pixel location
+sanpark_all_historical_fire_raster_stack_dfxy$fire_frequency <- rowSums(sanpark_all_historical_fire_raster_stack_df_var,na.rm =T)|>as.factor()
+# str(sanpark_all_historical_fire_raster_stack_dfxy$fire_frequency)
+
+unique(sanpark_all_historical_fire_raster_stack_dfxy$fire_frequency)
+
+# ggplot()+
+#   geom_raster(data = sanpark_all_historical_fire_raster_stack_dfxy, aes(x = x, y = y, fill = fire_frequency))+
+#   scale_fill_viridis_d(option = "plasma", direction = -1) +
+#   theme_bw()+
+#   theme(legend.title = element_blank())
+
+
+library(viridisLite)
+plasma_mod <- plasma(12,direction = -1) # importing palette
+plasma_mod[1] <- 'lightgreen' # customising palette
+
+historical_fire_frequency_map <- tm_shape(rasterFromXYZ(sanpark_all_historical_fire_raster_stack_dfxy, res = c(30,30), crs = crs(roi_trans))) +
+  tm_raster(
+    col = "fire_frequency",
+    palette = plasma_mod,   
+    style = "cat",          # categorical style (discrete)
+    title = "1964-2022\nFire Frequency"
+  ) +
+  tm_graticules(lines = F)+
+  tm_layout(legend.text.size = 0.5, legend.title.size = 0.6)
+
+# Save the map as a PDF
+# tmap_save(historical_fire_frequency_map, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/EDA plots/historical_fire_frequency_map.pdf", width = 4, height = 4)
+
+
+sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed_2014_2022 <- st_as_sf(sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed) %>%
+  filter(YEAR_extract %in% 2014:2022) %>%
+  as('Spatial') # convert dataframe to spatial feature again
+
+sanpark_20142022_historical_fire_raster_list <- pblapply(seq_along(sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed_2014_2022), function(x){
+  rasterise_polygons(study_area = roi_trans,
+                     polygon_shapefile = sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed_2014_2022,
+                     index = x,
+                     resolution = 30,
+                     plot = F)
+})
+
+# rename SANparks fire rasters 
+pblapply(seq_along(sanpark_20142022_historical_fire_raster_list), function(x){names(sanpark_20142022_historical_fire_raster_list[[x]]) <<- paste0("Fire Event ", seq_along(sanpark_20142022_historical_fire_raster_list)[x])})
+
+sanpark_20142022_historical_fire_raster_stack <- stack(sanpark_20142022_historical_fire_raster_list)
+sanpark_20142022_historical_fire_raster_stack_df <- as.data.frame(sanpark_20142022_historical_fire_raster_stack, xy = T, na.rm = T)
+# str(sanpark_20142022_historical_fire_raster_stack_df)
+
+# separate the xy coordinates
+sanpark_20142022_historical_fire_raster_stack_dfxy <- sanpark_20142022_historical_fire_raster_stack_df[,c('x','y')]
+
+# redefine no fire to 0 and fire to 1
+sanpark_20142022_historical_fire_raster_stack_df_var <- sanpark_20142022_historical_fire_raster_stack_df[,-(1:2)]
+sanpark_20142022_historical_fire_raster_stack_df_var <- ifelse(sanpark_20142022_historical_fire_raster_stack_df_var=='No Fire',0,1)
+# View(sanpark_20142022_historical_fire_raster_stack_df_var)
+
+# sum the number of times a fire occur at each pixel location
+sanpark_20142022_historical_fire_raster_stack_dfxy$fire_frequency <- rowSums(sanpark_20142022_historical_fire_raster_stack_df_var, na.rm = T)|>as.factor()
+str(sanpark_20142022_historical_fire_raster_stack_dfxy)
+
+unique(sanpark_20142022_historical_fire_raster_stack_dfxy$fire_frequency)
+
+
+historical_2014_2022_fire_frequency_map <- tm_shape(rasterFromXYZ(sanpark_20142022_historical_fire_raster_stack_dfxy, res = c(30,30), crs = crs(roi_trans))) +
+  tm_raster(
+    col = "fire_frequency",
+    palette = plasma_mod,   
+    style = "cat",          # categorical style (discrete)
+    title = "2014-2022\nFire Frequency"
+  ) +
+  tm_graticules(lines = F)+
+  tm_layout(legend.text.size = 0.5, legend.title.size = 0.6)
+
+# Save the map as a PDF
+# tmap_save(historical_2014_2022_fire_frequency_map, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/EDA plots/historical_2014_2022_fire_frequency_map.pdf", width = 4, height = 4)
+
+
+LULC_ref_map <- tm_shape(FINAL_LULC[[122]])+
+  tm_raster(style = "cat", title = "", palette = c('#883C07', '#00734C', '#D1FF73', '#70A800', '#00A9E6'))+
+  tm_layout(
+    # main.title= FINAL_LULC[[122]]@file@name,
+            # main.title.size =.9,
+            # main.title.position = c("center", "top"),
+            legend.outside = F,
+            legend.text.size = 0.5)+
+  tm_graticules(lines = F)
+
+
+fff_map <- tmap_arrange(historical_fire_frequency_map,
+             historical_2014_2022_fire_frequency_map,
+             LULC_ref_map,
+             ncol = 2,
+             nrow=2)
+tmap_save(fff_map, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/EDA plots/fff_map_map.pdf", width = 6.56, height = 6)
+
+ff_map <- tmap_arrange(historical_fire_frequency_map,
+                        historical_2014_2022_fire_frequency_map,
+                        # LULC_ref_map,
+                        ncol = 2,
+                        nrow=1)
+tmap_save(ff_map, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/EDA plots/ff_map.pdf", width = 6.56, height = 2.9)
+
+
+
+# dataset preparation
+all_monthly_fire_list <- pblapply(c(1:6,8:12), function(x){ # note that July never had a fire
+  sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed%>%
+    st_as_sf()%>%
+    mutate(MONTH = as.numeric(format(STARTDATE, "%m"))) %>%
+    filter(MONTH == x) %>%
+    as('Spatial')
+})
+
+# Function to calculate frequency of fire over a timeframe per month
+FIRE_FREQ <- function(data, month){
+  # rasterise all fire polygons on a monthly basis
+  rasterising_poly <- pblapply(seq_along(data[[month]]), function(x){
+    rasterise_polygons(study_area = roi_trans,
+                       polygon_shapefile = data[[month]],
+                       index = x,
+                       resolution = 30,
+                       plot = T)
+  })
+  # rename SANparks fire rasters 
+  pblapply(seq_along(rasterising_poly), function(x){names(rasterising_poly[[x]]) <<- paste0("Fire Event ", seq_along(rasterising_poly)[x])})
+  # stack rasterised poly
+  rasterising_poly_stack <- stack(rasterising_poly)
+  # convert stacked raster to dataframe
+  rasterising_poly_stack_df <- as.data.frame(rasterising_poly_stack, xy = T, na.rm = T)
+  # separate the xy coordinates from the dataframe
+  rasterising_poly_stack_dfxy <- rasterising_poly_stack_df[,c('x','y')]
+  # separate the variables
+  rasterising_poly_stack_df_var <- rasterising_poly_stack_df[,-(1:2)]
+  # redefine no fire to 0 and fire to 1
+  rasterising_poly_stack_df_var <- ifelse(rasterising_poly_stack_df_var=='No Fire',0,1)
+
+    if(ncol(rasterising_poly_stack_df)!=3){ # if there only multiple fire events
+    # sum the number of times a fire occur at each pixel location
+    rasterising_poly_stack_dfxy$fire_frequency <- rowSums(rasterising_poly_stack_df_var, na.rm = T)|>as.factor()
+    # convert frequency to raster
+    frequency_raster <- rasterFromXYZ(rasterising_poly_stack_dfxy, res = c(30,30), crs = crs(roi_trans))
+  }else{ # if there;s one fire events
+    rasterising_poly_stack_df$Fire.Event.1_fire_status <- ifelse(rasterising_poly_stack_df$Fire.Event.1_fire_status=='No Fire',0,1)
+    # convert frequency to raster
+    frequency_raster <- rasterFromXYZ(rasterising_poly_stack_df, res = c(30,30), crs = crs(roi_trans))
+  }
+
+   return(frequency_raster)
+}
+
+ 
+
+# FIRE_FREQ(data = all_monthly_fire_list, month = 3)
+
+# note that although index range from 1 to 11; 1 to 6 is correct month but 7 onwards add 1 as July had no fire throughout
+monthly_fire_frequency_rasters_1964_2022 <- pblapply(seq_along(all_monthly_fire_list), function(x) {FIRE_FREQ(data = all_monthly_fire_list, month = x)})
+#creating a dummy raster with 0 populated for months where no fire were detected
+dummy_df_for_no_fire <- as.data.frame(monthly_fire_frequency_rasters_1964_2022[[8]], xy = T, na.rm = T)[,-3]
+dummy_df_for_no_fire$fire_frequency <- 0
+dummy_df_for_no_fire_raster <- rasterFromXYZ(dummy_df_for_no_fire, res = c(30,30), crs = crs(roi_trans))
+
+
+{
+  p1 <- tm_shape(monthly_fire_frequency_rasters_1964_2022[[1]]) +
+    tm_raster(
+      col = "fire_frequency",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "1964-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "January", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+  p2 <- tm_shape(monthly_fire_frequency_rasters_1964_2022[[2]]) +
+    tm_raster(
+      col = "fire_frequency",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "1964-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "February", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+  p3 <- tm_shape(monthly_fire_frequency_rasters_1964_2022[[3]]) +
+    tm_raster(
+      col = "fire_frequency",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "1964-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "March", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+  p4 <- tm_shape(monthly_fire_frequency_rasters_1964_2022[[4]]) +
+    tm_raster(
+      col = "fire_frequency",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "1964-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "April", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+  p5 <- tm_shape(monthly_fire_frequency_rasters_1964_2022[[5]]) +
+    tm_raster(
+      col = "fire_frequency",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "1964-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "May", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+  p6 <- tm_shape(monthly_fire_frequency_rasters_1964_2022[[6]]) +
+    tm_raster(
+      col = "fire_frequency",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "1964-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "June", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+  dummy_df_for_no_fire_raster
+  p7 <- tm_shape(dummy_df_for_no_fire_raster) +
+    tm_raster(
+      col = "fire_frequency",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "1964-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "July", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+  p8 <- tm_shape(monthly_fire_frequency_rasters_1964_2022[[7]]) +
+    tm_raster(
+      col = "fire_frequency",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "1964-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "August", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+  p9 <- tm_shape(monthly_fire_frequency_rasters_1964_2022[[8]]) +
+    tm_raster(
+      col = "Fire.Event.1_fire_status",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "1964-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "September", main.title.size = 0.7 ,main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+  p10 <- tm_shape(monthly_fire_frequency_rasters_1964_2022[[9]]) +
+    tm_raster(
+      col = "fire_frequency",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "1964-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "October", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+  p11 <- tm_shape(monthly_fire_frequency_rasters_1964_2022[[10]]) +
+    tm_raster(
+      col = "fire_frequency",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "1964-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "November", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+  p12 <- tm_shape(monthly_fire_frequency_rasters_1964_2022[[11]]) +
+    tm_raster(
+      col = "fire_frequency",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "1964-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "December", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+}
+
+fire_freq_2964_2022_monthy_combined_maps <- tmap_arrange(p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,
+             ncol = 3,
+             nrow=4)
+
+tmap_save(fire_freq_2964_2022_monthy_combined_maps, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/EDA plots/fire_freq_2964_2022_monthy_combined_maps.pdf", width = 6.56, height = 8.50)
+
+
+# dataset preparation
+monthly_2014_2022_fire_list <-  pblapply(c(1:5,9:12), function(x){ # note that June-July-August: No fire detected
+ sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed_2014_2022%>%
+    st_as_sf()%>%
+    mutate(MONTH = as.numeric(format(STARTDATE, "%m"))) %>%
+    filter(MONTH == x) %>%
+    as('Spatial')
+})
+
+# note that although index range from 1 to 9; 1 to 5 is correct month but 6 onwards add 3 as June-July-Augus had no fire throughout
+monthly_fire_frequency_rasters_2014_2022 <- pblapply(seq_along(monthly_2014_2022_fire_list), function(x) {FIRE_FREQ(data = monthly_2014_2022_fire_list, month = x)})
+
+
+{
+  pp1 <- tm_shape(monthly_fire_frequency_rasters_2014_2022[[1]]) +
+    tm_raster(
+      col = "fire_frequency",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "2014-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "January", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+  pp2 <- tm_shape(monthly_fire_frequency_rasters_2014_2022[[2]]) +
+    tm_raster(
+      col = "fire_frequency",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "2014-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "February", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+  pp3 <- tm_shape(monthly_fire_frequency_rasters_2014_2022[[3]]) +
+    tm_raster(
+      col = "fire_frequency",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "2014-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "March", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+  pp4 <- tm_shape(monthly_fire_frequency_rasters_2014_2022[[4]]) +
+    tm_raster(
+      col = "fire_frequency",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "2014-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "April", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+  pp5 <- tm_shape(monthly_fire_frequency_rasters_2014_2022[[5]]) +
+    tm_raster(
+      col = "Fire.Event.1_fire_status",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "2014-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "May", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+  pp6 <- tm_shape(dummy_df_for_no_fire_raster) +
+    tm_raster(
+      col = "fire_frequency",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "2014-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "June", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+  
+  pp7 <- tm_shape(dummy_df_for_no_fire_raster) +
+    tm_raster(
+      col = "fire_frequency",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "2014-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "July", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+  pp8 <- tm_shape(dummy_df_for_no_fire_raster) +
+    tm_raster(
+      col = "fire_frequency",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "2014-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "August", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+  pp9 <- tm_shape(monthly_fire_frequency_rasters_2014_2022[[6]]) +
+    tm_raster(
+      col = "Fire.Event.1_fire_status",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "2014-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "September", main.title.size = 0.7 ,main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+  pp10 <- tm_shape(monthly_fire_frequency_rasters_2014_2022[[7]]) +
+    tm_raster(
+      col = "fire_frequency",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "2014-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "October", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+  pp11 <- tm_shape(monthly_fire_frequency_rasters_2014_2022[[8]]) +
+    tm_raster(
+      col = "fire_frequency",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "2014-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "November", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+  pp12 <- tm_shape(monthly_fire_frequency_rasters_2014_2022[[9]]) +
+    tm_raster(
+      col = "fire_frequency",
+      palette = plasma_mod,   
+      style = "cat",          # categorical style (discrete)
+      title = "2014-2022\nFire Frequency"
+    ) +
+    tm_graticules(lines = F)+
+    tm_layout(main.title = "December", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+  
+}
+
+fire_freq_2014_2022_monthy_combined_maps <- tmap_arrange(pp1,pp2,pp3,pp4,pp5,pp6,pp7,pp8,pp9,pp10,pp11,pp12,
+                                                         ncol = 3,
+                                                         nrow=4)
+
+tmap_save(fire_freq_2014_2022_monthy_combined_maps, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/EDA plots/fire_freq_2014_2022_monthy_combined_maps.pdf", width = 6.56, height = 8.50)
+
+# BONUS plot
+# trying some animation plot
+{
+  tmap_save(p1, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/sanpark_fire_animation/Rplot_1.pdf", width = 2.5, height = 2.5)
+  tmap_save(p2, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/sanpark_fire_animation/Rplot_2.pdf", width = 2.5, height = 2.5)
+  tmap_save(p3, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/sanpark_fire_animation/Rplot_3.pdf", width = 2.5, height = 2.5)
+  tmap_save(p4, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/sanpark_fire_animation/Rplot_4.pdf", width = 2.5, height = 2.5)
+  tmap_save(p5, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/sanpark_fire_animation/Rplot_5.pdf", width = 2.5, height = 2.5)
+  tmap_save(p6, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/sanpark_fire_animation/Rplot_6.pdf", width = 2.5, height = 2.5)
+  tmap_save(p7, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/sanpark_fire_animation/Rplot_7.pdf", width = 2.5, height = 2.5)
+  tmap_save(p8, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/sanpark_fire_animation/Rplot_8.pdf", width = 2.5, height = 2.5)
+  tmap_save(p9, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/sanpark_fire_animation/Rplot_9.pdf", width = 2.5, height = 2.5)
+  tmap_save(p10, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/sanpark_fire_animation/Rplot_10.pdf", width = 2.5, height = 2.5)
+  tmap_save(p11, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/sanpark_fire_animation/Rplot_11.pdf", width = 2.5, height = 2.5)
+  tmap_save(p12, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/sanpark_fire_animation/Rplot_12.pdf", width = 2.5, height = 2.5)
+  
+}
+
+
+
 

@@ -94,11 +94,11 @@ sanpark_fire_shpfile_combind_list_trans_intersect <- st_as_sf(sanpark_fire_shpfi
                                FIRECAUSE ==  "Wildfire"~"Wildfire"),
          
          FIRETYPE = case_when(FIRETYPE=="cigarette"~"Cigarette",
-                    FIRETYPE=="Prescribed"~"Prescribed",
-                    FIRETYPE=="unknown"~"Unknown",
-                    FIRETYPE=="Wild Fire"~"Wildfire",
-                    FIRETYPE=="Wildfire"~"Wildfire",
-                    FIRETYPE=="WildFire"~"Wildfire"))  %>%
+                              FIRETYPE=="Prescribed"~"Prescribed",
+                              FIRETYPE=="unknown"~"Unknown",
+                              FIRETYPE=="Wild Fire"~"Wildfire",
+                              FIRETYPE=="Wildfire"~"Wildfire",
+                              FIRETYPE=="WildFire"~"Wildfire"))  %>%
   
   mutate(STARTDATE = as.Date(STARTDATE, format = '%Y%m%d'), # reformat date
          STARTDATE = case_when(STARTDATE== as.Date('2020-12-17', format = '%Y-%m-%d')~as.Date('2021-04-18', format = '%Y-%m-%d'), # correct erroneous entry
@@ -109,7 +109,6 @@ sanpark_fire_shpfile_combind_list_trans_intersect <- st_as_sf(sanpark_fire_shpfi
   arrange(STARTDATE) %>% # rearrange date in correct order
   select(-YEAR, -XHECTARES) %>% # remove supplied year as it creates confusion as in the year for2007-11-30 will be 2008 (we want to keep the year!)
   as('Spatial') # convert dataframe to spatial feature again
-
 # Removing prescribed burning from burnt area
 sanpark_fire_shpfile_combind_list_trans_intersect_without_prescribed <- st_as_sf(sanpark_fire_shpfile_combind_list_trans_intersect) %>%
   filter(FIRECAUSE!="Prescribed") %>%
