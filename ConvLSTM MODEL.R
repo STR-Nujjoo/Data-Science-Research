@@ -275,6 +275,45 @@ dim(testX) # (samples, time_steps, height, width, variables)- channels_last form
 testY <- response_variable_2021_2022_test
 dim(testY) # (samples, time_steps, height, width, variables)- channels_last format
 
+# creating temporal slice
+make_temporal_samples <- function(X, Y, seq_len) {
+  n_time <- dim(X)[2]  # total timesteps
+  X_seq <- list()
+  Y_seq <- list()
+  
+  for (t in seq_len:(n_time - 1)) {
+    # Take seq_len months as input
+    X_seq[[length(X_seq) + 1]] <- X[, (t - seq_len + 1):t, , , , drop = FALSE]
+    
+    # Predict next month
+    Y_seq[[length(Y_seq) + 1]] <- Y[, t + 1, , , , drop = FALSE]
+  }
+  
+  list(
+    X = abind::abind(X_seq, along = 1),  # batch dimension created here
+    Y = abind::abind(Y_seq, along = 1)
+  )
+}
+
+seq_len <- 4  # your choice
+
+train_samples <- make_temporal_samples(trainX, trainY, seq_len)
+trainX <- train_samples$X
+dim(train_samples$X)
+trainY <- train_samples$Y
+dim(train_samples$Y)
+
+val_samples   <- make_temporal_samples(valX, valY, seq_len)
+valX <- val_samples$X
+dim(valX)
+valY <- val_samples$Y
+dim(valY)
+
+test_samples  <- make_temporal_samples(testX, testY, seq_len)
+testX <- test_samples$X
+dim(testX)
+testY <- test_samples$Y
+dim(testY)
 
 ConvLSTM_framework <- function(t){
   # Building a convolution lstm for wildfire susceptibility
@@ -282,13 +321,14 @@ ConvLSTM_framework <- function(t){
   ConvLSTM_model <- keras_model_sequential() %>%
     # 1st ConvLSTM layer
     layer_conv_lstm_2d(
-      input_shape = list(NULL, dim(trainX)[3], dim(trainX)[4], dim(trainX)[5]), # samples = 1, time_steps=NULL to allow for varying timesteps months, channels = 2 predictor variables, rows = 32, cols = 32
+      input_shape = list(NULL, dim(trainX)[3], dim(trainX)[4], dim(trainX)[5]), # samples = 1, time_steps=NULL to allow for varying timesteps months, channels = 2 predictor variables, rows = 372, cols = 382
       filters = 64, 
       kernel_size = c(3, 3), 
       data_format = 'channels_last',
-      kernel_regularizer = regularizer_l2(0.001), # applies L2 regularisation to the kernel weights
-      recurrent_regularizer = regularizer_l2(0.001), # applies it to recurrent weights (inside the LSTM)
-      bias_regularizer = regularizer_l2(0.001), # applies it to biases
+      dropout = 0.1,
+      # kernel_regularizer = regularizer_l2(0.001), # applies L2 regularisation to the kernel weights
+      # recurrent_regularizer = regularizer_l2(0.001), # applies it to recurrent weights (inside the LSTM)
+      # bias_regularizer = regularizer_l2(0.001), # applies it to biases
       activation = "tanh",
       padding = "same", 
       return_sequences = T, # It is important for this to be TRUE so that the time steps are also returned
@@ -298,16 +338,17 @@ ConvLSTM_framework <- function(t){
     layer_batch_normalization() %>%
     
     # dropout
-    layer_dropout(rate = 0.2) %>%
+    # layer_dropout(rate = 0.2) %>%
     
     # 2nd ConvLSTM layer
     layer_conv_lstm_2d(
       filters = 64, 
       kernel_size = c(3, 3), 
       data_format = 'channels_last',
-      kernel_regularizer = regularizer_l2(0.001), # applies L2 regularisation to the kernel weights
-      recurrent_regularizer = regularizer_l2(0.001), # applies it to recurrent weights (inside the LSTM)
-      bias_regularizer = regularizer_l2(0.001), # applies it to biases
+      dropout = 0.1,
+      # kernel_regularizer = regularizer_l2(0.001), # applies L2 regularisation to the kernel weights
+      # recurrent_regularizer = regularizer_l2(0.001), # applies it to recurrent weights (inside the LSTM)
+      # bias_regularizer = regularizer_l2(0.001), # applies it to biases
       activation = "tanh",
       padding = "same", 
       return_sequences = T, # It is important for this to be TRUE so that the time steps are also returned
@@ -341,13 +382,6 @@ ConvLSTM_framework <- function(t){
     
     # Output layer
     time_distributed(layer_dense(units = 1, activation = "sigmoid")) 
-    
-
-    
-   # layer_reshape(target_shape = c(372, 382, 24))
-  
-  
-
   
   focal_loss_fn_alpha_0_9_gamma_2 <- focal_loss_fn(alpha = 0.6, gamma = 2)
   # Compile the ConvLSTM_model
