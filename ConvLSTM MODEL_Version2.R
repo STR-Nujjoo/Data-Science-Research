@@ -275,6 +275,79 @@ dim(testX) # (samples, time_steps, height, width, variables)- channels_last form
 testY <- response_variable_2021_2022_test
 dim(testY) # (samples, time_steps, height, width, variables)- channels_last format
 
+# creating temporal slice
+make_temporal_samples <- function(X, Y, seq_len = 4, target = c("next", "all")) {
+  target <- match.arg(target)
+  n_time <- dim(X)[2]
+  X_seq <- list(); Y_seq <- list()
+  
+  # dynamic end index
+  t_end <- if (target == "next") n_time - 1 else n_time
+  
+  for (t in seq_len:t_end) {
+    X_seq[[length(X_seq) + 1]] <- X[, (t - seq_len + 1):t, , , , drop = FALSE]
+    
+    if (target == "next") {
+      Y_seq[[length(Y_seq) + 1]] <- Y[, t + 1, , , , drop = FALSE]
+    } else {
+      Y_seq[[length(Y_seq) + 1]] <- Y[, (t - seq_len + 1):t, , , , drop = FALSE]
+    }
+  }
+  
+  list(
+    X = abind::abind(X_seq, along = 1),
+    Y = abind::abind(Y_seq, along = 1)
+  )
+}
+
+seq_len <- 4  # no. of consecutive months 
+
+train_samples <- make_temporal_samples(trainX, trainY, seq_len, target = 'all')
+updated_trainX <- train_samples$X
+dim(updated_trainX)
+updated_trainY <- train_samples$Y
+dim(updated_trainY)
+
+val_samples <- make_temporal_samples(valX, valY, seq_len, target = 'all')
+updated_valX <- val_samples$X
+dim(updated_valX)
+updated_valY <- val_samples$Y
+dim(updated_valY)
+
+test_samples  <- make_temporal_samples(testX, testY, seq_len, target = 'all')
+updated_testX <- test_samples$X
+dim(updated_testX)
+updated_testY <- test_samples$Y
+dim(updated_testY)
+
+updated_spatial_temporal_weight_array <- make_temporal_samples(trainX, spatial_temporal_weight_array, seq_len, target = 'all')
+updated_spatial_temporal_weight_array <- updated_spatial_temporal_weight_array$Y
+dim(updated_spatial_temporal_weight_array)
+
+# dim(testY)
+# dim(testY[1,4,,,1])
+# x <- raster(testY[1,4,,,1], 
+#        crs = crs(roi_trans), 
+#        xmn = extent(LULC_2014_2022[[1]])[1], #xmin 
+#        xmx = extent(LULC_2014_2022[[1]])[2], #xmax
+#        ymn = extent(LULC_2014_2022[[1]])[3], #ymin
+#        ymx = extent(LULC_2014_2022[[1]])[4] #ymax
+# ) |> mask(roi_trans) # mask to study area to remove unecessary probabiliities
+# res(x) <- 30 # update spatial resolution to 30m
+# plot(x)
+# 
+# dim(updated_testY)
+# dim(updated_testY[1,4,,,1])
+# x <- raster(updated_testY[4,1,,,1], 
+#             crs = crs(roi_trans), 
+#             xmn = extent(LULC_2014_2022[[1]])[1], #xmin 
+#             xmx = extent(LULC_2014_2022[[1]])[2], #xmax
+#             ymn = extent(LULC_2014_2022[[1]])[3], #ymin
+#             ymx = extent(LULC_2014_2022[[1]])[4] #ymax
+# ) |> mask(roi_trans) # mask to study area to remove unecessary probabiliities
+# res(x) <- 30 # update spatial resolution to 30m
+# plot(x)
+
 
 ConvLSTM_framework <- function(t){
   # Building a convolution lstm for wildfire susceptibility
@@ -282,7 +355,7 @@ ConvLSTM_framework <- function(t){
   ConvLSTM_model <- keras_model_sequential() %>%
     # 1st ConvLSTM layer
     layer_conv_lstm_2d(
-      input_shape = list(NULL, dim(trainX)[3], dim(trainX)[4], dim(trainX)[5]), # samples = 1, time_steps=NULL to allow for varying timesteps months, channels = 2 predictor variables, rows = 372, cols = 382
+      input_shape = list(NULL, dim(updated_trainX)[3], dim(updated_trainX)[4], dim(updated_trainX)[5]), # samples = 1, time_steps=NULL to allow for varying timesteps months, channels = 2 predictor variables, rows = 372, cols = 382
       filters = 64, 
       kernel_size = c(3, 3), 
       data_format = 'channels_last',
@@ -400,12 +473,12 @@ for(t in thresholds){
   
   tensorflow::set_random_seed(1)
   history <- ConvLSTM_model %>% fit(
-    trainX, trainY,
-    validation_data = list(valX, valY),
+    updated_trainX, updated_trainY,
+    validation_data = list(updated_valX, updated_valY),
     use_multiprocessing = T,
     epochs = 4, # 300 looks reasonable
     batch_size = 2,
-    sample_weight = spatial_temporal_weight_array, # this assign weights to rasters on a more individual level (spatial-temporal) as in a raster with fire with more weight than a raster with no fire
+    sample_weight = updated_spatial_temporal_weight_array, # this assign weights to rasters on a more individual level (spatial-temporal) as in a raster with fire with more weight than a raster with no fire
     callbacks = callback_list,
     shuffle = F # very important to ensure temporal continuity/consistency
   )
@@ -464,10 +537,47 @@ optimal_ConvLSTM_threshold <- main_training_results[[optimal_ConvLSTM_model_inde
 optimal_ConvLSTM_model <- load_model_by_threshold(file_path = main_training_results[[optimal_ConvLSTM_model_index]]$model_file,
                                                   t = optimal_ConvLSTM_threshold) # extract the threshold as part of the name to ensure consistency
 
+
+# function to deconstruct the 5D tensor with overlapping rasters
+reconstruct_sequence_weighted <- function(predY, 
+                                          seq_len, # number of timesteps per window
+                                          total_time, # total months in full sequence
+                                          weights = c() # for weighted average
+) {
+  stopifnot(length(weights) == seq_len)
+  weights <- weights / sum(weights)  # normalize to sum = 1
+  
+  n_samples <- dim(predY)[1]
+  H <- dim(predY)[3]
+  W <- dim(predY)[4]
+  C <- dim(predY)[5]
+  
+  summed <- array(0, dim = c(total_time, H, W, C))
+  weights_sum <- array(0, dim = c(total_time, H, W, C))
+  
+  for (i in 1:n_samples) {
+    for (t in 1:seq_len) {
+      time_index <- i + t - 1
+      if (time_index <= total_time) {
+        w <- weights[t]
+        summed[time_index, , , ] <- summed[time_index, , , ] + w * predY[i, t, , , ]
+        weights_sum[time_index, , , ] <- weights_sum[time_index, , , ] + w
+      }
+    }
+  }
+  
+  avg <- summed / weights_sum
+  avg[is.na(avg)] <- 0
+  
+  array(avg, dim = c(1, total_time, H, W, C))
+}
+
+
 # Creating a function to calculate AUC_ROC and AUC_PR separately
 AUC_metrics <- function(best_model, true_dataX, true_dataY, threshold){
   tensorflow::set_random_seed(1)
   predicted_dataX <- best_model %>% predict(true_dataX)
+  predicted_dataX <- reconstruct_sequence_weighted(predicted_dataX, seq_len = dim(true_dataX)[2], total_time = dim(true_dataY)[2], weights = c(0.1, 0.2, 0.3, 0.4))
   x <- ifelse(as.vector(predicted_dataX) > threshold, 1, 0)
   p <- prediction(x, as.vector(true_dataY))
   AUC_ROC <- performance(p, measure = 'auc')@y.values[[1]] # AUC_ROC
@@ -477,14 +587,14 @@ AUC_metrics <- function(best_model, true_dataX, true_dataY, threshold){
 }
 
 val_AUCs <- AUC_metrics(best_model = optimal_ConvLSTM_model, 
-                        true_dataX = valX, 
+                        true_dataX = updated_valX, 
                         true_dataY = valY, 
                         threshold = optimal_ConvLSTM_threshold)
 
 
 
 tensorflow::set_random_seed(1)
-val_acc_check <- optimal_ConvLSTM_model %>% evaluate(valX, valY)
+val_acc_check <- optimal_ConvLSTM_model %>% evaluate(updated_valX, updated_valY)
 
 # Check if the optimal model is correctly extracted to match the optimal outcome of the validation accuracy of the best model prior to loading the best model
 if(all(val_acc_check == validation_metrics)){
@@ -497,31 +607,39 @@ if(all(val_acc_check == validation_metrics)){
 # ?fit.keras.engine.training.Model
 # plot(history)
 tensorflow::set_random_seed(1)
-test_metrics <- optimal_ConvLSTM_model %>% evaluate(testX,testY);test_metrics
+test_metrics <- optimal_ConvLSTM_model %>% evaluate(updated_testX, updated_testY);test_metrics
 
 test_AUCs <- AUC_metrics(best_model = optimal_ConvLSTM_model, 
-                         true_dataX = testX, 
+                         true_dataX = updated_testX, 
                          true_dataY = testY, 
                          threshold = optimal_ConvLSTM_threshold)
 
 
 # fire predicted for 2021 and 2022 - This is where all the probabilities are stored
 tensorflow::set_random_seed(1)
-predicted <- optimal_ConvLSTM_model %>% predict(testX)
-dim(predicted)
+predicted <- optimal_ConvLSTM_model %>% predict(updated_testX)
+dim(predicted) 
 summary(predicted)
 # as.vector(predicted[1,15,,,1])[which(as.vector(testY[1,15,,,1])==1)]|>summary()
 
+final_pred_weighted <- reconstruct_sequence_weighted(predicted,
+                                                     seq_len = dim(updated_testX)[2],
+                                                     total_time = dim(testY)[2],
+                                                     weights = c(0.1, 0.2, 0.3, 0.4))
+dim(final_pred_weighted)
+summary(final_pred_weighted)
 
 # creating time label
 timesteps_labels <- c('Fire 2021-01', 'Fire 2021-02', 'Fire 2021-03', 'Fire 2021-04', 'Fire 2021-05', 'Fire 2021-06', 'Fire 2021-07','Fire 2021-08', 'Fire 2021-09', 'Fire 2021-10', 'Fire 2021-11', 'Fire 2021-12',
                       'Fire 2022-01', 'Fire 2022-02', 'Fire 2022-03', 'Fire 2022-04', 'Fire 2022-05', 'Fire 2022-06', 'Fire 2022-07','Fire 2022-08', 'Fire 2022-09', 'Fire 2022-10', 'Fire 2022-11', 'Fire 2022-12')
 
+# timesteps_labels <- c('Fire 2021-01', 'Fire 2021-02', 'Fire 2021-03', 'Fire 2021-04', 'Fire 2021-05', 'Fire 2021-06', 'Fire 2021-07','Fire 2021-08', 'Fire 2021-09', 'Fire 2021-10', 'Fire 2021-11', 'Fire 2021-12')
+
 
 # Detect cores on system and create clusters
 cl <- makeCluster(detectCores() - 1)
 # To allow parallel processing in pbapply functions export items used in the function to the cluster
-clusterExport(cl, varlist = c("predicted", 'roi_trans', 'LULC_2014_2022', 'timesteps_labels', 'testY')) 
+clusterExport(cl, varlist = c("final_pred_weighted", 'roi_trans', 'LULC_2014_2022', 'timesteps_labels', 'testY')) 
 # Loading relevant packages on cluster
 clusterEvalQ(cl, {
   library(caret)
@@ -530,11 +648,11 @@ clusterEvalQ(cl, {
 })
 
 # Converting the predicted probabilities into their respective raster while cropping each raster to the study area
-predicted_raster_list <- pblapply(1:dim(predicted)[2],
+predicted_raster_list <- pblapply(1:dim(final_pred_weighted)[2],
                                   function(x){
                                     index <- x
                                     
-                                    predicted_normal_Raster_format <- predicted[1, index, , , 1] # not rasterised yet!
+                                    predicted_normal_Raster_format <- final_pred_weighted[1, index, , , 1] # not rasterised yet!
                                     dim(predicted_normal_Raster_format)
                                     
                                     # Rasterise predicted probabilities
@@ -814,7 +932,7 @@ WS_visualisation <- function(true_raster, raster_with_probabilities, raster_fact
 
 # VISUALISATION OF WSM ----------------------------------------------------
 
-call_fire_period <- 'Fire 2022-06'
+call_fire_period <- 'Fire 2021-03'
 
 # optmised_threshold_plot(fire_period = call_fire_period)
 

@@ -1304,7 +1304,7 @@ Dec_covariate_stack_val <- pblapply(seq_along(focused_validation_timeframe), fun
                    focused_month = seq(as.Date("2019-12-01"), as.Date("2020-12-01"), by="12 month"))})|>stack()
 
 
-# monthly covariate stack for validation set
+# monthly covariate stack for test set
 focused_testing_timeframe <- seq(as.Date("2021-01-01"), as.Date("2022-12-01"), by="1 month") 
 
 Jan_covariate_stack_test <- pblapply(seq_along(focused_testing_timeframe), function(x){
