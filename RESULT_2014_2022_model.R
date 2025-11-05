@@ -147,25 +147,22 @@ dim(testX) # (samples, time_steps, height, width, variables)- channels_last form
 testY <- response_variable_2021_2022_test
 dim(testY) # (samples, time_steps, height, width, variables)- channels_last format
 
-
-
-load('Wildfire_Data_Stefan/main_training_results_2014_2022_6.Rdata')
-str(main_training_results)
+load('Wildfire_Data_Stefan/main_training_results_2014_2022_2.Rdata')
+# str(main_training_results)
 
 # Extract all the best validation MCCs from the different thresholds
 best_val_MCCs <- sapply(seq_along(main_training_results), function(x){main_training_results[[x]]$best_val_MCC})
-# best_val_MCCs <- sapply(seq_along(main_training_results), function(x){main_training_results[[x]]$best_val_precision})
+# best_val_MCCs <- sapply(seq_along(main_training_results), function(x){main_training_results[[x]]$best_val_f1_score})
 
 
 # Visualise the best validation MCCs of the best model for each threshold
-# thresholds <- seq(0.65,0.9, by = .03) # threshold list
-thresholds <- seq(0.45,0.6, by = .01) # threshold list
+thresholds <- seq(0.4,0.9, by = .05) # threshold list
 plot(x = thresholds, y = best_val_MCCs, type = 'b', xlab = 'Threshold', ylab = 'Validation MCC', col = 'red', pch = 20)
 
 optimal_ConvLSTM_model_index <- which.max(best_val_MCCs)
 optimal_ConvLSTM_threshold <- main_training_results[[optimal_ConvLSTM_model_index]]$threshold;optimal_ConvLSTM_threshold
 
-main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics
+# main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics
 
 options(scipen=999)
 
@@ -184,17 +181,17 @@ validation_metrics <- c(val_loss = main_training_results[[optimal_ConvLSTM_model
                         val_tn = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_tn[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
                         val_tp = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_tp[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)])
 
-# validation_metrics <- c(val_loss = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_loss[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_precision)],
-#                         val_binary_accuracy = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_binary_accuracy[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_precision)],
-#                         val_recall = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_recall[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_precision)],
-#                         val_precision = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_precision[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_precision)],
-#                         val_specificity = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_specificity[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_precision)],
-#                         val_f1_score = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_precision)],
-#                         val_MCC = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_precision)],
-#                         val_fn = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_fn[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_precision)],
-#                         val_fp = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_fp[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_precision)],
-#                         val_tn = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_tn[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_precision)],
-#                         val_tp = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_tp[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_precision)])
+# validation_metrics <- c(val_loss = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_loss[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score)],
+#                         val_binary_accuracy = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_binary_accuracy[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score)],
+#                         val_recall = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_recall[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score)],
+#                         val_precision = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_precision[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score)],
+#                         val_specificity = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_specificity[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score)],
+#                         val_f1_score = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score)],
+#                         val_MCC = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score)],
+#                         val_fn = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_fn[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score)],
+#                         val_fp = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_fp[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score)],
+#                         val_tn = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_tn[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score)],
+#                         val_tp = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_tp[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score)])
 
 # Creating a function to load each best model for each threshold
 load_model_by_threshold <- function(file_path, t){
@@ -204,17 +201,17 @@ load_model_by_threshold <- function(file_path, t){
                        custom_objects = list(specificity = specificity_metric(threshold = t),
                                              f1_score = f1_score_metric(threshold = t),
                                              MCC = mcc_metric(threshold = t),
-                                             focal_loss_fn_alpha_0_9_gamma_2 = focal_loss_fn(alpha = 0.6, gamma = 2)
+                                             focal_loss_fn_alpha_0_9_gamma_2 = focal_loss_fn(alpha = 0.54, gamma = 2)
                                              ),
                        compile = T)
 }
 
 
 # reading file names from folder if needed
-MODELS_PATH <- list.files('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Wildfire_Data_Stefan/Models6/')
+MODELS_PATH <- list.files('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Wildfire_Data_Stefan/Models2/')
 
 # Loading the BEST model from the optimal threshold
-optimal_ConvLSTM_model <- load_model_by_threshold(file_path = paste0('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Wildfire_Data_Stefan/Models6/', MODELS_PATH[optimal_ConvLSTM_model_index]),
+optimal_ConvLSTM_model <- load_model_by_threshold(file_path = paste0('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Wildfire_Data_Stefan/Models2/', MODELS_PATH[optimal_ConvLSTM_model_index]),
                                                   t = optimal_ConvLSTM_threshold) # extract the threshold as part of the name to ensure consistency
 
 # Creating a function to calculate AUC_ROC and AUC_PR separately
@@ -246,6 +243,7 @@ val_AUCs <- AUC_metrics(best_model = optimal_ConvLSTM_model,
                         true_dataY = valY, 
                         threshold = optimal_ConvLSTM_threshold);val_AUCs
 
+
 tensorflow::set_random_seed(1)
 val_acc_check <- optimal_ConvLSTM_model %>% evaluate(valX, valY)
 
@@ -273,14 +271,17 @@ test_AUCs <- AUC_metrics(best_model = optimal_ConvLSTM_model,
 tensorflow::set_random_seed(1)
 predicted <- optimal_ConvLSTM_model %>% predict(testX)
 dim(predicted)
+
 summary(predicted)
 hist(predicted)
 # as.vector(predicted[1,15,,,1])[which(as.vector(testY[1,15,,,1])==1)]|>summary()
 
 
 # creating time label
-timesteps_labels <- c('Fire 2021-01', 'Fire 2021-02', 'Fire 2021-03', 'Fire 2021-04', 'Fire 2021-05', 'Fire 2021-06', 'Fire 2021-07','Fire 2021-08', 'Fire 2021-09', 'Fire 2021-10', 'Fire 2021-11', 'Fire 2021-12',
-                      'Fire 2022-01', 'Fire 2022-02', 'Fire 2022-03', 'Fire 2022-04', 'Fire 2022-05', 'Fire 2022-06', 'Fire 2022-07','Fire 2022-08', 'Fire 2022-09', 'Fire 2022-10', 'Fire 2022-11', 'Fire 2022-12')
+# timesteps_labels <- c('Fire 2021-01', 'Fire 2021-02', 'Fire 2021-03', 'Fire 2021-04', 'Fire 2021-05', 'Fire 2021-06', 'Fire 2021-07','Fire 2021-08', 'Fire 2021-09', 'Fire 2021-10', 'Fire 2021-11', 'Fire 2021-12',
+#                       'Fire 2022-01', 'Fire 2022-02', 'Fire 2022-03', 'Fire 2022-04', 'Fire 2022-05', 'Fire 2022-06', 'Fire 2022-07','Fire 2022-08', 'Fire 2022-09', 'Fire 2022-10', 'Fire 2022-11', 'Fire 2022-12')
+
+timesteps_labels <- c('Fire 2021-01', 'Fire 2021-02', 'Fire 2021-03', 'Fire 2021-04', 'Fire 2021-05', 'Fire 2021-06', 'Fire 2021-07','Fire 2021-08', 'Fire 2021-09', 'Fire 2021-10', 'Fire 2021-11', 'Fire 2021-12')
 
 
 # Detect cores on system and create clusters
@@ -578,15 +579,15 @@ WS_visualisation <- function(index, true_raster, raster_with_probabilities, rast
 
 # VISUALISATION OF WSM ----------------------------------------------------
 
-call_fire_period <- 'Fire 2022-01'
+call_fire_period <- 'Fire 2021-04'
 
 # optmised_threshold_plot(fire_period = call_fire_period)
 
-WS_visualisation(index = which(timesteps_labels==call_fire_period),
-                 true_raster = true_test_raster_list[[which(timesteps_labels==call_fire_period)]],
-                 raster_with_probabilities = predicted_raster_list[[which(timesteps_labels==call_fire_period)]],
-                 raster_factor = y_pred_raster_list[[which(timesteps_labels==call_fire_period)]],
-                 classes_breaks_method = 'natural_breaks')
+# WS_visualisation(index = which(timesteps_labels==call_fire_period),
+#                  true_raster = true_test_raster_list[[which(timesteps_labels==call_fire_period)]],
+#                  raster_with_probabilities = predicted_raster_list[[which(timesteps_labels==call_fire_period)]],
+#                  raster_factor = y_pred_raster_list[[which(timesteps_labels==call_fire_period)]],
+#                  classes_breaks_method = 'natural_breaks')
 
 WS_visualisation(index = which(timesteps_labels==call_fire_period),
                  true_raster = true_test_raster_list[[which(timesteps_labels==call_fire_period)]], 
@@ -606,9 +607,3 @@ WS_visualisation(index = which(timesteps_labels==call_fire_period),
 #      ConvLSTM_metrics_list,
 #      ConvLSTM_test_results,
 #      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/ConvLSTM main subset results/ConvLSTM_main_outputs_on_subset.Rdata')
-
-
-
-
-
-
