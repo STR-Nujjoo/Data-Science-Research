@@ -190,8 +190,6 @@ updated_testY <- test_samples$Y
 dim(updated_testY)
 
 
-
-
 # Extract all the best validation MCCs from the different thresholds
 best_val_MCCs <- sapply(seq_along(main_training_results), function(x){main_training_results[[x]]$best_val_MCC})
 # best_val_MCCs <- sapply(seq_along(main_training_results), function(x){main_training_results[[x]]$best_val_f1_score})
@@ -263,8 +261,8 @@ reconstruct_sequence_weighted <- function(predY,
                                           total_time, # total months in full sequence
                                           weights = c() # for weighted average
 ) {
-  stopifnot(length(weights) == seq_len)
-  weights <- weights / sum(weights)  # normalize to sum = 1
+  stopifnot(length(weights) == seq_len) # weight assigned must strictly equal to sample sequence 
+  weights <- weights / sum(weights)  # normalise weight to sum = 1
   
   n_samples <- dim(predY)[1]
   H <- dim(predY)[3]
@@ -291,17 +289,20 @@ reconstruct_sequence_weighted <- function(predY,
   array(avg, dim = c(1, total_time, H, W, C))
 }
 
-# weights for weighted average samples
-alpha <- 0.6
-w_exp <- exp(alpha * (0:(seq_len-1)))
-w_exp <- w_exp / sum(w_exp)
-# plot(w_exp, type = 'l', col = 'red')
+# weighting scheme for aggregation based on the different sample length
+if (seq_len==2){
+  w = c(1,2)
+}else if (seq_len == 3){
+  w = c(1,2,3)
+}else if (seq_len==4){
+  w = c(1,2,3,4)
+}
 
 # Creating a function to calculate AUC_ROC and AUC_PR separately
 AUC_metrics <- function(best_model, true_dataX, true_dataY, threshold, plt_aucroc = T, plt_aucpr = T){
   tensorflow::set_random_seed(1)
   predicted_dataX <- best_model %>% predict(true_dataX)
-  predicted_dataX <- reconstruct_sequence_weighted(predicted_dataX, seq_len = dim(true_dataX)[2], total_time = dim(true_dataY)[2], weights = w_exp)
+  predicted_dataX <- reconstruct_sequence_weighted(predicted_dataX, seq_len = dim(true_dataX)[2], total_time = dim(true_dataY)[2], weights = w)
   x <- ifelse(as.vector(predicted_dataX) > threshold, 1, 0)
   p <- prediction(x, as.vector(true_dataY))
   AUC_ROC <- performance(p, measure = 'auc')@y.values[[1]] # AUC_ROC
@@ -363,9 +364,17 @@ hist(predicted)
 final_pred_weighted <- reconstruct_sequence_weighted(predicted,
                                                      seq_len,
                                                      total_time = 24, # 2021 to 2022
-                                                     weights = w_exp)
+                                                     weights = w)
 dim(final_pred_weighted)
 summary(final_pred_weighted)
+
+# Evaluation metric for all the testY without repetition
+overall_pred_class <- ifelse(as.vector(final_pred_weighted) > optimal_ConvLSTM_threshold, 1, 0)
+overall_CM <- confusionMatrix(factor(as.vector(overall_pred_class), levels = c('0','1')), 
+                factor(as.vector(testY), 
+                       levels = c('0','1')), 
+                positive = '1', 
+                mode = 'everything');overall_CM
 
 # creating time label
 timesteps_labels <- c('Fire 2021-01', 'Fire 2021-02', 'Fire 2021-03', 'Fire 2021-04', 'Fire 2021-05', 'Fire 2021-06', 'Fire 2021-07','Fire 2021-08', 'Fire 2021-09', 'Fire 2021-10', 'Fire 2021-11', 'Fire 2021-12',
@@ -543,7 +552,7 @@ for(i in 1:length(ConvLSTM_f1_score_list)){
   
 }
 
-# View(ConvLSTM_test_results)
+View(ConvLSTM_test_results)
 
 # creating a function for visualisation
 WS_visualisation <- function(index, true_raster, raster_with_probabilities, raster_factor, classes_breaks_method = c('natural_breaks', 'quantile')){
@@ -669,7 +678,7 @@ WS_visualisation <- function(index, true_raster, raster_with_probabilities, rast
 
 # VISUALISATION OF WSM ----------------------------------------------------
 
-call_fire_period <- 'Fire 2022-12'
+call_fire_period <- 'Fire 2022-10'
 
 # optmised_threshold_plot(fire_period = call_fire_period)
 
