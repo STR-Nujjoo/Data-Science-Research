@@ -417,13 +417,14 @@ ConvLSTM_framework <- function(t){
     # Output layer
     time_distributed(layer_dense(units = 1, activation = "sigmoid")) 
   
-  focal_loss_fn_alpha_0_9_gamma_2 <- focal_loss_fn(alpha = 0.6, gamma = 2)
+  # focal_loss_fn_alpha_0_9_gamma_2 <- focal_loss_fn(alpha = 0.6, gamma = 2)
   # Compile the ConvLSTM_model
   tensorflow::set_random_seed(1)
   ConvLSTM_model %>% compile(
     optimizer = optimizer_adam(learning_rate = 0.0001, weight_decay = 0.03),
     # focal loss sigmoid crossentropy
-    loss = focal_loss_fn_alpha_0_9_gamma_2,
+    # loss = focal_loss_fn_alpha_0_9_gamma_2,
+    loss = 'binary_crossentropy',
     metrics = list(
       metric_binary_accuracy(name = 'binary_accuracy', threshold = t),
       metric_recall(name = 'recall', thresholds = t),

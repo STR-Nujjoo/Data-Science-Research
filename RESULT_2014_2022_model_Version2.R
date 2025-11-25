@@ -77,14 +77,14 @@ mcc_metric <- function(threshold){
 }
 
 
-tfa <- reticulate::import("tensorflow_addons", delay_load = TRUE)
-focal_loss <- tfa$losses$SigmoidFocalCrossEntropy
-focal_loss_fn <- function(alpha = NULL, gamma = NULL) {
-  loss_fn <- tfa$losses$SigmoidFocalCrossEntropy(alpha = alpha, gamma = gamma)
-  function(y_true, y_pred) {
-    loss_fn(y_true, y_pred)
-  }
-}
+# tfa <- reticulate::import("tensorflow_addons", delay_load = TRUE)
+# focal_loss <- tfa$losses$SigmoidFocalCrossEntropy
+# focal_loss_fn <- function(alpha = NULL, gamma = NULL) {
+#   loss_fn <- tfa$losses$SigmoidFocalCrossEntropy(alpha = alpha, gamma = gamma)
+#   function(y_true, y_pred) {
+#     loss_fn(y_true, y_pred)
+#   }
+# }
 
 # Define color code for fire rasters
 fire_color_condition_func <- function(data){
@@ -175,7 +175,7 @@ make_temporal_samples <- function(X, Y, seq_len, target = c("next", "all")) {
   )
 }
 
-seq_len <- 4  # no. of consecutive months 
+seq_len <- 2  # no. of consecutive months 
 
 val_samples <- make_temporal_samples(valX, valY, seq_len, target = 'all')
 updated_valX <- val_samples$X
@@ -189,19 +189,20 @@ dim(updated_testX)
 updated_testY <- test_samples$Y
 dim(updated_testY)
 
-
 # Extract all the best validation MCCs from the different thresholds
 best_val_MCCs <- sapply(seq_along(main_training_results), function(x){main_training_results[[x]]$best_val_MCC})
 # best_val_MCCs <- sapply(seq_along(main_training_results), function(x){main_training_results[[x]]$best_val_f1_score})
 
 
 # Visualise the best validation MCCs of the best model for each threshold
-thresholds <- seq(0.4,0.9, by = .05) # threshold list
+thresholds <- seq(0.5,0.7, by = .05) # threshold list
+# thresholds <- seq(0.55,0.65, by = .01) # threshold list
+
 plot(x = thresholds, y = best_val_MCCs, type = 'b', xlab = 'Threshold', ylab = 'Validation MCC', col = 'red', pch = 20)
 
 optimal_ConvLSTM_model_index <- which.max(best_val_MCCs)
 optimal_ConvLSTM_threshold <- main_training_results[[optimal_ConvLSTM_model_index]]$threshold;optimal_ConvLSTM_threshold
-
+# optimal_ConvLSTM_threshold <- 0.6
 # main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics
 
 options(scipen=999)
@@ -296,6 +297,8 @@ if (seq_len==2){
   w = c(1,2,3)
 }else if (seq_len==4){
   w = c(1,2,3,4)
+} else if (seq_len==1){
+  w = 1
 }
 
 # Creating a function to calculate AUC_ROC and AUC_PR separately
@@ -332,9 +335,26 @@ val_AUCs <- AUC_metrics(best_model = optimal_ConvLSTM_model,
 tensorflow::set_random_seed(1)
 val_acc_check <- optimal_ConvLSTM_model %>% evaluate(updated_valX, updated_valY)
 
+tensorflow::set_random_seed(1)
 pred_prob_val <- optimal_ConvLSTM_model %>% predict(updated_valX)
 summary(pred_prob_val)
 hist(pred_prob_val)
+
+val_pred_weighted <- reconstruct_sequence_weighted(pred_prob_val,
+                                                     seq_len,
+                                                     total_time = 24, # 2021 to 2022
+                                                     weights = w)
+dim(val_pred_weighted)
+summary(val_pred_weighted)
+
+# Evaluation metric for all the testY without repetition
+val_pred_class <- ifelse(as.vector(val_pred_weighted) > optimal_ConvLSTM_threshold, 1, 0)
+val_CM <- confusionMatrix(factor(as.vector(val_pred_class), levels = c('0','1')), 
+                              factor(as.vector(valY), 
+                                     levels = c('0','1')), 
+                              positive = '1', 
+                              mode = 'everything');val_CM
+
 # Check if the optimal model is correctly extracted to match the optimal outcome of the validation accuracy of the best model prior to loading the best model
 if(all(round(val_acc_check,5) == round(validation_metrics,5))){
   print('Verification Successful!')
@@ -347,6 +367,7 @@ if(all(round(val_acc_check,5) == round(validation_metrics,5))){
 tensorflow::set_random_seed(1)
 test_metrics <- optimal_ConvLSTM_model %>% evaluate(updated_testX, updated_testY);test_metrics
 
+tensorflow::set_random_seed(1)
 test_AUCs <- AUC_metrics(best_model = optimal_ConvLSTM_model, 
                          true_dataX = updated_testX, 
                          true_dataY = testY, 
@@ -380,7 +401,8 @@ overall_CM <- confusionMatrix(factor(as.vector(overall_pred_class), levels = c('
 timesteps_labels <- c('Fire 2021-01', 'Fire 2021-02', 'Fire 2021-03', 'Fire 2021-04', 'Fire 2021-05', 'Fire 2021-06', 'Fire 2021-07','Fire 2021-08', 'Fire 2021-09', 'Fire 2021-10', 'Fire 2021-11', 'Fire 2021-12',
                       'Fire 2022-01', 'Fire 2022-02', 'Fire 2022-03', 'Fire 2022-04', 'Fire 2022-05', 'Fire 2022-06', 'Fire 2022-07','Fire 2022-08', 'Fire 2022-09', 'Fire 2022-10', 'Fire 2022-11', 'Fire 2022-12')
 
-# timesteps_labels <- c('Fire 2021-01', 'Fire 2021-02', 'Fire 2021-03', 'Fire 2021-04', 'Fire 2021-05', 'Fire 2021-06', 'Fire 2021-07','Fire 2021-08', 'Fire 2021-09', 'Fire 2021-10', 'Fire 2021-11', 'Fire 2021-12')
+# timesteps_labels <- c('Fire 2021-01', 'Fire 2021-02', 'Fire 2021-03', 'Fire 2021-04')
+                      # 'Fire 2021-05', 'Fire 2021-06', 'Fire 2021-07','Fire 2021-08', 'Fire 2021-09', 'Fire 2021-10', 'Fire 2021-11', 'Fire 2021-12')
 
 
 # Detect cores on system and create clusters
@@ -552,7 +574,7 @@ for(i in 1:length(ConvLSTM_f1_score_list)){
   
 }
 
-View(ConvLSTM_test_results)
+# View(ConvLSTM_test_results)
 
 # creating a function for visualisation
 WS_visualisation <- function(index, true_raster, raster_with_probabilities, raster_factor, classes_breaks_method = c('natural_breaks', 'quantile')){
@@ -678,7 +700,7 @@ WS_visualisation <- function(index, true_raster, raster_with_probabilities, rast
 
 # VISUALISATION OF WSM ----------------------------------------------------
 
-call_fire_period <- 'Fire 2022-10'
+call_fire_period <- 'Fire 2022-12'
 
 # optmised_threshold_plot(fire_period = call_fire_period)
 
