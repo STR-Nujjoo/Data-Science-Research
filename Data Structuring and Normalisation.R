@@ -485,11 +485,11 @@ FIRE_2014_2022_stack <- stack(FIRE_2014_2022) |> resample(LULC_2014_2022[[1]], m
 # save(RESAMPLED_FIRE_2014_2022_training_stack, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Not-Normalised/RESAMPLED_FIRE_2014_2022_training_stack.Rdata')
 # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Not-Normalised/RESAMPLED_FIRE_2014_2022_training_stack.Rdata')
 
-# RESAMPLED_FIRE_2014_2022_buffered_training_stack <- stack(RESAMPLED_FIRE_2014_2022_buffered_training_list) |> resample(LULC_2014_2022[[1]], method = 'ngb') |> stack()
+RESAMPLED_FIRE_2014_2022_buffered_training_stack <- stack(RESAMPLED_FIRE_2014_2022_buffered_training_list) |> resample(LULC_2014_2022[[1]], method = 'ngb') |> stack()
 # save(RESAMPLED_FIRE_2014_2022_buffered_training_stack, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Not-Normalised/RESAMPLED_FIRE_2014_2022_buffered_training_stack.Rdata')
 # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Not-Normalised/RESAMPLED_FIRE_2014_2022_buffered_training_stack.Rdata')
 
-# RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_stack <- stack(RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_list) |> resample(LULC_2014_2022[[1]], method = 'ngb') |> stack()
+RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_stack <- stack(RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_list) |> resample(LULC_2014_2022[[1]], method = 'ngb') |> stack()
 # save(RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_stack, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Not-Normalised/RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_stack.Rdata')
 # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/All variables (.Rdata)/2014-2022/Rasterstack format/Not-Normalised/RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_stack.Rdata')
 

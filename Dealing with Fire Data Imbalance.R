@@ -395,6 +395,11 @@ RESAMPLED_FIRE_2014_2022_buffered_training_list <- pblapply(seq_along(x), functi
   return(xx)
 })
 
+plot(roi_trans)
+plot(RESAMPLED_FIRE_2014_2022_buffered_training_list[[1]],
+          col = fire_color_condition_func(RESAMPLED_FIRE_2014_2022_buffered_training_list[[1]]),
+          main= names(RESAMPLED_FIRE_2014_2022_buffered_training_list[[1]]),add = T)
+
 
 # Resampling without buffering
 RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_list <- pblapply(1:60, # training set index only
@@ -506,6 +511,26 @@ pblapply(seq_along(RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_list), functio
                             path = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/Resampled SANParks fire data/Individual rasters (non-buffered)/')
   
 })
+
+y <- list.files('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/Resampled SANParks fire data/Individual rasters (non-buffered)/', pattern = '.tif')
+RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_list <- pblapply(seq_along(y), function(i){
+  xx <- raster(paste0('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Fire hotspots/Resampled SANParks fire data/Individual rasters (non-buffered)/', y[i]))
+  # plot(xx,
+  #      col = fire_color_condition_func(xx),
+  #      main= names(xx))
+  # plot(roi_trans, add = T)
+  # plot(target_waterbodies, add = T)
+  return(xx)
+})
+
+plot(roi_trans)
+plot(RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_list[[1]],
+     col = fire_color_condition_func(RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_list[[1]]),
+     main= names(RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_list[[1]]),add = T)
+
+
+
+
 
 # # Save object
 # save(RESAMPLED_NON_BUFFERED_FIRE_2014_2022_training_list,
