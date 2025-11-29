@@ -746,7 +746,7 @@ test_accuracy1 <- cbind(optimal_threshold = test_optimal_threshold1,
                         FN = test_metrics1$table[1,2],
                         FP = test_metrics1$table[2,1],
                         TN = test_metrics1$table[1,1],
-                        TP = test_metrics1$table[2,2]) |> as_tibble(); test_accuracy1
+                        TP = test_metrics1$table[2,2]) |> as.data.frame(); test_accuracy1
 
 # save(test_probs1,test_optimal_threshold1,test_pred_class1,test_metrics1,
 #      test_prediction1,test_AUC_ROC1,test_AUC_PR1,test_MCC1,test_accuracy1,
@@ -778,14 +778,17 @@ pblapply(1:12, function(x){
 # Importing structured and normalised data for modelling using RF --------
 RF_2014to2022_Train2 <- fully_resampled_non_buffered_dfnorm_2014_2022_training_set # random forest training set from 2014 to 2022 dataframe
 RF_2014to2022_Train2$Month <- as.factor(RF_2014to2022_Train2$Month) # converting month to factor
+RF_2014to2022_Train2$Lagged_Fire_Value <- as.factor(RF_2014to2022_Train2$Lagged_Fire_Value) # converting lagged fire value to factor
 RF_2014to2022_Train2$Fire_Value <- as.factor(RF_2014to2022_Train2$Fire_Value) # converting fire value to factor
 
-RF_2014to2022_Val2 <- RF_2014to2022_Val1  # random forest validation set from 2014 to 2022 dataframe
+RF_2014to2022_Val2 <- dfnorm_2014_2022_validation_set  # random forest validation set from 2014 to 2022 dataframe
 RF_2014to2022_Val2$Month <- as.factor(RF_2014to2022_Val2$Month) # converting month to factor
+RF_2014to2022_Val2$Lagged_Fire_Value <- as.factor(RF_2014to2022_Val2$Lagged_Fire_Value) # converting lagged fire value to factor
 RF_2014to2022_Val2$Fire_Value <- as.factor(RF_2014to2022_Val2$Fire_Value) # converting fire value to factor
 
-RF_2014to2022_Test2 <- RF_2014to2022_Test1 # random forest test set from 2014 to 2022 dataframe
+RF_2014to2022_Test2 <- dfnorm_2014_2022_test_set # random forest test set from 2014 to 2022 dataframe
 RF_2014to2022_Test2$Month <- as.factor(RF_2014to2022_Test2$Month) # converting month to factor
+RF_2014to2022_Test2$Lagged_Fire_Value <- as.factor(RF_2014to2022_Test2$Lagged_Fire_Value) # converting lagged fire value to factor
 RF_2014to2022_Test2$Fire_Value <- as.factor(RF_2014to2022_Test2$Fire_Value) # converting fire value to factor
 
 # RF_2002to2022_Train <- dfnorm_2002_2022_training_set # random forest training set from 2002 to 2022 dataframe
@@ -813,8 +816,13 @@ prop.table(table(test_set2$Fire_Value))*100 # calculate proportion of imbalance 
 #      RF_2014to2022_Test2,
 #      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/RF Model 2 input data/non_bufferedTrain20142018_Val20192020_Test20212022.Rdata')
 
+# save(RF_2014to2022_Train2,
+#      RF_2014to2022_Val2,
+#      RF_2014to2022_Test2,
+#      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/FINAL MODELS OUTPUT/Random Forest/Non-Buffered Model/Input data/non_bufferedTrain20142018_Val20192020_Test20212022.Rdata')
+
 # create combinations of hyperparameters
-rf_gridsearch <-  expand.grid(mtry = 2:(ncol(train_set2) - 1),
+rf2_gridsearch <-  expand.grid(mtry = 2:(ncol(train_set2) - 1),
                               splitrule = c('gini', 'hellinger'), # gini for classification
                               min.node.size=seq(1, 5, 2),
                               stringsAsFactors = F)
@@ -823,8 +831,9 @@ rf_gridsearch <-  expand.grid(mtry = 2:(ncol(train_set2) - 1),
 # Initialize results storage
 model_list2 <- list()
 probabilities_list2 <- list()
-threshold_list2 <- list()
-F1_score_list2 <- list()
+# threshold_list2 <- list()
+# F1_score_list2 <- list()
+MCC_score_list2 <- list()
 metrics_list2 <- list()
 results2 <- data.frame()
 
@@ -832,10 +841,10 @@ results2 <- data.frame()
 cl <- makeCluster(detectCores() - 1)
 
 #  Manual tuning loop
-for (i in 1:nrow(rf_gridsearch)) {
-  cat('Iteration',i, 'out of', nrow(rf_gridsearch), '\n')
+for (i in 1:nrow(rf2_gridsearch)) {
+  cat('Iteration',i, 'out of', nrow(rf2_gridsearch), '\n')
   i <- i
-  params <- rf_gridsearch[i, ]
+  params <- rf2_gridsearch[i, ]
   
   # Train the model
   rf <- ranger(
@@ -865,17 +874,21 @@ for (i in 1:nrow(rf_gridsearch)) {
   # density(probs[,'1'])
   # summary(probs[,'1'])
   
-  threshold <- seq(min(probs[,'1']), max(probs[,'1']), by = 0.002) # generate a sequence of threshold to classify response variable based on probability class
+  threshold <- seq(0.5, 0.9, 0.05) # generate a sequence of threshold to classify response variable 
   
   # To allow parallel processing in pbsapply export items used in the function to the cluster
   clusterExport(cl, varlist = c("probs",'threshold','actual_class')) 
   # Loading relevant package on cluster
-  clusterEvalQ(cl, library(caret))
+  clusterEvalQ(cl,  {
+    library(caret)
+    library(mltools)
+  })
   
   # This returns the F1 scores for each threshold 
-  F1_SCORES <- pbsapply(seq_along(threshold), function (x){
+  MCC_SCORES <- pbsapply(seq_along(threshold), function (x){
     pred_class <- ifelse(probs[, '1'] >= threshold[x], 1, 0) |> as.factor()
-    return(confusionMatrix(pred_class, actual_class, positive = '1', mode = 'everything')$byClass['F1'][[1]])}, cl = cl)# apply threshold on positive class; 1 in this case
+    return(mcc(pred_class,actual_class))# apply threshold on positive class; 1 in this case
+    }, cl = cl) # apply threshold on positive class; 1 in this case
   
   # # This returns the F1 scores for each threshold
   # F1_SCORES <- pbsapply(seq_along(threshold), function (x){
@@ -884,11 +897,11 @@ for (i in 1:nrow(rf_gridsearch)) {
   
   
   # F1_SCORES[is.nan(F1_SCORES)] <- 0 # replace NaN with 0
-  optimal_threshold <- threshold[which.max(F1_SCORES)] # which threshold has led to the maximum F1 score
-  optimal_f1_score <- max(F1_SCORES[!is.nan(F1_SCORES)]) # extract the maximum F1 score (omitting NaN if there's any)
+  optimal_threshold <- threshold[which.max(MCC_SCORES)] # which threshold has led to the maximum F1 score
+  optimal_mcc_score <- max(MCC_SCORES[!is.nan(MCC_SCORES)]) # extract the maximum F1 score (omitting NaN if there's any)
   final_pred_class <- ifelse(probs[, '1'] >= optimal_threshold, 1, 0) |> as.factor() # recalculate the final predicted class again using the optimal threshold
   # final_pred_class <- ifelse(probs[, '1'] >= threshold[1] & probs[, '1'] <= optimal_threshold, 1, 0) |> as.factor() # recalculate the final predicted class again using the optimal threshold
-  # plot(threshold, F1_SCORES,
+  # plot(threshold, MCC_SCORES,
   #      type = 'l',
   #      # pch = 19,
   #      cex.main = .9,
@@ -897,10 +910,10 @@ for (i in 1:nrow(rf_gridsearch)) {
   #      # cex = .3,
   #      col = 'red',
   #      xlab = 'Threshold',
-  #      ylab = 'F1 Score',
+  #      ylab = 'MCC Score',
   #      # xlim = c(min(threshold), 0.01)
   #      )
-  # points(threshold, F1_SCORES, pch = 19, cex = .2, col = 'red')
+  # points(threshold, MCC_SCORES, pch = 19, cex = .2, col = 'red')
   MCC <- mcc(preds = final_pred_class, actuals = actual_class) # computing Matthew's correlation coefficient
   Metrics <- confusionMatrix(final_pred_class, actual_class, positive = '1', mode = 'everything') # generate other metrics from confusion matrix
   
@@ -918,52 +931,61 @@ for (i in 1:nrow(rf_gridsearch)) {
   
   model_list2[[i]] <- rf # appending each model to a list
   probabilities_list2[[i]] <- probs # appending each model's probability to a list
-  threshold_list2[[i]] <- threshold # appending the threshold generated from the probabilities to a list
-  F1_score_list2[[i]] <- F1_SCORES # appending each F1 score generated from the respective threshold to a list
+  # threshold_list2[[i]] <- threshold # appending the threshold generated from the probabilities to a list
+  MCC_score_list2[[i]] <- MCC_SCORES # appending each F1 score generated from the respective threshold to a list
   metrics_list2[[i]] <- Metrics # appending each metric from each model to a list
   results2 <- rbind(results2, cbind(params, 
                                     optimal_threshold = optimal_threshold,
-                                    precision = Metrics$byClass['Precision'][[1]],
+                                    binary_accuracy = Metrics$overall['Accuracy'][[1]],
                                     recall = Metrics$byClass['Recall'][[1]],
-                                    F1_score = optimal_f1_score, 
+                                    precision = Metrics$byClass['Precision'][[1]],
+                                    specificity =  Metrics$byClass['Specificity'][[1]],
+                                    F1_score = Metrics$byClass['F1'][[1]], 
+                                    MCC = optimal_mcc_score,
                                     AUC_ROC = AUC_ROC,
                                     AUC_PR = AUC_PR,
-                                    MCC = MCC))
+                                    FN = Metrics$table[1,2],
+                                    FP = Metrics$table[2,1],
+                                    TN = Metrics$table[1,1],
+                                    TP = Metrics$table[2,2]
+                                    ))
   
 }
 
 stopCluster(cl)
 # save all content from model
+# save(model_list2,
+#      probabilities_list2,
+#      MCC_score_list2,
+#      metrics_list2,
+#      results2,
+#      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/rf_models_output_2014_2022_resampled_non_buffered_dataset.Rdata')
+
 save(model_list2,
      probabilities_list2,
-     threshold_list2,
-     F1_score_list2,
+     MCC_score_list2,
      metrics_list2,
      results2,
-     file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/rf_models_output_2014_2022_resampled_non_buffered_dataset.Rdata')
+     file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/FINAL MODELS OUTPUT/Random Forest/Non-Buffered Model/Training metrics/rf_models_training_output_2014_2022_resampled_non_buffered_dataset.Rdata')
+
 
 results2
-which.max(results2$AUC_ROC)
-which.max(results2$AUC_PR)
-which.max(results2$MCC)
-which.max(results2$F1_score)
-metrics_list2[[which.max(results2$AUC_PR)]]
 
-optimal_model2 <- model_list2[[which.max(results2$AUC_PR)]] # extracting optimal model from list using AUC_PR as metrics of choice
+optimal_model2 <- model_list2[[which.max(results2$MCC)]] # extracting optimal model from list using MCC as metrics of choice
 { # Variable importance plot
   # par(mar = c(4.1, 7, 1, 0.2)) 
   # importance(optimal_model2)|> sort(decreasing = F) |> barplot(horiz = T, las = 1)
   optimal_model2_IMP <- importance(optimal_model2) |> as.data.frame() # convert importance into a data frame
   rownames(optimal_model2_IMP) <- c('Longitude', 'Latitude', 'Year', 'Month',
-                                    'LULC', 'NDVI', 'NDMI', 'NBR', 'TP',
+                                    'LULC', 'NDVI', 'NDMI', 'TP',
                                     'AMT', 'ANSWS', 'ARH', 'Elevation',
-                                    'Slope', 'Aspect') # rename variables
+                                    'Slope', 'Aspect', 'Lagged Fire') # rename variables
   colnames(optimal_model2_IMP) <- 'Importance' # change column names
   optimal_model2_IMP$Importance <- optimal_model2_IMP$Importance*100 # convert importance to percentage
   optimal_model2_IMP_plot <- ggplot(optimal_model2_IMP, aes(x = reorder(rownames(optimal_model2_IMP), Importance), y = Importance, 
                                                             fill = -Importance)) +
     geom_bar(stat='identity') +
-    ggtitle('Variable Importance\n from RFM 3')+
+    ggtitle('Variable Importance\n from RFM 2')+
     xlab('')+
     ylab('Overall \nImportance (%)') +
     theme_classic() +
@@ -972,14 +994,16 @@ optimal_model2 <- model_list2[[which.max(results2$AUC_PR)]] # extracting optimal
           axis.text = element_text(size = 8))
   optimal_model2_IMP_plot
 }
-opt_probs2 <- probabilities_list2[[which.max(results2$AUC_PR)]]
-threshold_from_optimal_model2 <- threshold_list2[[which.max(results2$AUC_PR)]] # generate a sequence of threshold to classify response variable based on probability class
-F1_scores_from_optimal_model2 <- F1_score_list2[[which.max(results2$AUC_PR)]]
+opt_probs2 <- probabilities_list2[[which.max(results2$MCC)]]
+RFM2_training_accuracy <- results2[which.max(results2$MCC),]
+MCC_from_optimal_model2 <- MCC_score_list2[[which.max(results2$MCC)]] # list of MCCs for each threshold
+RFM2_optimal_MCC <- max(MCC_from_optimal_model2) # chosen MCC for best outcome
+RFM2_optimal_threshold <- RFM2_training_accuracy[,'optimal_threshold']
 
 {
   par(mar = c(4.1, 4, .2, 0.2)) # customised margin
-  plot(threshold_from_optimal_model2, F1_scores_from_optimal_model2,
-       type = 'l',
+  plot(threshold, MCC_from_optimal_model2,
+       type = 'b',
        # pch = 19,
        # main = 'Chosen Threshold from Optimal RF Model',
        # cex.main = .9,
@@ -988,56 +1012,65 @@ F1_scores_from_optimal_model2 <- F1_score_list2[[which.max(results2$AUC_PR)]]
        # cex = .3,
        col = 'seagreen',
        xlab = paste0('Threshold'),
-       ylab = 'F1 Score',
+       ylab = 'MCC Score',
        # xlim = c(min(threshold), 0.01)
   )
-  points(threshold_from_optimal_model2, 
-         F1_scores_from_optimal_model2, 
-         pch = 19, cex = .1, col = 'seagreen')
-  points(results2$optimal_threshold[which.max(results2$AUC_PR)], 
-         results2$F1_score[which.max(results2$AUC_PR)], 
-         pch = 19, cex = .5, col = 'greenyellow')
-  abline(v=results2$optimal_threshold[which.max(results2$AUC_PR)],
-         h=results2$F1_score[which.max(results2$AUC_PR)],
-         lty = "dashed",
-         col= 'greenyellow')
-  text(results2$optimal_threshold[which.max(results2$AUC_PR)]+.02, 
-       results2$F1_score[which.max(results2$AUC_PR)]-.03, 
-       labels=paste("Threshold = ", results2$optimal_threshold[which.max(results2$AUC_PR)]|>round(3)),
-       cex=.6,
-       col="seagreen",
-       srt=270)
-  text(results2$optimal_threshold[which.max(results2$AUC_PR)]-.3, 
-       results2$F1_score[which.max(results2$AUC_PR)]-.0015, 
-       labels=paste("F1 Score = ", results2$F1_score[which.max(results2$AUC_PR)]|>round(3)),
-       cex=.6,
-       col="seagreen")
+  points(RFM2_optimal_threshold, 
+         RFM2_optimal_MCC, 
+         pch = 19, cex = .75, col = 'seagreen')
+  # points(results2$optimal_threshold[which.max(results2$AUC_PR)], 
+  #        results2$F1_score[which.max(results2$AUC_PR)], 
+  #        pch = 19, cex = .5, col = 'greenyellow')
+  # abline(v=results2$optimal_threshold[which.max(results2$AUC_PR)],
+  #        h=results2$F1_score[which.max(results2$AUC_PR)],
+  #        lty = "dashed",
+  #        col= 'greenyellow')
+  # text(results2$optimal_threshold[which.max(results2$AUC_PR)]+.02, 
+  #      results2$F1_score[which.max(results2$AUC_PR)]-.03, 
+  #      labels=paste("Threshold = ", results2$optimal_threshold[which.max(results2$AUC_PR)]|>round(3)),
+  #      cex=.6,
+  #      col="seagreen",
+  #      srt=270)
+  # text(results2$optimal_threshold[which.max(results2$AUC_PR)]-.3, 
+  #      results2$F1_score[which.max(results2$AUC_PR)]-.0015, 
+  #      labels=paste("F1 Score = ", results2$F1_score[which.max(results2$AUC_PR)]|>round(3)),
+  #      cex=.6,
+  #      col="seagreen")
 }
 
 # prediction probabilities for each class on test set
 test_probs2 <- predict(optimal_model2, data = test_set2[,colnames(test_set2) != 'Fire_Value'])$predictions
-test_optimal_threshold2 <- results2[which.max(results2$AUC_PR),]$optimal_threshold # extracting the optimal threshold used in the optimal model
+test_optimal_threshold2 <- RFM2_optimal_threshold # extracting the optimal threshold used in the optimal model
 test_pred_class2 <- ifelse(test_probs2[, '1'] >= test_optimal_threshold2, 1, 0) |> as.factor()
 test_metrics2 <- confusionMatrix(test_pred_class2, test_set2$Fire_Value, positive = '1', mode = 'everything')
-test_f1_score2<- test_metrics2$byClass['F1'][[1]]
-test_precision2 <- test_metrics2$byClass['Precision'][[1]]
-test_recall2 <- test_metrics2$byClass['Recall'][[1]]
 test_prediction2 <- prediction(as.numeric(test_pred_class2)-1, test_set2$Fire_Value)
 test_AUC_ROC2<- performance(test_prediction2, measure = 'auc')@y.values[[1]] # AUC_ROC
 test_AUC_PR2 <- performance(test_prediction2, measure = 'aucpr')@y.values[[1]] # AUC_PR
 test_MCC2 <- mcc(preds = test_pred_class2, actuals = test_set2$Fire_Value) # computing Matthew's correlation coefficient
 test_accuracy2 <- cbind(optimal_threshold = test_optimal_threshold2,
-                        precision = test_precision2|>round(3),
-                        recall = test_recall2|>round(3),
-                        F1_score = test_f1_score2|>round(3), 
-                        AUC_ROC = test_AUC_ROC2|>round(3),
-                        AUC_PR = test_AUC_PR2|>round(3),
-                        MCC = test_MCC2|>round(3)) |> as_tibble()
+                        binary_accuracy = test_metrics2$overall['Accuracy'][[1]],
+                        recall = test_metrics2$byClass['Recall'][[1]],
+                        precision = test_metrics2$byClass['Precision'][[1]],
+                        specificity = test_metrics2$byClass['Specificity'][[1]],
+                        F1_score = test_metrics2$byClass['F1'][[1]], 
+                        MCC = test_MCC2,
+                        AUC_ROC = test_AUC_ROC2,
+                        AUC_PR = test_AUC_PR2,
+                        FN = test_metrics2$table[1,2],
+                        FP = test_metrics2$table[2,1],
+                        TN = test_metrics2$table[1,1],
+                        TP = test_metrics2$table[2,2]) |> as.data.frame(); test_accuracy2
 
-WS_visualisation_from_RF(df = test_set2, year = 2021, month = 4, 
-                         test_probs = test_probs2, test_pred_class = test_pred_class2, 
-                         classes_breaks_method = 'natural_breaks')
-WS_visualisation_from_RF(df = test_set2, year = 2021, month = 4, 
+# # saving test accuracy
+# save(test_probs2,test_optimal_threshold2,test_pred_class2,test_metrics2,
+#      test_prediction2,test_AUC_ROC2,test_AUC_PR2,test_MCC2,test_accuracy2,
+#      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/FINAL MODELS OUTPUT/Random Forest/Non-Buffered Model/Test metrics/rf_models_test_output_2014_2022_resampled_non_buffered_dataset.Rdata')
+
+
+# WS_visualisation_from_RF(df = test_set2, year = 2021, month = 4, 
+#                          test_probs = test_probs2, test_pred_class = test_pred_class2, 
+#                          classes_breaks_method = 'natural_breaks')
+WS_visualisation_from_RF(df = test_set2, year = 2022, month = 12,
                          test_probs = test_probs2, test_pred_class = test_pred_class2, 
                          classes_breaks_method = 'quantile')
 
@@ -1054,36 +1087,36 @@ pblapply(1:12, function(x){
 })
 
 
-# Final model results from resampled buffered training set [2014-2019], validation set [2020-2021], test set [2022]
-results[which.max(results$AUC_PR),] # training accuracy for Model 0
-test_accuracy # test accuracy from Model 0
+# # Final model results from resampled buffered training set [2014-2019], validation set [2020-2021], test set [2022]
+# results[which.max(results$AUC_PR),] # training accuracy for Model 0
+# test_accuracy # test accuracy from Model 0
+# 
+# # Final model results from resampled buffered training set [2014-2018], validation set [2019-2020], test set [2021-2022]
+# results1[which.max(results1$AUC_PR),] # training accuracy for Model 1
+# test_accuracy1 # test accuracy from Model 1
+# 
+# # Final model results from resampled non-buffered training set [2014-2018], validation set [2019-2020], test set [2021-2022]
+# results2[which.max(results2$AUC_PR),] # training accuracy for Model 2
+# test_accuracy2 # test accuracy from Model 2
+# 
+# # Random forest models training accuracy 
+# cbind(Model = c('RFM0 (Training set: buffered+undersampled+normalised-2014 to 2019| Val set: normalised-2020 to 2021| Test set: normalised-2022', 
+#                 'RFM1 (Training set: buffered+undersampled+normalised-2014 to 2018| Val set: normalised-2019 to 2020| Test set: normalised-2021 to 2022',
+#                 'RFM2 (Training set: non-buffered+undersampled+normalised-2014 to 2018| Val set: normalised-2019 to 2020| Test set: normalised-2021 to 2022'),
+#       rbind(results[which.max(results$AUC_PR),],
+#       results1[which.max(results1$AUC_PR),],
+#       results2[which.max(results2$AUC_PR),]))
+# 
+# # Random forest models test accuracy 
+# cbind(Model = c('RFM0 (Training set: buffered+undersampled+normalised-2014 to 2019| Val set: normalised-2020 to 2021| Test set: normalised-2022', 
+#                 'RFM1 (Training set: buffered+undersampled+normalised-2014 to 2018| Val set: normalised-2019 to 2020| Test set: normalised-2021 to 2022',
+#                 'RFM2 (Training set: non-buffered+undersampled+normalised-2014 to 2018| Val set: normalised-2019 to 2020| Test set: normalised-2021 to 2022'),
+#       rbind(test_accuracy,
+#       test_accuracy1,
+#       test_accuracy2))
 
-# Final model results from resampled buffered training set [2014-2018], validation set [2019-2020], test set [2021-2022]
-results1[which.max(results1$AUC_PR),] # training accuracy for Model 1
-test_accuracy1 # test accuracy from Model 1
-
-# Final model results from resampled non-buffered training set [2014-2018], validation set [2019-2020], test set [2021-2022]
-results2[which.max(results2$AUC_PR),] # training accuracy for Model 2
-test_accuracy2 # test accuracy from Model 2
-
-# Random forest models training accuracy 
-cbind(Model = c('RFM0 (Training set: buffered+undersampled+normalised-2014 to 2019| Val set: normalised-2020 to 2021| Test set: normalised-2022', 
-                'RFM1 (Training set: buffered+undersampled+normalised-2014 to 2018| Val set: normalised-2019 to 2020| Test set: normalised-2021 to 2022',
-                'RFM2 (Training set: non-buffered+undersampled+normalised-2014 to 2018| Val set: normalised-2019 to 2020| Test set: normalised-2021 to 2022'),
-      rbind(results[which.max(results$AUC_PR),],
-      results1[which.max(results1$AUC_PR),],
-      results2[which.max(results2$AUC_PR),]))
-
-# Random forest models test accuracy 
-cbind(Model = c('RFM0 (Training set: buffered+undersampled+normalised-2014 to 2019| Val set: normalised-2020 to 2021| Test set: normalised-2022', 
-                'RFM1 (Training set: buffered+undersampled+normalised-2014 to 2018| Val set: normalised-2019 to 2020| Test set: normalised-2021 to 2022',
-                'RFM2 (Training set: non-buffered+undersampled+normalised-2014 to 2018| Val set: normalised-2019 to 2020| Test set: normalised-2021 to 2022'),
-      rbind(test_accuracy,
-      test_accuracy1,
-      test_accuracy2))
-
-VARIMPPLOT <- cowplot::plot_grid(optimal_model_IMP_plot, optimal_model1_IMP_plot, optimal_model2_IMP_plot,
-                   labels = '', ncol = 3, nrow = 1)
+VARIMPPLOT <- cowplot::plot_grid(optimal_model1_IMP_plot, optimal_model2_IMP_plot,
+                   labels = '', ncol = 2, nrow = 1)
 ggsave('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/results plot/variable_importance_plots.pdf', plot = VARIMPPLOT,  width = 6.56, height = 3)
 
 
