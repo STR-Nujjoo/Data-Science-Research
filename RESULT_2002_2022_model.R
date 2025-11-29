@@ -312,13 +312,16 @@ val_CM_long <- confusionMatrix(factor(as.vector(val_pred_class_long), levels = c
                           positive = '1', 
                           mode = 'everything');val_CM_long
 
+# save(val_acc_check_long, val_AUCs_long, val_CM_long, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/FINAL MODELS OUTPUT/ConvLSTM/2002-2022/Training_validation metrics/Val_metrics_AUCs_CM_stats_2002_2022.Rdata')
 
-# Check if the optimal model is correctly extracted to match the optimal outcome of the validation accuracy of the best model prior to loading the best model
-if(all(val_acc_check_long == validation_metrics_long)){
-  print('Verification Successful!')
-}else{
-  print('Verification Unsuccessful!')
-}
+
+
+# # Check if the optimal model is correctly extracted to match the optimal outcome of the validation accuracy of the best model prior to loading the best model
+# if(all(val_acc_check_long == validation_metrics_long)){
+#   print('Verification Successful!')
+# }else{
+#   print('Verification Unsuccessful!')
+# }
 
 
 # ?fit.keras.engine.training.Model
@@ -354,6 +357,9 @@ overall_CM_long <- confusionMatrix(factor(as.vector(overall_pred_class_long), le
                                      levels = c('0','1')), 
                               positive = '1', 
                               mode = 'everything');overall_CM_long
+
+# save(test_AUCs_long,predicted_long,final_pred_weighted_long,overall_CM_long, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/FINAL MODELS OUTPUT/ConvLSTM/2002-2022/Test metrics/convlstm_test_results_2002_2022.Rdata')
+
 
 # creating time label
 timesteps_labels <- c('Fire 2021-01', 'Fire 2021-02', 'Fire 2021-03', 'Fire 2021-04', 'Fire 2021-05', 'Fire 2021-06', 'Fire 2021-07','Fire 2021-08', 'Fire 2021-09', 'Fire 2021-10', 'Fire 2021-11', 'Fire 2021-12',
@@ -535,7 +541,7 @@ for(i in 1:length(ConvLSTM_f1_score_list_long)){
 # View(ConvLSTM_test_results_long)
 
 # creating a function for visualisation
-WS_visualisation <- function(true_raster, raster_with_probabilities, raster_factor, classes_breaks_method = c('natural_breaks', 'quantile')){
+WS_visualisation <- function(index, true_raster, raster_with_probabilities, raster_factor, classes_breaks_method = c('natural_breaks', 'quantile')){
   period_name <- sub("^Fire\\s*", "", timesteps_labels[index])
   # Subdivision types
   quantile_subdivisions <- quantile(0:1, probs = seq(0,1,1/5))
@@ -653,15 +659,13 @@ WS_visualisation <- function(true_raster, raster_with_probabilities, raster_fact
     tm_graticules(lines = F)
   # )
   
-  maps <- tmap_arrange(p1,p2,p3,p4, nrow = 2, ncol = 2)
-  
-  return(maps) 
+  return(tmap_arrange(p1,p2,p3,p4, nrow = 2, ncol = 2)) 
 }
 
 
 # VISUALISATION OF WSM ----------------------------------------------------
 
-call_fire_period <- 'Fire 2021-01'
+call_fire_period <- 'Fire 2022-12'
 
 # optmised_threshold_plot(fire_period = call_fire_period)
 
@@ -670,21 +674,21 @@ call_fire_period <- 'Fire 2021-01'
 #                  raster_factor = y_pred_raster_list_long[[which(timesteps_labels==call_fire_period)]], 
 #                  classes_breaks_method = 'natural_breaks')
 
-WS_visualisation( index = which(timesteps_labels==call_fire_period),
+WS_visualisation(index = which(timesteps_labels==call_fire_period),
                   true_raster = true_test_raster_list_long[[which(timesteps_labels==call_fire_period)]], 
                   raster_with_probabilities = predicted_raster_list_long[[which(timesteps_labels==call_fire_period)]], 
                   raster_factor = y_pred_raster_list_long[[which(timesteps_labels==call_fire_period)]], 
                   classes_breaks_method = 'quantile')
 
-# # save all results
+# save all results
 # save(
-#      predicted_long,
+#      final_pred_weighted_long,
 #      predicted_raster_list_long,
 #      true_test_raster_list_long,
-#      ConvLSTM_threshold_list,
+#      ConvLSTM_threshold_list_long,
 #      ConvLSTM_specificity_list_long,
 #      ConvLSTM_f1_score_list_long,
 #      y_pred_raster_list_long,
 #      ConvLSTM_metrics_list_long,
 #      ConvLSTM_test_results_long,
-#      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/ConvLSTM main subset results/ConvLSTM_main_outputs_on_subset.Rdata')
+#      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/FINAL MODELS OUTPUT/ConvLSTM/2002-2022/results_for_visualisation/ConvLSTM_main_results_2002_2022.Rdata')

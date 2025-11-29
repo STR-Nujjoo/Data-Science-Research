@@ -198,41 +198,42 @@ best_val_MCCs <- sapply(seq_along(main_training_results), function(x){main_train
 thresholds <- seq(0.5,0.7, by = .05) # threshold list
 # thresholds <- seq(0.55,0.65, by = .01) # threshold list
 
-plot(x = thresholds, y = best_val_MCCs, type = 'b', xlab = 'Threshold', ylab = 'Validation MCC', col = 'red', pch = 20)
-
 optimal_ConvLSTM_model_index <- which.max(best_val_MCCs)
 optimal_ConvLSTM_threshold <- main_training_results[[optimal_ConvLSTM_model_index]]$threshold;optimal_ConvLSTM_threshold
 # optimal_ConvLSTM_threshold <- 0.6
 # main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics
+
+{
+  par(mar = c(4.1, 4, .2, 0.2)) # customised margin
+  plot(x = thresholds, 
+       y = best_val_MCCs, 
+       type = 'b', 
+       xlab = 'Threshold', ylab = 'Validation MCC Score', 
+       cex.lab = .8,
+       cex.axis = .8,
+       col = 'seagreen')
+  points(optimal_ConvLSTM_threshold,
+         max(best_val_MCCs),
+         pch = 19, cex = .75, col = 'seagreen')
+  
+}
 
 options(scipen=999)
 
 # visualise history plot of best model
 main_training_results[[optimal_ConvLSTM_model_index]]$history |> plot()
 
-validation_metrics <- c(val_loss = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_loss[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
-                        val_binary_accuracy = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_binary_accuracy[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
-                        val_recall = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_recall[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
-                        val_precision = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_precision[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
-                        val_specificity = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_specificity[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
-                        val_f1_score = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
-                        val_MCC = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
-                        val_fn = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_fn[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
-                        val_fp = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_fp[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
-                        val_tn = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_tn[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
-                        val_tp = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_tp[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)])
-
-# validation_metrics <- c(val_loss = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_loss[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score)],
-#                         val_binary_accuracy = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_binary_accuracy[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score)],
-#                         val_recall = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_recall[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score)],
-#                         val_precision = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_precision[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score)],
-#                         val_specificity = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_specificity[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score)],
-#                         val_f1_score = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score)],
-#                         val_MCC = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score)],
-#                         val_fn = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_fn[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score)],
-#                         val_fp = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_fp[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score)],
-#                         val_tn = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_tn[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score)],
-#                         val_tp = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_tp[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score)])
+# validation_metrics <- c(val_loss = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_loss[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
+#                         val_binary_accuracy = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_binary_accuracy[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
+#                         val_recall = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_recall[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
+#                         val_precision = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_precision[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
+#                         val_specificity = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_specificity[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
+#                         val_f1_score = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_f1_score[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
+#                         val_MCC = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
+#                         val_fn = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_fn[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
+#                         val_fp = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_fp[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
+#                         val_tn = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_tn[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)],
+#                         val_tp = main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_tp[which.max(main_training_results[[optimal_ConvLSTM_model_index]]$history$metrics$val_MCC)])
 
 # Creating a function to load each best model for each threshold
 load_model_by_threshold <- function(file_path, t){
@@ -347,7 +348,7 @@ val_pred_weighted <- reconstruct_sequence_weighted(pred_prob_val,
 dim(val_pred_weighted)
 summary(val_pred_weighted)
 
-# Evaluation metric for all the testY without repetition
+# Evaluation metric for all the valY without repetition
 val_pred_class <- ifelse(as.vector(val_pred_weighted) > optimal_ConvLSTM_threshold, 1, 0)
 val_CM <- confusionMatrix(factor(as.vector(val_pred_class), levels = c('0','1')), 
                               factor(as.vector(valY), 
@@ -355,12 +356,14 @@ val_CM <- confusionMatrix(factor(as.vector(val_pred_class), levels = c('0','1'))
                               positive = '1', 
                               mode = 'everything');val_CM
 
-# Check if the optimal model is correctly extracted to match the optimal outcome of the validation accuracy of the best model prior to loading the best model
-if(all(round(val_acc_check,5) == round(validation_metrics,5))){
-  print('Verification Successful!')
-}else{
-  print('Verification Unsuccessful!')
-}
+# save(val_acc_check, val_AUCs,val_CM, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/FINAL MODELS OUTPUT/ConvLSTM/2014-2022/Training_validation metrics/Val_metrics_AUCs_CM_stats_2014_2022.Rdata')
+
+# # Check if the optimal model is correctly extracted to match the optimal outcome of the validation accuracy of the best model prior to loading the best model
+# if(all(round(val_acc_check,5) == round(validation_metrics,5))){
+#   print('Verification Successful!')
+# }else{
+#   print('Verification Unsuccessful!')
+# }
 
 # ?fit.keras.engine.training.Model
 # plot(history)
@@ -396,6 +399,8 @@ overall_CM <- confusionMatrix(factor(as.vector(overall_pred_class), levels = c('
                        levels = c('0','1')), 
                 positive = '1', 
                 mode = 'everything');overall_CM
+
+# save(test_AUCs,predicted,final_pred_weighted,overall_CM, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/FINAL MODELS OUTPUT/ConvLSTM/2014-2022/Test metrics/convlstm_test_results_2014_2022.Rdata')
 
 # creating time label
 timesteps_labels <- c('Fire 2021-01', 'Fire 2021-02', 'Fire 2021-03', 'Fire 2021-04', 'Fire 2021-05', 'Fire 2021-06', 'Fire 2021-07','Fire 2021-08', 'Fire 2021-09', 'Fire 2021-10', 'Fire 2021-11', 'Fire 2021-12',
@@ -700,7 +705,7 @@ WS_visualisation <- function(index, true_raster, raster_with_probabilities, rast
 
 # VISUALISATION OF WSM ----------------------------------------------------
 
-call_fire_period <- 'Fire 2022-12'
+call_fire_period <- 'Fire 2021-04'
 
 # optmised_threshold_plot(fire_period = call_fire_period)
 
@@ -716,7 +721,7 @@ WS_visualisation(index = which(timesteps_labels==call_fire_period),
                  raster_factor = y_pred_raster_list[[which(timesteps_labels==call_fire_period)]], 
                  classes_breaks_method = 'quantile')
 
-# # save all results
+# save all results
 # save(
 #      final_pred_weighted,
 #      predicted_raster_list,
@@ -727,4 +732,4 @@ WS_visualisation(index = which(timesteps_labels==call_fire_period),
 #      y_pred_raster_list,
 #      ConvLSTM_metrics_list,
 #      ConvLSTM_test_results,
-#      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/ConvLSTM main subset results/ConvLSTM_main_outputs_on_subset.Rdata')
+#      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/FINAL MODELS OUTPUT/ConvLSTM/2014-2022/results_for_visualisation/ConvLSTM_main_results_2014_2022.Rdata')

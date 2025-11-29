@@ -698,8 +698,8 @@ RFM1_optimal_threshold <- RFM1_training_accuracy[,'optimal_threshold']
        cex.axis = .8,
        # cex = .3,
        col = 'seagreen',
-       xlab = paste0('Threshold'),
-       ylab = 'MCC Score',
+       xlab = 'Threshold',
+       ylab = 'Validation MCC Score',
        # xlim = c(min(threshold), 0.01)
   )
   points(RFM1_optimal_threshold,
@@ -961,13 +961,13 @@ stopCluster(cl)
 #      results2,
 #      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/rf_models_output_2014_2022_resampled_non_buffered_dataset.Rdata')
 
-save(model_list2,
-     probabilities_list2,
-     MCC_score_list2,
-     metrics_list2,
-     results2,
-     file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/FINAL MODELS OUTPUT/Random Forest/Non-Buffered Model/Training metrics/rf_models_training_output_2014_2022_resampled_non_buffered_dataset.Rdata')
-
+# save(model_list2,
+#      probabilities_list2,
+#      MCC_score_list2,
+#      metrics_list2,
+#      results2,
+#      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/FINAL MODELS OUTPUT/Random Forest/Non-Buffered Model/Training metrics/rf_models_training_output_2014_2022_resampled_non_buffered_dataset.Rdata')
+# 
 
 results2
 
