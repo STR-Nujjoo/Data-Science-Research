@@ -700,12 +700,13 @@ WS_visualisation <- function(index, true_raster, raster_with_probabilities, rast
     tm_graticules(lines = F)
   # )
   
-  return(tmap_arrange(p1,p2,p3,p4, nrow = 2, ncol = 2)) 
+  return(tmap_arrange(p1,p2,p3,p4, nrow = 2, ncol = 2))
+  
 }
 
 # VISUALISATION OF WSM ----------------------------------------------------
 
-call_fire_period <- 'Fire 2021-04'
+call_fire_period <- 'Fire 2021-10'
 
 # optmised_threshold_plot(fire_period = call_fire_period)
 
@@ -733,3 +734,5 @@ WS_visualisation(index = which(timesteps_labels==call_fire_period),
 #      ConvLSTM_metrics_list,
 #      ConvLSTM_test_results,
 #      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/FINAL MODELS OUTPUT/ConvLSTM/2014-2022/results_for_visualisation/ConvLSTM_main_results_2014_2022.Rdata')
+
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/FINAL MODELS OUTPUT/ConvLSTM/2014-2022/results_for_visualisation/ConvLSTM_main_results_2014_2022.Rdata')

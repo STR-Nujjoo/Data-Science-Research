@@ -12,6 +12,7 @@
   library(colorRamps)
   library(pbapply)
   library(reshape2)
+  library(plotly)
 }
 
 # Colour ramp for NDVI
@@ -140,6 +141,10 @@ median_NDVI_plot <- ggplot(NDVI_EDA_df, aes(x = date, y = median_NDVI, color = m
         legend.text = element_text(size = 7))
 
 median_NDVI_plot
+
+x <- ggplot(NDVI_EDA_df, aes(x = date, y = median_NDVI, color = median_NDVI)) +
+  geom_line(linewidth = .8)
+ggplotly(x)
 
 # Save above plot
 ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/EDA plots/median_NDVI_plot.pdf", 

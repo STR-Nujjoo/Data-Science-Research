@@ -499,6 +499,8 @@ prop.table(table(test_set1$Fire_Value))*100 # calculate proportion of imbalance
 #      RF_2014to2022_Test1,
 #      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/RF Model 1 input data/bufferedTrain20142018_Val20192020_Test20212022.Rdata')
 
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/RF Model 1 input data/bufferedTrain20142018_Val20192020_Test20212022.Rdata')
+
 # save(RF_2014to2022_Train1,
 #      RF_2014to2022_Val1,
 #      RF_2014to2022_Test1,
@@ -752,10 +754,12 @@ test_accuracy1 <- cbind(optimal_threshold = test_optimal_threshold1,
 #      test_prediction1,test_AUC_ROC1,test_AUC_PR1,test_MCC1,test_accuracy1,
 #      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/FINAL MODELS OUTPUT/Random Forest/Buffered Model/Test metrics/rf_models_test_output_2014_2022_resampled_buffered_dataset.Rdata')
 
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/FINAL MODELS OUTPUT/Random Forest/Buffered Model/Test metrics/rf_models_test_output_2014_2022_resampled_buffered_dataset.Rdata')
+
 # WS_visualisation_from_RF(df = test_set1, year = 2022, month = 3, 
 #                          test_probs = test_probs1, test_pred_class = test_pred_class1, 
 #                          classes_breaks_method = 'natural_breaks')
-WS_visualisation_from_RF(df = test_set1, year = 2021, month = 4, 
+WS_visualisation_from_RF(df = test_set1, year = 2022, month = 3, 
                          test_probs = test_probs1, test_pred_class = test_pred_class1, 
                          classes_breaks_method = 'quantile')
 
@@ -815,6 +819,8 @@ prop.table(table(test_set2$Fire_Value))*100 # calculate proportion of imbalance 
 #      RF_2014to2022_Val2,
 #      RF_2014to2022_Test2,
 #      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/RF Model 2 input data/non_bufferedTrain20142018_Val20192020_Test20212022.Rdata')
+
+load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/RF Model 2 input data/non_bufferedTrain20142018_Val20192020_Test20212022.Rdata')
 
 # save(RF_2014to2022_Train2,
 #      RF_2014to2022_Val2,
@@ -961,6 +967,7 @@ stopCluster(cl)
 #      results2,
 #      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/rf_models_output_2014_2022_resampled_non_buffered_dataset.Rdata')
 
+
 # save(model_list2,
 #      probabilities_list2,
 #      MCC_score_list2,
@@ -1066,11 +1073,12 @@ test_accuracy2 <- cbind(optimal_threshold = test_optimal_threshold2,
 #      test_prediction2,test_AUC_ROC2,test_AUC_PR2,test_MCC2,test_accuracy2,
 #      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/FINAL MODELS OUTPUT/Random Forest/Non-Buffered Model/Test metrics/rf_models_test_output_2014_2022_resampled_non_buffered_dataset.Rdata')
 
+load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/FINAL MODELS OUTPUT/Random Forest/Non-Buffered Model/Test metrics/rf_models_test_output_2014_2022_resampled_non_buffered_dataset.Rdata')
 
 # WS_visualisation_from_RF(df = test_set2, year = 2021, month = 4, 
 #                          test_probs = test_probs2, test_pred_class = test_pred_class2, 
 #                          classes_breaks_method = 'natural_breaks')
-WS_visualisation_from_RF(df = test_set2, year = 2022, month = 12,
+WS_visualisation_from_RF(df = test_set2, year = 2022, month = 03,
                          test_probs = test_probs2, test_pred_class = test_pred_class2, 
                          classes_breaks_method = 'quantile')
 

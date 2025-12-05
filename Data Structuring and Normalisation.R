@@ -74,6 +74,7 @@ names(LULC_2023[[x]]) <<- gsub('[.]','', names(LULC_2023[[x]]))}) # rename layer
 # })
 
 {
+  par(mar = c(4.1, 3, .2, 0.1)) # customised margin
   # calculate the average days between consecutive LULC after removal of duplicate LULC (duplicate as in 2 LULC for the same month)
   ave_d <- as.Date(sapply(seq_along(LULC_2014_2022), function (x){sub('LULC ', '', LULC_2014_2022[[x]]@file@name)}), '%Y%m%d') |> 
     diff() |> mean() |> ceiling()
