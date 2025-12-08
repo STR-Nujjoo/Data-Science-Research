@@ -652,12 +652,16 @@ stopCluster(cl)
 #      results1,
 #      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/rf_models_output_2014_2022_resampled_buffered_dataset.Rdata')
 
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/rf_models_output_2014_2022_resampled_buffered_dataset.Rdata')
+
 # save(model_list1,
 #      probabilities_list1,
 #      MCC_score_list1,
 #      metrics_list1,
 #      results1,
 #      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/FINAL MODELS OUTPUT/Random Forest/Buffered Model/Training metrics/rf_models_training_output_2014_2022_resampled_buffered_dataset.Rdata')
+
+
 
 View(results1)
 optimal_model1 <- model_list1[[which.max(results1$MCC)]] # extracting optimal model from list using MCC as metrics of choice
@@ -967,6 +971,7 @@ stopCluster(cl)
 #      results2,
 #      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/rf_models_output_2014_2022_resampled_non_buffered_dataset.Rdata')
 
+# load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Models/rf_models_output_2014_2022_resampled_non_buffered_dataset.Rdata')
 
 # save(model_list2,
 #      probabilities_list2,
