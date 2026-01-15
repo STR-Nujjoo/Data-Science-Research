@@ -694,3 +694,5 @@ WS_visualisation(index = which(timesteps_labels==call_fire_period),
 #      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/FINAL MODELS OUTPUT/ConvLSTM/2002-2022/results_for_visualisation/ConvLSTM_main_results_2002_2022.Rdata')
 
 # load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/FINAL MODELS OUTPUT/ConvLSTM/2002-2022/results_for_visualisation/ConvLSTM_main_results_2002_2022.Rdata')
+
+

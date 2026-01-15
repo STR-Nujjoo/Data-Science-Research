@@ -1,6 +1,3 @@
-library(tmap)
-library(cowplot)
-
 
 # Detecting abnormal prediction from convLSTM [2014-2022]- 2021-10 which i suspect the 2017-10 fire had an influence on that.
 # Hence, check similariity between few predictor variables between 2017-10 and 2021-10.
@@ -220,6 +217,7 @@ WS_RASTERS_list <- pblapply(seq_along(timesteps_labels), function(x){
              raster_with_probabilities = predicted_raster_list[[x]], 
              raster_factor = y_pred_raster_list[[x]])
 })
+
 
 
 WSM_combined_plot <- function(data, r1_index, r2_index, r3_index, r4_index){
@@ -499,6 +497,129 @@ convlstm_wsm_2022_09_to_2022_12_20142022df <- WSM_combined_plot(data = WS_RASTER
 
 tmap_save(convlstm_wsm_2022_09_to_2022_12_20142022df, filename = "/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/results plot/convlstm_wsm_2022_09_to_2022_12_20142022df.pdf", width = 6.56, height = 8.50)
 
+
+# Performing further analysis with the WSM- temporal trend in classes
+
+Area_per_classes_WSM <- do.call(rbind,lapply(1:24,function(x){freq(WS_RASTERS_list[[x]][[4]])%>%
+  mutate(area_in_ha = (count*30*30)/10000,
+         date = str_extract(timesteps_labels[x],"\\d{4}-\\d{2}"))%>%
+  select(value,area_in_ha,date)}))
+
+Area_per_classes_WSM$date <- factor(Area_per_classes_WSM$date) # converting column to factor
+Area_per_classes_WSM$value <- factor(Area_per_classes_WSM$value,
+                                     levels = c("Very Low WS", "Low WS", "Moderate WS", "High WS", "Very High WS"))
+str(Area_per_classes_WSM)
+
+# Define custom colors
+my_colors <- c(
+  "Very Low WS" = '#007206',  # dark green
+  "Low WS"      = '#7DB810',  # green
+  "Moderate WS" = '#F2FE1E',  # yellow
+  "High WS"     = '#FFAC12',  # orange
+  "Very High WS"= '#FC3B09'   # red
+)
+
+ymin <- 0
+ymax <- max(Area_per_classes_WSM$area_in_ha)  # slightly above max for padding
+
+
+ggplot(Area_per_classes_WSM , aes(x = date, y = area_in_ha, colour = value, group = value)) +
+  geom_line(linewidth = 0.5) +
+  geom_point(size = 1) +
+  labs(
+    x = "Period",
+    y = "log10(Area) in ha",
+    colour = "WS Class"
+  ) +
+  scale_color_manual(values = my_colors)+
+  theme_light() +
+  annotate(
+    "rect",
+    xmin = "2021-11",
+    xmax = '2021-12',
+    ymin = ymin,
+    ymax = ymax,
+    fill = "red", # for summer
+    alpha = 0.2
+  )+
+  annotate(
+    "rect",
+    xmin = "2021-01",
+    xmax = '2021-02',
+    ymin = ymin,
+    ymax = ymax,
+    fill = "red", # for summer
+    alpha = 0.2
+  )+
+  annotate(
+    "rect",
+    xmin = "2021-03",
+    xmax = '2021-05',
+    ymin = ymin,
+    ymax = ymax,
+    fill = "yellow", # for autumn
+    alpha = 0.2
+  )+
+  annotate(
+    "rect",
+    xmin = "2022-11",
+    xmax = '2022-12',
+    ymin = ymin,
+    ymax = ymax,
+    fill = "red", # for summer
+    alpha = 0.2
+  )+
+  annotate(
+    "rect",
+    xmin = "2022-01",
+    xmax = '2022-02',
+    ymin = ymin,
+    ymax = ymax,
+    fill = "red", # for summer
+    alpha = 0.2
+  )+
+  annotate(
+    "rect",
+    xmin = "2022-03",
+    xmax = '2022-05',
+    ymin = ymin,
+    ymax = ymax,
+    fill = "yellow", # for autumn
+    alpha = 0.2
+  )+
+  annotate(
+    "rect",
+    xmin = "2021-12",
+    xmax = '2022-01',
+    ymin = ymin,
+    ymax = ymax,
+    fill = "red", # for summer
+    alpha = 0.2
+  )+
+  annotate(
+    "rect",
+    xmin = "2021-02",
+    xmax = '2021-03',
+    ymin = ymin,
+    ymax = ymax,
+    fill = "darkorange", # for summer transitioning to early autumn
+    alpha = 0.2
+  )+
+  annotate(
+    "rect",
+    xmin = "2022-02",
+    xmax = '2022-03',
+    ymin = ymin,
+    ymax = ymax,
+    fill = "darkorange", # for summer transitioning to early autumn
+    alpha = 0.2
+  )+
+  scale_y_log10() + # scale plot if necessary
+  facet_wrap(~ value, scales = "free_y", ncol = 1)+
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "none"
+  )
 
 
 # CONVLSTM 2 OUTPUTS ------------------------------------------------------

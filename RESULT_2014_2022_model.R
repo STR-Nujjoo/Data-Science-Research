@@ -579,7 +579,7 @@ WS_visualisation <- function(index, true_raster, raster_with_probabilities, rast
 
 # VISUALISATION OF WSM ----------------------------------------------------
 
-call_fire_period <- 'Fire 2021-04'
+call_fire_period <- 'Fire 2022-10'
 
 # optmised_threshold_plot(fire_period = call_fire_period)
 

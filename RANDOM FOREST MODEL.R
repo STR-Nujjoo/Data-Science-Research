@@ -677,8 +677,8 @@ optimal_model1 <- model_list1[[which.max(results1$MCC)]] # extracting optimal mo
   optimal_model1_IMP$Importance <- optimal_model1_IMP$Importance*100 # convert importance to percentage
   optimal_model1_IMP_plot <- ggplot(optimal_model1_IMP, aes(x = reorder(rownames(optimal_model1_IMP), Importance), y = Importance, 
                                                           fill = -Importance)) +
-    geom_bar(stat='identity') +
-    ggtitle('Variable Importance\n from RFM 1')+
+    geom_bar(stat='identity', fill = 'steelblue') +
+    ggtitle('Variable Importance\n from RF 1')+
     xlab('')+
     ylab('Overall \nImportance (%)') +
     theme_classic() +
@@ -996,8 +996,8 @@ optimal_model2 <- model_list2[[which.max(results2$MCC)]] # extracting optimal mo
   optimal_model2_IMP$Importance <- optimal_model2_IMP$Importance*100 # convert importance to percentage
   optimal_model2_IMP_plot <- ggplot(optimal_model2_IMP, aes(x = reorder(rownames(optimal_model2_IMP), Importance), y = Importance, 
                                                             fill = -Importance)) +
-    geom_bar(stat='identity') +
-    ggtitle('Variable Importance\n from RFM 2')+
+    geom_bar(stat='identity', fill = 'steelblue') +
+    ggtitle('Variable Importance\n from RF 2')+
     xlab('')+
     ylab('Overall \nImportance (%)') +
     theme_classic() +
