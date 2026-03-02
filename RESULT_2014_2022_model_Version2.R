@@ -256,7 +256,6 @@ MODELS_PATH <- list.files('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024
 optimal_ConvLSTM_model <- load_model_by_threshold(file_path = paste0('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Wildfire_Data_Stefan/Models2/', MODELS_PATH[optimal_ConvLSTM_model_index]),
                                                   t = optimal_ConvLSTM_threshold) # extract the threshold as part of the name to ensure consistency
 
-
 # function to deconstruct the 5D tensor with overlapping rasters
 reconstruct_sequence_weighted <- function(predY, 
                                           seq_len, # number of timesteps per window

@@ -523,12 +523,14 @@ ymin <- 0
 ymax <- max(Area_per_classes_WSM$area_in_ha)  # slightly above max for padding
 
 
+# 1st option of the plot
+options(scipen = 999)
 ggplot(Area_per_classes_WSM , aes(x = date, y = area_in_ha, colour = value, group = value)) +
   geom_line(linewidth = 0.5) +
   geom_point(size = 1) +
   labs(
     x = "Period",
-    y = "log10(Area) in ha",
+    y = "Area (ha)",
     colour = "WS Class"
   ) +
   scale_color_manual(values = my_colors)+
@@ -621,6 +623,420 @@ ggplot(Area_per_classes_WSM , aes(x = date, y = area_in_ha, colour = value, grou
     legend.position = "none"
   )
 
+
+# 2nd option of the plot is to preserve the area- therefore plot separately and combine them into 1
+
+# generate a dataset with continuous 5 classes per period
+all_months <- seq.Date(
+  from = as.Date("2021-01-01"),
+  to   = as.Date("2022-12-01"),
+  by   = "month"
+) |> format("%Y-%m")
+
+all_classes <- c(
+  "Very Low WS",
+  "Low WS",
+  "Moderate WS",
+  "High WS",
+  "Very High WS"
+)
+
+df_ref <- expand_grid(
+  date  = all_months,
+  value = all_classes
+)
+
+# convert WSM area df to tibble
+Area_per_classes_WSM <- as_tibble(Area_per_classes_WSM)
+
+# join both df to see which period did not contain those class
+Area_per_classes_WSM_modified <- left_join(df_ref,Area_per_classes_WSM, by = c('date','value'))
+Area_per_classes_WSM_modified <- Area_per_classes_WSM_modified %>%
+  mutate(area_in_ha = ifelse(is.na(Area_per_classes_WSM_modified$area_in_ha),0,Area_per_classes_WSM_modified$area_in_ha)) # convert any NA to 0
+# View(Area_per_classes_WSM_modified)
+Area_per_classes_WSM_modified$value <- factor(Area_per_classes_WSM_modified$value,
+                                              levels = c("Very Low WS", "Low WS", "Moderate WS", "High WS", "Very High WS"))
+
+Area_per_classes_WSM_modified %>%
+  filter(value=="Very High WS")%>%
+  summary()
+
+ymin <- min(Area_per_classes_WSM_modified$area_in_ha)
+ymax <- max(Area_per_classes_WSM_modified$area_in_ha) # slightly above max for padding
+
+# 1st option of the plot
+options(scipen = 999)
+timeseries_WS_class_plot <- ggplot(Area_per_classes_WSM_modified , aes(x = date, y = area_in_ha, colour = value, group = value)) +
+  geom_line(linewidth = 0.5) +
+  geom_point(size = 1) +
+  labs(
+    x = "Period",
+    y = "Area (ha)",
+    colour = "WS Class"
+  ) +
+  # geom_smooth(method='lm', se = F, linewidth = 0.3)+
+  scale_color_manual(values = my_colors)+
+  theme_light(base_size = 9) +
+  annotate(
+    "rect",
+    xmin = "2021-11",
+    xmax = '2021-12',
+    ymin = ymin,
+    ymax = ymax,
+    fill = "red", # for summer
+    alpha = 0.2
+  )+
+  annotate(
+    "rect",
+    xmin = "2021-01",
+    xmax = '2021-02',
+    ymin = ymin,
+    ymax = ymax,
+    fill = "red", # for summer
+    alpha = 0.2
+  )+
+  annotate(
+    "rect",
+    xmin = "2021-03",
+    xmax = '2021-05',
+    ymin = ymin,
+    ymax = ymax,
+    fill = "yellow", # for autumn
+    alpha = 0.2
+  )+
+  annotate(
+    "rect",
+    xmin = "2022-11",
+    xmax = '2022-12',
+    ymin = ymin,
+    ymax = ymax,
+    fill = "red", # for summer
+    alpha = 0.2
+  )+
+  annotate(
+    "rect",
+    xmin = "2022-01",
+    xmax = '2022-02',
+    ymin = ymin,
+    ymax = ymax,
+    fill = "red", # for summer
+    alpha = 0.2
+  )+
+  annotate(
+    "rect",
+    xmin = "2022-03",
+    xmax = '2022-05',
+    ymin = ymin,
+    ymax = ymax,
+    fill = "yellow", # for autumn
+    alpha = 0.2
+  )+
+  annotate(
+    "rect",
+    xmin = "2021-12",
+    xmax = '2022-01',
+    ymin = ymin,
+    ymax = ymax,
+    fill = "red", # for summer
+    alpha = 0.2
+  )+
+  annotate(
+    "rect",
+    xmin = "2021-02",
+    xmax = '2021-03',
+    ymin = ymin,
+    ymax = ymax,
+    fill = "darkorange", # for summer transitioning to early autumn
+    alpha = 0.2
+  )+
+  annotate(
+    "rect",
+    xmin = "2022-02",
+    xmax = '2022-03',
+    ymin = ymin,
+    ymax = ymax,
+    fill = "darkorange", # for summer transitioning to early autumn
+    alpha = 0.2
+  )+
+  # scale_y_log10() + # scale plot if necessary
+  # facet_wrap(~ value, scales = "free_y", ncol = 1)+
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "top",
+    legend.title = element_blank()
+  )
+
+timeseries_WS_class_plot
+
+# Save above plot
+ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/results plot/timeseries_WS_class_plot.pdf", 
+       plot = timeseries_WS_class_plot, width = 6.56, height = 3.8)
+
+# this one plots all the labels- separate plots
+WS_class_timeseries <- function(data,class,y_axis_title_col, title){
+  class_df <- Area_per_classes_WSM_modified%>%filter(value==class)
+  ymin <- min(class_df$area_in_ha)
+  ymax <- max(class_df$area_in_ha)  
+  
+  ggplot(class_df, aes(x = date, y = area_in_ha, colour = value, group = value))+
+    geom_line(linewidth = 0.5) +
+    geom_point(size = 1) +
+    labs(
+      x = "Period",
+      y = "Area (ha)",
+      colour = "WS Class"
+    ) +
+    geom_smooth(method = "loess", se=F, linewidth = 0.2)+
+    ggtitle(title)+
+    scale_color_manual(values = my_colors)+
+    theme_light() +
+    annotate(
+      "rect",
+      xmin = "2021-11",
+      xmax = '2021-12',
+      ymin = ymin,
+      ymax = ymax,
+      fill = "red", # for summer
+      alpha = 0.2
+    )+
+    annotate(
+      "rect",
+      xmin = "2021-01",
+      xmax = '2021-02',
+      ymin = ymin,
+      ymax = ymax,
+      fill = "red", # for summer
+      alpha = 0.2
+    )+
+    annotate(
+      "rect",
+      xmin = "2021-03",
+      xmax = '2021-05',
+      ymin = ymin,
+      ymax = ymax,
+      fill = "yellow", # for autumn
+      alpha = 0.2
+    )+
+    annotate(
+      "rect",
+      xmin = "2022-11",
+      xmax = '2022-12',
+      ymin = ymin,
+      ymax = ymax,
+      fill = "red", # for summer
+      alpha = 0.2
+    )+
+    annotate(
+      "rect",
+      xmin = "2022-01",
+      xmax = '2022-02',
+      ymin = ymin,
+      ymax = ymax,
+      fill = "red", # for summer
+      alpha = 0.2
+    )+
+    annotate(
+      "rect",
+      xmin = "2022-03",
+      xmax = '2022-05',
+      ymin = ymin,
+      ymax = ymax,
+      fill = "yellow", # for autumn
+      alpha = 0.2
+    )+
+    annotate(
+      "rect",
+      xmin = "2021-12",
+      xmax = '2022-01',
+      ymin = ymin,
+      ymax = ymax,
+      fill = "red", # for summer
+      alpha = 0.2
+    )+
+    annotate(
+      "rect",
+      xmin = "2021-02",
+      xmax = '2021-03',
+      ymin = ymin,
+      ymax = ymax,
+      fill = "darkorange", # for summer transitioning to early autumn
+      alpha = 0.2
+    )+
+    annotate(
+      "rect",
+      xmin = "2022-02",
+      xmax = '2022-03',
+      ymin = ymin,
+      ymax = ymax,
+      fill = "darkorange", # for summer transitioning to early autumn
+      alpha = 0.2
+    )+
+    theme_light(base_size = 9)+
+    theme(legend.position = 'none', 
+          plot.title = element_text(size= 7),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          axis.text.y = element_text(angle = 90, hjust = 0.5, vjust=0.5),
+          axis.title.y = element_text(color=y_axis_title_col))
+  
+}
+
+# this one plots all the labels- separate plots but without x-axis label
+WS_class_timeseries_no_x_axis_label <- function(data,class,y_axis_title_col, title){
+  class_df <- Area_per_classes_WSM_modified%>%filter(value==class)
+  ymin <- min(class_df$area_in_ha)
+  ymax <- max(class_df$area_in_ha)  
+  
+  ggplot(class_df, aes(x = date, y = area_in_ha, colour = value, group = value))+
+    geom_line(linewidth = 0.5) +
+    geom_point(size = 1) +
+    labs(
+      # x = "Period",
+      y = "Area (ha)",
+      colour = "WS Class"
+    ) +
+    geom_smooth(method = "loess", se=F, linewidth = 0.2)+
+    ggtitle(title)+
+    scale_color_manual(values = my_colors)+
+    theme_light() +
+    annotate(
+      "rect",
+      xmin = "2021-11",
+      xmax = '2021-12',
+      ymin = ymin,
+      ymax = ymax,
+      fill = "red", # for summer
+      alpha = 0.2
+    )+
+    annotate(
+      "rect",
+      xmin = "2021-01",
+      xmax = '2021-02',
+      ymin = ymin,
+      ymax = ymax,
+      fill = "red", # for summer
+      alpha = 0.2
+    )+
+    annotate(
+      "rect",
+      xmin = "2021-03",
+      xmax = '2021-05',
+      ymin = ymin,
+      ymax = ymax,
+      fill = "yellow", # for autumn
+      alpha = 0.2
+    )+
+    annotate(
+      "rect",
+      xmin = "2022-11",
+      xmax = '2022-12',
+      ymin = ymin,
+      ymax = ymax,
+      fill = "red", # for summer
+      alpha = 0.2
+    )+
+    annotate(
+      "rect",
+      xmin = "2022-01",
+      xmax = '2022-02',
+      ymin = ymin,
+      ymax = ymax,
+      fill = "red", # for summer
+      alpha = 0.2
+    )+
+    annotate(
+      "rect",
+      xmin = "2022-03",
+      xmax = '2022-05',
+      ymin = ymin,
+      ymax = ymax,
+      fill = "yellow", # for autumn
+      alpha = 0.2
+    )+
+    annotate(
+      "rect",
+      xmin = "2021-12",
+      xmax = '2022-01',
+      ymin = ymin,
+      ymax = ymax,
+      fill = "red", # for summer
+      alpha = 0.2
+    )+
+    annotate(
+      "rect",
+      xmin = "2021-02",
+      xmax = '2021-03',
+      ymin = ymin,
+      ymax = ymax,
+      fill = "darkorange", # for summer transitioning to early autumn
+      alpha = 0.2
+    )+
+    annotate(
+      "rect",
+      xmin = "2022-02",
+      xmax = '2022-03',
+      ymin = ymin,
+      ymax = ymax,
+      fill = "darkorange", # for summer transitioning to early autumn
+      alpha = 0.2
+    )+
+    theme_light(base_size = 9)+
+    theme(legend.position = 'none', 
+          plot.title = element_text(size= 7),
+          axis.text.x = element_blank(), axis.title.x = element_blank(),
+          axis.text.y = element_text(angle = 90, hjust = 0.5, vjust=0.5),
+          axis.title.y = element_text(color=y_axis_title_col))
+  
+}
+
+plt_VLWS <- WS_class_timeseries_no_x_axis_label(Area_per_classes_WSM_modified, "Very Low WS","white","Very Low WS")
+
+# Save above plot
+ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/results plot/VLWS_timeseries.pdf", 
+       plot = plt_VLWS, width = 6.56, height = 2)
+# # Save above plot
+# ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/results plot/VLWS_timeseries.png", 
+#        plot = plt_VLWS, width = 6.56, height = 2)
+
+plt_LWS <-  WS_class_timeseries_no_x_axis_label(Area_per_classes_WSM_modified, "Low WS","white","Low WS")
+# Save above plot
+ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/results plot/LWS_timeseries.pdf", 
+       plot = plt_LWS, width = 6.56, height = 2)
+# # Save above plot
+# ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/results plot/LWS_timeseries.png", 
+#        plot = plt_LWS, width = 6.56, height = 2)
+
+
+
+plt_MWS <- WS_class_timeseries_no_x_axis_label(Area_per_classes_WSM_modified, "Moderate WS","black","Moderate WS")
+# Save above plot
+ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/results plot/MWS_timeseries.pdf", 
+       plot = plt_MWS, width = 6.56, height = 2)
+# # Save above plot
+# ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/results plot/MWS_timeseries.png", 
+#        plot = plt_MWS, width = 6.56, height = 2)
+
+plt_HWS <- WS_class_timeseries_no_x_axis_label(Area_per_classes_WSM_modified, "High WS","white","High WS")
+# Save above plot
+ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/results plot/HWS_timeseries.pdf", 
+       plot = plt_HWS, width = 6.56, height = 2)
+# # Save above plot
+# ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/results plot/HWS_timeseries.png", 
+#        plot = plt_HWS, width = 6.56, height = 2)
+
+plt_VHWS <-  WS_class_timeseries(Area_per_classes_WSM_modified, "Very High WS","white","Very High WS")
+
+# Save above plot
+ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/results plot/VHWS_timeseries.pdf", 
+       plot = plt_VHWS, width = 6.56, height = 2.64)
+# # Save above plot
+# ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/results plot/VHWS_timeseries.png", 
+#        plot = plt_VHWS, width = 6.56, height = 2.64)
+
+WSM_timeseries_combined <- plot_grid(plt_VLWS,plt_LWS,plt_MWS,plt_HWS,plt_VHWS, nrow = 5, ncol = 1)
+
+# Save above plot
+ggsave("/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-DS Minor Dissertation/Figures/results plot/WSM_timeseries_combined.pdf", 
+       plot = WSM_timeseries_combined, width = 6.56, height = 8.50)
 
 # CONVLSTM 2 OUTPUTS ------------------------------------------------------
 
@@ -1151,7 +1567,7 @@ tmap_save(rf_wsm_2022_09_to_2022_12_20022022df, filename = '/Volumes/Hard Drive 
 
 
 
-
+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
 
 
 
