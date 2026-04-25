@@ -17,7 +17,7 @@
 wind_color_ramp <- colorRampPalette(c('steelblue','khaki','red'))(100) # define a color ramp for wind speed
 
 # Import TMNR shapefile 
-roi <- readOGR('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/Shapefiles/TMNR shapefile/tmnr_boundary.shp')
+roi <- readOGR('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/SANParks shapefiles/tmnr_boundary.shp')
 roi_trans <- spTransform(roi, CRS('+proj=utm +zone=34 +south +datum=WGS84 +units=m +no_defs')) # convert coordinate system to EPSG:32734 (WGS 84 / UTM zone 34S)
 
 windspeed_filenames <- list.files('Raw Data/Climatological Data/Near Surface Wind Speed') # read file names
@@ -31,7 +31,7 @@ windspeed_raster_func <- function(file, index, plot = NULL){
   windspeed_raster_proj <- projectRaster(windspeed_raster_crop, 
                                          crs = crs(roi_trans),
                                          res = 30, # downsample spatial resolution to 30x30m
-                                         method = 'bilinear')
+                                         method = 'bilinear') 
   # crop and mask raster to study area only
   windspeed_raster_projcropmask_TMNR <- windspeed_raster_proj |>
     crop(roi_trans) |>
