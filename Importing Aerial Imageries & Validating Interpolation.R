@@ -604,22 +604,22 @@ weighted_inter_natural_colour_composite_net_RMSE <- (all_summary_weighted_averag
           margin = T,
           stretch = 'lin',
           cex.main = .6,
-          main = 'Original Aerial Imagery \n 2018-10-13')
+          main = 'Original Satellite Imagery \n 2018-10-13')
   plotRGB(mask(l8_20181013_interpoltedH, roi_trans), r=4 , g=3 , b=2,
           margin = T,
           stretch = 'lin',
           cex.main = .6,
-          main = 'Horizontally Interpolated Aerial Imagery \n 2018-10-13 \n Net RMSE: 0.015')
+          main = 'Horizontally Interpolated Satellite Imagery \n 2018-10-13 \n Net RMSE: 0.015')
   plotRGB(mask(l8_20181013_interpoltedV, roi_trans), r=4 , g=3 , b=2,
           margin = T,
           stretch = 'lin',
           cex.main = .6,
-          main = 'Vertically Interpolated Aerial Imagery \n 2018-10-13 \n Net RMSE: 0.019')
+          main = 'Vertically Interpolated Satellite Imagery \n 2018-10-13 \n Net RMSE: 0.019')
   plotRGB(mask(l8_20181013_interpoltedW, roi_trans), r=4 , g=3 , b=2,
           margin = T,
           stretch = 'lin',
           cex.main = .6,
-          main = 'Weighted Interpolated Aerial Imagery \n 2018-10-13 \n Net RMSE: 0.014')
+          main = 'Weighted Interpolated Satellite Imagery \n 2018-10-13 \n Net RMSE: 0.014')
   
 }
 

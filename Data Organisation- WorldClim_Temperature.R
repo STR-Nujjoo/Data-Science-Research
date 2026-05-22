@@ -12,6 +12,7 @@
   library(colorRamps)
   library(pbapply)
   library(plotly)
+  library(ggrepel)
 }
 
 # Creating color ramp for temperature plot
@@ -88,6 +89,7 @@ WorldClim_S3LST_temperature_raster_list <- append(WorldClim_temperature_raster_l
 # save(WorldClim_S3LST_temperature_raster_list,
 #      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Temperature/Combined temperature data/WorldClim_S3LST_temperature_raster_list.Rdata')
 
+load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/Temperature/Combined temperature data/WorldClim_S3LST_temperature_raster_list.Rdata')
 
 # EDA for temperature data ------------------------------------------------
 # Trim data from 2014 to 2023
@@ -114,7 +116,7 @@ max_median_temp_df <- temp_EDA_df %>%
   group_by(year) %>%
   summarise(median_temp = max(median_temp)) %>%
   select(median_temp) %>%
-  left_join(temp_EDA_df) %>%
+  left_join(temp_EDA_df, relationship = 'many-to-many') %>%
   select(-year) %>%
   rename(max_median_temp = median_temp) %>%
   distinct() %>%  # remove repetitive rows
@@ -127,7 +129,7 @@ min_median_temp_df <- temp_EDA_df %>%
   group_by(year) %>%
   summarise(median_temp = min(median_temp)) %>%
   select(median_temp) %>%
-  left_join(temp_EDA_df) %>%
+  left_join(temp_EDA_df, relationship = 'many-to-many') %>%
   select(-year) %>%
   rename(min_median_temp = median_temp)%>%
   distinct() %>% # remove repetitive rows
@@ -138,11 +140,11 @@ min_median_temp_df <- temp_EDA_df %>%
 median_temperature_plot <- ggplot(temp_EDA_df, aes(x = date, y = median_temp, color = median_temp)) +
   geom_line(linewidth = .8) +
   geom_point(data = max_median_temp_df, aes(x = date, y = max_median_temp), color = 'deeppink', size = 1) +
-  geom_text(data = max_median_temp_df, aes(x = date, y = max_median_temp, label = format(date, '%Y-%m')), 
-            vjust = -1, color = "deeppink", size = 2) +  # Label the max points)
+  geom_text_repel(data = max_median_temp_df, aes(x = date, y = max_median_temp, label = format(date, '%Y-%m')), 
+            vjust = -1, color = "deeppink", size = 2, direction='both') +  # Label the max points)
   geom_point(data = min_median_temp_df, aes(x = date, y = min_median_temp), color = 'salmon', size = 1) +
-  geom_text(data = min_median_temp_df, aes(x = date, y = min_median_temp, label = format(date, '%Y-%m')), 
-            vjust = 1.5, color = 'salmon', size = 2) +  # Label the max points)
+  geom_text_repel(data = min_median_temp_df, aes(x = date, y = min_median_temp, label = format(date, '%Y-%m')), 
+            vjust = 1.5, color = 'salmon', size = 2, direction='x') +  # Label the max points)
   geom_smooth(method = loess, se = F, color = 'black', linewidth = .3, linetype = 'dashed') +
   scale_color_gradient(low = "yellow", high = 'red', guide = 'none', name = 'Median Temperature (°C)') +
   ylab('Median AMT (°C)') +

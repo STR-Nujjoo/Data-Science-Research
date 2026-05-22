@@ -108,8 +108,8 @@ elevation_plot <- tm_shape(elevation_raster_trans)+
   tm_shape(max_elev)+
   tm_symbols(size = 0.1, col = "red", shape = 24, border.col = "black") +
   tm_text("label", size = 0.5, just = "bottom", ymod=-0.6) +
-  tm_graticules(lines = F)+
-  tm_layout(legend.text.size = 0.37)
+  tm_graticules(labels.size = 0.5, n.x = 3, n.y = 3, lines = F)+
+tm_layout(legend.text.size = 0.37)
 
 
 slope_plot <- tm_shape(slope_raster_trans)+
@@ -117,8 +117,8 @@ slope_plot <- tm_shape(slope_raster_trans)+
             palette = jcolors::jcolors("pal12"), 
             style = 'cont', 
             breaks = seq(values(slope_raster_trans)%>%na.omit()%>%min(), values(slope_raster_trans)%>%na.omit()%>%max(), by = 10))+  
-  tm_graticules(lines = F)+
-  tm_layout(legend.text.size = 0.37)
+  tm_graticules(labels.size = 0.5, n.x = 3, n.y = 3, lines = F)+
+tm_layout(legend.text.size = 0.37)
 
 
 aspect_plot <- tm_shape(aspect_raster_trans)+
@@ -136,8 +136,8 @@ aspect_plot <- tm_shape(aspect_raster_trans)+
                        'W (247.5-292.5)',
                        'NW (292.5-337.5)', 
                        'N (337.5-360)'))+  
-  tm_graticules(lines = F)+
-  tm_layout(legend.text.size = 0.37)
+  tm_graticules(labels.size = 0.5, n.x = 3, n.y = 3, lines = F)+
+tm_layout(legend.text.size = 0.37)
 
 combined_map <- tmap_arrange(elevation_plot,
              slope_plot,

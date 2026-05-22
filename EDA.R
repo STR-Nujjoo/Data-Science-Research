@@ -510,7 +510,7 @@ historical_fire_frequency_map <- tm_shape(rasterFromXYZ(sanpark_all_historical_f
     style = "cat",          # categorical style (discrete)
     title = "1964-2022\nFire Frequency"
   ) +
-  tm_graticules(lines = F)+
+  tm_graticules(labels.size = 0.5, n.x = 3, n.y = 3, lines = F)+
   tm_layout(legend.text.size = 0.5, legend.title.size = 0.6)
 
 # Save the map as a PDF
@@ -558,7 +558,7 @@ historical_2014_2022_fire_frequency_map <- tm_shape(rasterFromXYZ(sanpark_201420
     style = "cat",          # categorical style (discrete)
     title = "2014-2022\nFire Frequency"
   ) +
-  tm_graticules(lines = F)+
+  tm_graticules(labels.size = 0.5, n.x = 3, n.y = 3, lines = F)+
   tm_layout(legend.text.size = 0.5, legend.title.size = 0.6)
 
 # Save the map as a PDF
@@ -802,8 +802,8 @@ monthly_fire_frequency_rasters_2014_2022 <- pblapply(seq_along(monthly_2014_2022
       style = "cat",          # categorical style (discrete)
       title = "2014-2022\nFire Frequency"
     ) +
-    tm_graticules(lines = F)+
-    tm_layout(main.title = "January", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)+
+    tm_layout(main.title = "January", main.title.size = .55, main.title.position = 0.19, legend.text.size = 0.45, legend.title.size = 0.5)
   
   pp2 <- tm_shape(monthly_fire_frequency_rasters_2014_2022[[2]]) +
     tm_raster(
@@ -812,8 +812,8 @@ monthly_fire_frequency_rasters_2014_2022 <- pblapply(seq_along(monthly_2014_2022
       style = "cat",          # categorical style (discrete)
       title = "2014-2022\nFire Frequency"
     ) +
-    tm_graticules(lines = F)+
-    tm_layout(main.title = "February", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)+
+    tm_layout(main.title = "February", main.title.size = .55, main.title.position = 0.19, legend.text.size = 0.45, legend.title.size = 0.5)
   
   pp3 <- tm_shape(monthly_fire_frequency_rasters_2014_2022[[3]]) +
     tm_raster(
@@ -822,8 +822,8 @@ monthly_fire_frequency_rasters_2014_2022 <- pblapply(seq_along(monthly_2014_2022
       style = "cat",          # categorical style (discrete)
       title = "2014-2022\nFire Frequency"
     ) +
-    tm_graticules(lines = F)+
-    tm_layout(main.title = "March", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)+
+    tm_layout(main.title = "March", main.title.size = .55, main.title.position = 0.19, legend.text.size = 0.45, legend.title.size = 0.5)
   
   pp4 <- tm_shape(monthly_fire_frequency_rasters_2014_2022[[4]]) +
     tm_raster(
@@ -832,8 +832,8 @@ monthly_fire_frequency_rasters_2014_2022 <- pblapply(seq_along(monthly_2014_2022
       style = "cat",          # categorical style (discrete)
       title = "2014-2022\nFire Frequency"
     ) +
-    tm_graticules(lines = F)+
-    tm_layout(main.title = "April", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)+
+    tm_layout(main.title = "April", main.title.size = .55, main.title.position = 0.19, legend.text.size = 0.45, legend.title.size = 0.5)
   
   pp5 <- tm_shape(monthly_fire_frequency_rasters_2014_2022[[5]]) +
     tm_raster(
@@ -842,8 +842,8 @@ monthly_fire_frequency_rasters_2014_2022 <- pblapply(seq_along(monthly_2014_2022
       style = "cat",          # categorical style (discrete)
       title = "2014-2022\nFire Frequency"
     ) +
-    tm_graticules(lines = F)+
-    tm_layout(main.title = "May", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)+
+    tm_layout(main.title = "May", main.title.size = .55, main.title.position = 0.19, legend.text.size = 0.45, legend.title.size = 0.5)
   
   pp6 <- tm_shape(dummy_df_for_no_fire_raster) +
     tm_raster(
@@ -852,8 +852,8 @@ monthly_fire_frequency_rasters_2014_2022 <- pblapply(seq_along(monthly_2014_2022
       style = "cat",          # categorical style (discrete)
       title = "2014-2022\nFire Frequency"
     ) +
-    tm_graticules(lines = F)+
-    tm_layout(main.title = "June", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)+
+    tm_layout(main.title = "June", main.title.size = .55, main.title.position = 0.19, legend.text.size = 0.45, legend.title.size = 0.5)
   
   
   pp7 <- tm_shape(dummy_df_for_no_fire_raster) +
@@ -863,8 +863,8 @@ monthly_fire_frequency_rasters_2014_2022 <- pblapply(seq_along(monthly_2014_2022
       style = "cat",          # categorical style (discrete)
       title = "2014-2022\nFire Frequency"
     ) +
-    tm_graticules(lines = F)+
-    tm_layout(main.title = "July", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)+
+    tm_layout(main.title = "July", main.title.size = .55, main.title.position = 0.19, legend.text.size = 0.45, legend.title.size = 0.5)
   
   pp8 <- tm_shape(dummy_df_for_no_fire_raster) +
     tm_raster(
@@ -873,8 +873,8 @@ monthly_fire_frequency_rasters_2014_2022 <- pblapply(seq_along(monthly_2014_2022
       style = "cat",          # categorical style (discrete)
       title = "2014-2022\nFire Frequency"
     ) +
-    tm_graticules(lines = F)+
-    tm_layout(main.title = "August", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)+
+    tm_layout(main.title = "August", main.title.size = .55, main.title.position = 0.19, legend.text.size = 0.45, legend.title.size = 0.5)
   
   pp9 <- tm_shape(monthly_fire_frequency_rasters_2014_2022[[6]]) +
     tm_raster(
@@ -883,8 +883,8 @@ monthly_fire_frequency_rasters_2014_2022 <- pblapply(seq_along(monthly_2014_2022
       style = "cat",          # categorical style (discrete)
       title = "2014-2022\nFire Frequency"
     ) +
-    tm_graticules(lines = F)+
-    tm_layout(main.title = "September", main.title.size = 0.7 ,main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)+
+    tm_layout(main.title = "September", main.title.size = .55 ,main.title.position = 0.19, legend.text.size = 0.45, legend.title.size = 0.5)
   
   pp10 <- tm_shape(monthly_fire_frequency_rasters_2014_2022[[7]]) +
     tm_raster(
@@ -893,8 +893,8 @@ monthly_fire_frequency_rasters_2014_2022 <- pblapply(seq_along(monthly_2014_2022
       style = "cat",          # categorical style (discrete)
       title = "2014-2022\nFire Frequency"
     ) +
-    tm_graticules(lines = F)+
-    tm_layout(main.title = "October", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)+
+    tm_layout(main.title = "October", main.title.size = .55, main.title.position = 0.19, legend.text.size = 0.45, legend.title.size = 0.5)
   
   pp11 <- tm_shape(monthly_fire_frequency_rasters_2014_2022[[8]]) +
     tm_raster(
@@ -903,8 +903,8 @@ monthly_fire_frequency_rasters_2014_2022 <- pblapply(seq_along(monthly_2014_2022
       style = "cat",          # categorical style (discrete)
       title = "2014-2022\nFire Frequency"
     ) +
-    tm_graticules(lines = F)+
-    tm_layout(main.title = "November", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)+
+    tm_layout(main.title = "November", main.title.size = .55, main.title.position = 0.19, legend.text.size = 0.45, legend.title.size = 0.5)
   
   pp12 <- tm_shape(monthly_fire_frequency_rasters_2014_2022[[9]]) +
     tm_raster(
@@ -912,10 +912,10 @@ monthly_fire_frequency_rasters_2014_2022 <- pblapply(seq_along(monthly_2014_2022
       palette = plasma_mod,   
       style = "cat",          # categorical style (discrete)
       title = "2014-2022\nFire Frequency"
+      
     ) +
-    tm_graticules(lines = F)+
-    tm_layout(main.title = "December", main.title.size = 0.7, main.title.position = 0.26, legend.text.size = 0.45, legend.title.size = 0.5)
-  
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)+
+    tm_layout(main.title = "December", main.title.size = .55, main.title.position = 0.19, legend.text.size = 0.45, legend.title.size = 0.5)
 }
 
 fire_freq_2014_2022_monthy_combined_maps <- tmap_arrange(pp1,pp2,pp3,pp4,pp5,pp6,pp7,pp8,pp9,pp10,pp11,pp12,

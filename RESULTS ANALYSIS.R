@@ -219,6 +219,18 @@ WS_RASTERS_list <- pblapply(seq_along(timesteps_labels), function(x){
 })
 
 
+# testing plot grid
+tm_shape(WS_RASTERS_list[[24]][[4]])+
+  tm_raster(style = "cat", title = "", palette = WS_palette[c(levels(WS_RASTERS_list[[24]][[4]])[[1]]$ID)])+
+  tm_layout(main.title= paste0(period_name[24],': True Fire Status'),
+            main.title.size =.55,
+            main.title.position = 0.26,
+            legend.outside = F,
+            legend.text.size = .3
+            # legend.outside.position = 'bottom'
+  )+
+  tm_graticules(labels.size = 0.4, n.x = 2, n.y = 4, lines = F)
+
 
 WSM_combined_plot <- function(data, r1_index, r2_index, r3_index, r4_index){
   period_name <- c('2021-01', '2021-02', '2021-03', '2021-04', '2021-05', '2021-06', '2021-07', '2021-08', '2021-09', '2021-10', '2021-11', '2021-12',
@@ -239,7 +251,7 @@ WSM_combined_plot <- function(data, r1_index, r2_index, r3_index, r4_index){
               legend.text.size = .3
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   r1p2 <- tm_shape(data[[r1_index]][[2]])+
     tm_raster(style = "cat", title = "", palette = fire_color_condition_func(data[[r1_index]][[2]]))+
@@ -250,7 +262,7 @@ WSM_combined_plot <- function(data, r1_index, r2_index, r3_index, r4_index){
               legend.text.size = .3
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   
   # # Visualise the sd of wildfire probabilities raster
@@ -277,7 +289,7 @@ WSM_combined_plot <- function(data, r1_index, r2_index, r3_index, r4_index){
               legend.text.size = .3
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   # Row 2 in full layout
   # Visualising the fire data used as testY
@@ -290,7 +302,7 @@ WSM_combined_plot <- function(data, r1_index, r2_index, r3_index, r4_index){
               legend.text.size = .3
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   r2p2 <- tm_shape(data[[r2_index]][[2]])+
     tm_raster(style = "cat", title = "", palette = fire_color_condition_func(data[[r2_index]][[2]]))+
@@ -301,7 +313,7 @@ WSM_combined_plot <- function(data, r1_index, r2_index, r3_index, r4_index){
               legend.text.size = .3
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   
   # # Visualise the sd of wildfire probabilities raster
@@ -328,7 +340,7 @@ WSM_combined_plot <- function(data, r1_index, r2_index, r3_index, r4_index){
               legend.text.size = .3
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   # Row 3 in full layout
   # Visualising the fire data used as testY
@@ -341,7 +353,7 @@ WSM_combined_plot <- function(data, r1_index, r2_index, r3_index, r4_index){
               legend.text.size = .3
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   r3p2 <- tm_shape(data[[r3_index]][[2]])+
     tm_raster(style = "cat", title = "", palette = fire_color_condition_func(data[[r3_index]][[2]]))+
@@ -352,7 +364,7 @@ WSM_combined_plot <- function(data, r1_index, r2_index, r3_index, r4_index){
               legend.text.size = .3
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   
   # # Visualise the sd of wildfire probabilities raster
@@ -379,7 +391,7 @@ WSM_combined_plot <- function(data, r1_index, r2_index, r3_index, r4_index){
               legend.text.size = .3
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   # Row 4 in full layout
   # Visualising the fire data used as testY
@@ -392,7 +404,7 @@ WSM_combined_plot <- function(data, r1_index, r2_index, r3_index, r4_index){
               legend.text.size = .3
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   r4p2 <- tm_shape(data[[r4_index]][[2]])+
     tm_raster(style = "cat", title = "", palette = fire_color_condition_func(data[[r4_index]][[2]]))+
@@ -403,7 +415,7 @@ WSM_combined_plot <- function(data, r1_index, r2_index, r3_index, r4_index){
               legend.text.size = .3
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   # # Visualise the sd of wildfire probabilities raster
   # r4p3 <- tm_shape(data[[r4_index]][[3]])+
@@ -427,7 +439,7 @@ WSM_combined_plot <- function(data, r1_index, r2_index, r3_index, r4_index){
               legend.text.size = .3,
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   return(
     tmap_arrange(r1p1,r1p2,r1p4,
@@ -1217,7 +1229,7 @@ RF_WSM_combined_plot <- function(data, period_name_2021 = T, r1_index, r2_index,
               legend.text.size = .3
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   r1p2 <- tm_shape(data[[r1_index]][[2]])+
     tm_raster(style = "cat", title = "", palette = fire_color_condition_func(data[[r1_index]][[2]]))+
@@ -1228,7 +1240,7 @@ RF_WSM_combined_plot <- function(data, period_name_2021 = T, r1_index, r2_index,
               legend.text.size = .3
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   
   # # Visualise the sd of wildfire probabilities raster
@@ -1255,7 +1267,7 @@ RF_WSM_combined_plot <- function(data, period_name_2021 = T, r1_index, r2_index,
               legend.text.size = .3
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   # Row 2 in full layout
   # Visualising the fire data used as testY
@@ -1268,7 +1280,7 @@ RF_WSM_combined_plot <- function(data, period_name_2021 = T, r1_index, r2_index,
               legend.text.size = .3
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   r2p2 <- tm_shape(data[[r2_index]][[2]])+
     tm_raster(style = "cat", title = "", palette = fire_color_condition_func(data[[r2_index]][[2]]))+
@@ -1279,7 +1291,7 @@ RF_WSM_combined_plot <- function(data, period_name_2021 = T, r1_index, r2_index,
               legend.text.size = .3
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   
   # # Visualise the sd of wildfire probabilities raster
@@ -1306,7 +1318,7 @@ RF_WSM_combined_plot <- function(data, period_name_2021 = T, r1_index, r2_index,
               legend.text.size = .3
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   # Row 3 in full layout
   # Visualising the fire data used as testY
@@ -1319,7 +1331,7 @@ RF_WSM_combined_plot <- function(data, period_name_2021 = T, r1_index, r2_index,
               legend.text.size = .3
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   r3p2 <- tm_shape(data[[r3_index]][[2]])+
     tm_raster(style = "cat", title = "", palette = fire_color_condition_func(data[[r3_index]][[2]]))+
@@ -1330,7 +1342,7 @@ RF_WSM_combined_plot <- function(data, period_name_2021 = T, r1_index, r2_index,
               legend.text.size = .3
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   
   # # Visualise the sd of wildfire probabilities raster
@@ -1357,7 +1369,7 @@ RF_WSM_combined_plot <- function(data, period_name_2021 = T, r1_index, r2_index,
               legend.text.size = .3
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   # Row 4 in full layout
   # Visualising the fire data used as testY
@@ -1370,7 +1382,7 @@ RF_WSM_combined_plot <- function(data, period_name_2021 = T, r1_index, r2_index,
               legend.text.size = .3
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   r4p2 <- tm_shape(data[[r4_index]][[2]])+
     tm_raster(style = "cat", title = "", palette = fire_color_condition_func(data[[r4_index]][[2]]))+
@@ -1381,7 +1393,7 @@ RF_WSM_combined_plot <- function(data, period_name_2021 = T, r1_index, r2_index,
               legend.text.size = .3
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   # # Visualise the sd of wildfire probabilities raster
   # r4p3 <- tm_shape(data[[r4_index]][[3]])+
@@ -1405,7 +1417,7 @@ RF_WSM_combined_plot <- function(data, period_name_2021 = T, r1_index, r2_index,
               legend.text.size = .3,
               # legend.outside.position = 'bottom'
     )+
-    tm_graticules(lines = F)
+    tm_graticules(labels.size = 0.4, n.x = 3, n.y = 3, lines = F)
   
   return(
     tmap_arrange(r1p1,r1p2,r1p4,

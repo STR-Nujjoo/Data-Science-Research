@@ -371,7 +371,7 @@ burnt_area_2014_2022 <- tm_shape(veg_type_trans)+
               alpha = .2,
               border.col = 'red',
               legend.show = F)+
-  tm_graticules(lines = F)+
+  tm_graticules(labels.size = 0.5, n.x = 3, n.y = 3, lines = F)+
   tm_layout(legend.position = c("left", "top"), legend.text.size = 0.37)
 
 # Save the burnt area map as a PDF

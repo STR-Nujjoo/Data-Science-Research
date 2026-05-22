@@ -68,13 +68,16 @@ ggplotly(pop_plot) # make plot interactive for further analysis
 ggplotly(fire_plot) # make plot interactive for further analysis
 
 # Visualise monthly aggregated fire frequency
+firms_fire_df_monthly$Month <- month(1:12,label=T) # change 1-12 to Jan-Dec
+# str(firms_fire_df_monthly)
+
 (
   firefreq_monthly_plot <- ggplot(firms_fire_df_monthly, aes(x = factor(Month), y = n_fire)) +
     xlab('Month')+
     ylab('Number of Fires  (in Thousands)')+
     geom_col(width = 0.3) +
     geom_hline(yintercept = mean(firms_fire_df_monthly$n_fire), linetype = 'dashed', colour = 'red', linewidth = .3)+
-    annotate("text", x = 4, y = mean(firms_fire_df_monthly$n_fire), label = paste("Mean Fire Occurrences= ", round(mean(firms_fire_df_monthly$n_fire)*1000)), 
+    annotate("text", x = 4, y = mean(firms_fire_df_monthly$n_fire), label = paste("Mean Fire Occurrences= ", format(round(mean(firms_fire_df_monthly$n_fire)*1000), big.mark = " ", scientific = FALSE)), 
              vjust = -0.5, hjust = 1.1, color = "red", size = 2.5)+
     theme_light()+
     theme(plot.tag = element_text(size = 10, face = 'bold'),

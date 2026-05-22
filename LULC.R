@@ -172,6 +172,7 @@ LULC_raster_list <- pblapply(seq_along(training_samples_filenames), function(x){
 
 # Save object
 # save(LULC_raster_list, file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/LULC 2014-2023 (with interpolation)/LULC_raster_list.Rdata')
+load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/LULC 2014-2023 (with interpolation)/LULC_raster_list.Rdata')
 
 # extracting the LULC rasters only
 LULC <- lapply(seq_along(training_samples_filenames), function(x){LULC_raster_list[[x]]$LULCRaster})
@@ -237,12 +238,20 @@ lapply(seq_along(LULC_CloudCover_index), function(x){
 # FUNCTION THAT REMOVE SHADOWS AND REPLACE IT BY NEAREST NEIGHBOUR PIXELS
 Imputating_shadows_from_7classesLULC <- function(index, plt_mask=NULL, plt_imputed = NULL){
   index <- index
+  # initial_LULC <- LULC[[119]]
   initial_LULC <- LULC[[LULC_CloudCover_index[index]]];levels(initial_LULC) # read in LULC data
   shadow_index <- which(values(initial_LULC)==5) # this only applies for LULC with 7 classes (i.e, also containing cloud cover)
   initial_LULC_mask <- mask(initial_LULC, initial_LULC, maskvalue = which(levels(initial_LULC)[[1]]$value == 'Shadow')) # mask shadow pixels
   levels(initial_LULC_mask)[[1]] <- levels(initial_LULC_mask)[[1]] %>% slice(-which(levels(initial_LULC_mask)[[1]]$value == 'Shadow')) # redefine levels (i.e, exclude shadows)
   # levels(initial_LULC_mask)
   
+  # lvl <- levels(initial_LULC_mask)[[1]]
+  # 
+  # lvl <- lvl[lvl$value != "Shadow", ]
+  # 
+  # initial_LULC_mask <- subs(initial_LULC_mask, lvl)
+  # levels(initial_LULC_mask)
+  # 
   if(plt_mask==T){
     print(
       # Visualise masked LULC
@@ -356,6 +365,7 @@ LULC_imputed_from_7classesLULC_list <- pblapply(seq_along(LULC_CloudCover_index)
 # FUNCTION THAT REMOVE CLOUD COVER AND REPLACE IT BY NEAREST NEIGHBOUR PIXELS- taking output from previous function
 Imputing_cloudcover_from_7classesLULC <- function(index, plt_mask=NULL, plt_imputed = NULL){
   index <- index
+  initial_LULC <- LULC[[119]]
   initial_LULC <- LULC_imputed_from_7classesLULC_list[[index]];levels(initial_LULC) # read in LULC data
   CC_index <- which(values(initial_LULC)==2) # this only applies for LULC originally having 7 classes containing cloud cover
   initial_LULC_mask <- mask(initial_LULC, initial_LULC, maskvalue = which(levels(initial_LULC)[[1]]$Classes == 'Cloud Cover')) # mask cloud cover pixels
@@ -470,14 +480,26 @@ LULC_imputed_NO_shadows_CC_list <- pblapply(seq_along(LULC_CloudCover_index), fu
 # save(LULC_imputed_NO_shadows_CC_list,
 #      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/LULC 2014-2023 (post-processing)/LULC_imputed_NO_shadows_CC_list.Rdata')
 
+load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/LULC 2014-2023 (post-processing)/LULC_imputed_NO_shadows_CC_list.Rdata')
+
 # FUNCTION THAT REMOVE SHADOWS AND REPLACE IT BY NEAREST NEIGHBOUR PIXELS- on remaining LULC which do not contain cloud cover
 Imputing_shadows_from_6classesLULC <- function(index, plt_mask=NULL, plt_imputed = NULL){
   index <- index
+  initial_LULC <- LULC[[119]];levels(initial_LULC) # read in LULC data
   initial_LULC <- LULC[[LULC_NOCloudCover_index[index]]];levels(initial_LULC) # read in LULC data
   shadow_index <- which(values(initial_LULC)==4) # this only applies for LULC with 6 classes (i.e, also containing cloud cover)
   initial_LULC_mask <- mask(initial_LULC, initial_LULC, maskvalue = which(levels(initial_LULC)[[1]]$value == 'Shadow')) # mask shadow pixels
-  levels(initial_LULC_mask)[[1]] <- levels(initial_LULC_mask)[[1]] %>% slice(-which(levels(initial_LULC_mask)[[1]]$value == 'Shadow')) # redefine levels (i.e, exclude shadows)
-  # levels(initial_LULC_mask)
+  # levels(initial_LULC_mask)[[1]] <- levels(initial_LULC_mask)[[1]] %>% slice(-which(levels(initial_LULC_mask)[[1]]$value == 'Shadow')) # redefine levels (i.e, exclude shadows)
+  levels(initial_LULC_mask)
+  lvl <- levels(initial_LULC_mask)[[1]]
+  
+  shadow_id <- lvl$ID[lvl$value == "Shadow"]
+  
+  initial_LULC_mask[initial_LULC_mask == shadow_id] <- NA
+  # initial_LULC_mask <- ratify(initial_LULC_mask)
+  levels(raster_imputation_mask) <- data.frame(ID = c(1,2,3,4,5,6), Classes = c('Bare Land', 'Forest & Thicket', 'Grass Land','NA', 'Shrub Land', 'Water Bodies')) # redefine levels
+  
+  # values(initial_LULC_mask)
   
   if(plt_mask==T){
     print(
@@ -494,17 +516,27 @@ Imputing_shadows_from_6classesLULC <- function(index, plt_mask=NULL, plt_imputed
   }
   
   
+  # # Convert the masked LULC into a dataframe to modify the classes
+  # initial_LULC_mask_df <- as.data.frame(initial_LULC_mask, xy = T)%>%
+  #   mutate(layer_value = factor(case_when(value_value=='Bare Land' ~ 1,
+  #                                         layer_value=='Forest & Thicket'~2,
+  #                                         layer_value=='Grass Land'~3,
+  #                                         # layer_value=='Shadow'~4,
+  #                                         layer_value=='Shrub Land'~4,
+  #                                         layer_value=='Water Bodies'~5))) 
+  
   # Convert the masked LULC into a dataframe to modify the classes
   initial_LULC_mask_df <- as.data.frame(initial_LULC_mask, xy = T)%>%
-    mutate(layer_value = factor(case_when(layer_value=='Bare Land' ~ 1,
-                                          layer_value=='Forest & Thicket'~2,
-                                          layer_value=='Grass Land'~3,
+    mutate(layer_value = factor(case_when(value_value=='Bare Land' ~ 1,
+                                          value_value=='Forest & Thicket'~2,
+                                          value_value=='Grass Land'~3,
                                           # layer_value=='Shadow'~4,
-                                          layer_value=='Shrub Land'~4,
-                                          layer_value=='Water Bodies'~5))) 
+                                          value_value=='Shrub Land'~4,
+                                          value_value=='Water Bodies'~5))) 
   
-  # str(initial_LULC_mask_df)
+  str(initial_LULC_mask_df)
   
+  initial_LULC_mask_df <- initial_LULC_mask_df[,-3]
   # Convert the updated LULC dataframe into raster again
   initial_LULC_mask_raster <- rasterFromXYZ(initial_LULC_mask_df) 
   crs(initial_LULC_mask_raster) <- crs(roi_trans) # redefine crs
@@ -590,6 +622,7 @@ LULC_imputed_NO_shadows_never_had_CC_list <- pblapply(seq_along(LULC_NOCloudCove
 # save(LULC_imputed_NO_shadows_never_had_CC_list,
 #      file = '/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/LULC 2014-2023 (post-processing)/LULC_imputed_NO_shadows_never_had_CC_list.Rdata')
 
+load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/LULC 2014-2023 (post-processing)/LULC_imputed_NO_shadows_never_had_CC_list.Rdata')
 
 # Combining imputed rasters in one list
 LULC_noCloudCover_noShadow_full_list <- vector('list', length(LULC)) # create an empty list with the same size as the number of LULC
@@ -754,6 +787,7 @@ FINAL_LULC <- pblapply(seq_along(LULC_noCloudCover_noShadow_full_list), function
 # }  
 
 # EDA ---------------------------------------------------------------------
+load('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Processed Variables/LULC 2014-2023 (with interpolation)/LULC_raster_list.Rdata')
 
 # Extracting accuracy assessment
 LULC_accuracy_assessment <- lapply(seq_along(LULC_raster_list), function(x) LULC_raster_list[[x]]$Test_accuracy)
@@ -786,7 +820,7 @@ LULC_AA_boxplot <- ggplot(LULC_accuracy_assessment_df_long, aes(x = Year, y = Me
   annotate('text', 
            x=7-.1, 
            y=mean(LULC_accuracy_assessment_df$Accuracy), 
-           label = paste('Mean Overall Accuracy: \n', mean(LULC_accuracy_assessment_df$Accuracy)|>round(3)),
+           label = paste('Mean Overall Accuracy: \n', mean(LULC_accuracy_assessment_df$Accuracy)|>round(3)*100, '%'),
            size = 2, 
            color = 'red')+
   annotate('text',
@@ -798,6 +832,11 @@ LULC_AA_boxplot <- ggplot(LULC_accuracy_assessment_df_long, aes(x = Year, y = Me
   scale_fill_discrete(labels = c('Overall Accuracy', 'Kappa Coefficient')) +
   xlab('Period') +
   ylab('LULC Accuracy Assessment') +
+  scale_y_continuous(
+    labels = function(x) {
+      paste0(round(x * 100), "% | ", round(x, 2))
+    }
+  )+
   labs(fill = '')+
   theme_light()+
   theme(legend.position = 'bottom')
@@ -814,7 +853,7 @@ LULC_with_shadow_plot <- tm_shape(LULC[[119]])+ # leave the index as 119 here!
             main.title.position = c("center", "top"),
             legend.outside = F,
             legend.text.size = .5)+
-  tm_graticules(lines = F); LULC_with_shadow_plot
+  tm_graticules(labels.size = 0.5, n.x = 3, n.y = 3, lines = F)
 
 LULC_with_shadowMasked_plot <- tm_shape(initial_LULC_mask)+
   tm_raster(style = "cat", title = "", palette = c('#883C07', '#00734C', '#D1FF73', 'white','#70A800', '#00A9E6'))+
@@ -823,7 +862,7 @@ LULC_with_shadowMasked_plot <- tm_shape(initial_LULC_mask)+
             main.title.position = c("center", "top"),
             legend.outside = F,
             legend.text.size = .5)+
-  tm_graticules(lines = F); LULC_with_shadowMasked_plot
+  tm_graticules(labels.size = 0.5, n.x = 3, n.y = 3, lines = F)
 
 LULC_with_shadowImputed_plot <- tm_shape(LULC_imputed_NO_shadows_never_had_CC_list[[94]])+
   tm_raster(style = "cat", title = "", palette = c('#883C07', '#00734C', '#D1FF73', '#70A800', '#00A9E6'))+
@@ -832,7 +871,7 @@ LULC_with_shadowImputed_plot <- tm_shape(LULC_imputed_NO_shadows_never_had_CC_li
             main.title.position = c("center", "top"),
             legend.outside = F,
             legend.text.size = .5)+
-  tm_graticules(lines = F); LULC_with_shadowImputed_plot
+  tm_graticules(labels.size = 0.5, n.x = 3, n.y = 3, lines = F)
 
 LULC_with_misclassified_waterbodies_masked_plot <- tm_shape(initial_LULC_mask_raster)+
   tm_raster(style = "cat", title = "", palette = c('#883C07', '#00734C', '#D1FF73', '#70A800', '#00A9E6'))+
@@ -841,7 +880,7 @@ LULC_with_misclassified_waterbodies_masked_plot <- tm_shape(initial_LULC_mask_ra
             main.title.position = c("center", "top"),
             legend.outside = F,
             legend.text.size = .5)+
-  tm_graticules(lines = F); LULC_with_misclassified_waterbodies_masked_plot
+  tm_graticules(labels.size = 0.5, n.x = 3, n.y = 3, lines = F)
 
 LULC_final_imputation_plot <-  tm_shape(FINAL_LULC[[119]])+
   tm_raster(style = "cat", title = "", palette = c('#883C07', '#00734C', '#D1FF73', '#70A800', '#00A9E6'))+
@@ -850,7 +889,7 @@ LULC_final_imputation_plot <-  tm_shape(FINAL_LULC[[119]])+
             main.title.position = c("center", "top"),
             legend.outside = F,
             legend.text.size = .5)+
-  tm_graticules(lines = F); LULC_final_imputation_plot
+  tm_graticules(labels.size = 0.5, n.x = 3, n.y = 3, lines = F)
 
 geoimputation_plot <- tmap_arrange(LULC_with_shadow_plot, LULC_with_shadowMasked_plot,
                                    LULC_with_shadowImputed_plot, LULC_with_misclassified_waterbodies_masked_plot, 

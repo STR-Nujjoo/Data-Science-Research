@@ -229,8 +229,8 @@ median_precipitation_plot <- ggplot(prec_EDA_df, aes(x = date, y = median_prec, 
   geom_text(data = max_median_prec_df, aes(x = date, y = max_median_prec, label = format(date, '%Y-%m')), 
             vjust = -1, color = "deeppink", size = 2) +  # Label the max points)
   geom_point(data = min_median_prec_df, aes(x = date, y = min_median_prec), color = 'salmon', size = 1) +
-  geom_text(data = min_median_prec_df, aes(x = date, y = min_median_prec, label = format(date, '%Y-%m')), 
-            vjust = 1.5, color = 'salmon', size = 2) +  # Label the max points)
+  geom_text_repel(data = min_median_prec_df, aes(x = date, y = min_median_prec, label = format(date, '%Y-%m')), 
+            vjust = 1.5, color = 'salmon', size = 2, direction='both') +  # Label the max points)
   geom_smooth(method = loess, se = F, color = 'black', linewidth = .3, linetype = 'dashed') +
   scale_color_gradient(low = "lightskyblue", high = 'darkblue', guide = 'none', name = 'Median Precipitation (mm)') +
   ylab('Median TP (mm)') +
