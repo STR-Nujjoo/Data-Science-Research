@@ -26,6 +26,71 @@
 aerial_imagery_filenames <- list.files('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Unprocessed Variables/Aerial Imagery 2014-2023 (with interpolation)', pattern = 'tif')
 training_samples_filenames <- list.files('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Training Samples 2014-2023', pattern = '\\.shp$')
 
+# function to count number of pixels per training classes
+tr_samp_poly_count <- pbsapply(1:length(training_samples_filenames)
+, function (i){
+  x <- read_sf(paste0('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Training Samples 2014-2023/', training_samples_filenames[i]))
+  
+  x_df <- st_as_sf(x) %>%  # convert to spatial dataframe
+    st_buffer(dist = 0) %>% # correct for geometry if there's any error
+    mutate(Classname= as.factor(Classname), # convert class label into factor
+           Classcode=1:nrow(x)) 
+  
+  cloudcover <- x_df |>
+    filter(Classvalue == 0)
+  shadow <- x_df |>
+    filter(Classvalue == 1)
+  waterbodies <- x_df |>
+    filter(Classvalue == 2)
+  forestthicket <- x_df |>
+    filter(Classvalue == 3)
+  shrubland <- x_df |>
+    filter(Classvalue == 4)
+  grassland <- x_df |>
+    filter(Classvalue == 5)
+  bareland <- x_df |>
+    filter(Classvalue == 6)
+  
+  return(
+
+      list(n_cloud_cover =   cloudcover$Count, # cloud cover
+           n_shadow =   shadow$Count, # shadow
+           n_waterbodies =   waterbodies$Count, # water bodies
+           n_forest_thicket =   forestthicket$Count, # forest & thicket
+           n_shrubland =   shrubland$Count, # shrub land
+           n_grassland =   grassland$Count, # grass land
+           n_bareland =   bareland$Count) # bare land
+
+    ) 
+})
+
+# finding the average value of pixel count per class
+y <- as.data.frame(tr_samp_poly_count |> t()) 
+unlist(y$n_cloud_cover) |> mean() |> round()
+unlist(y$n_shadow) |> mean() |> round()
+unlist(y$n_waterbodies) |> mean() |> round()
+unlist(y$n_forest_thicket) |> mean() |> round()
+unlist(y$n_shrubland) |> mean() |> round()
+unlist(y$n_grassland) |> mean() |> round()
+unlist(y$n_bareland) |> mean() |> round()
+
+## if I want to visualise training samples...
+# x <- read_sf(paste0('/Volumes/Hard Drive (29-08-22)/Data Science 2023-2024/2nd year MSc Data Science/STA5079W-R Project/Data Science Minor Dissertation/Variables/Training Samples 2014-2023/', training_samples_filenames[10]))
+# 
+# x_df <- st_as_sf(x) %>%  # convert to spatial dataframe
+#   st_buffer(dist = 0) %>% # correct for geometry if there's any error
+#   mutate(Classname= as.factor(Classname), # convert class label into factor
+#          Classcode=1:nrow(x)) 
+# 
+# x_df <- x_df |>
+#   filter(Classvalue == 0)
+# 
+# 
+# plot(roi_trans)
+# plot(x_df$geometry, add = T, col = x_df$Classname)
+
+
+
 RF_supervised_classification <- function(index, plotPCAImagery=NULL, plottrainingsamples=NULL, Screeplot=NULL, plotLULC=NULL){
   index <- index # call for specific raster
   # read rasterBrick
